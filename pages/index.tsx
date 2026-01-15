@@ -22,9 +22,13 @@ export default function Home() {
           setHealth({ status: "ok", message: data.message || "ok" });
         }
       } catch (error) {
-        if (isMounted) {
-          setHealth({ status: "error", message: error.message });
+        if (!isMounted) {
+          return;
         }
+
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
+        setHealth({ status: "error", message });
       }
     }
 
