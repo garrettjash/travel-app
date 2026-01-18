@@ -1,0 +1,392 @@
+{
+  "28953": {
+    "seed": "Manhattan, New York, USA",
+    "name": "New York",
+    "address_string": "NY"
+  },
+  "295424": {
+    "seed": "Dubai, UAE",
+    "name": "Dubai",
+    "address_string": "Dubai United Arab Emirates"
+  },
+  "298184": {
+    "seed": "Tokyo, Japan",
+    "name": "Tokyo",
+    "address_string": "Tokyo Prefecture"
+  },
+  "7917565": {
+    "seed": "Hong Kong",
+    "name": "Hong Kong Intl Airport",
+    "address_string": "1 Sky Plaza Road, Hong Kong China"
+  },
+  "2146391": {
+    "seed": "Singapore",
+    "name": "Singapore River",
+    "address_string": "Singapore Singapore"
+  },
+  "303506": {
+    "seed": "Rio de Janeiro, Brazil",
+    "name": "Rio de Janeiro",
+    "address_string": "Rio de Janeiro, State of Rio de Janeiro Brazil"
+  },
+  "187147": {
+    "seed": "Paris, France",
+    "name": "Paris",
+    "address_string": "Paris France"
+  },
+  "187497": {
+    "seed": "Barcelona, Spain",
+    "name": "Barcelona",
+    "address_string": "Barcelona Spain"
+  },
+  "187791": {
+    "seed": "Rome, Italy",
+    "name": "Rome",
+    "address_string": "Rome Italy"
+  },
+  "255060": {
+    "seed": "Sydney, Australia",
+    "name": "Sydney",
+    "address_string": "Sydney, New South Wales Australia"
+  },
+  "45963": {
+    "seed": "Las Vegas, Nevada, USA",
+    "name": "Las Vegas",
+    "address_string": "Las Vegas, NV"
+  },
+  "293983": {
+    "seed": "Jerusalem, Israel",
+    "name": "Jerusalem",
+    "address_string": "Jerusalem Israel"
+  },
+  "186338": {
+    "seed": "London, UK",
+    "name": "London",
+    "address_string": "London England"
+  },
+  "552077": {
+    "seed": "San Francisco, California, USA",
+    "name": "San Francisco",
+    "address_string": "San Francisco Mexico"
+  },
+  "298507": {
+    "seed": "St. Petersburg, Russia",
+    "name": "St. Petersburg",
+    "address_string": "St. Petersburg Russia"
+  },
+  "187870": {
+    "seed": "Venice, Italy",
+    "name": "Venice",
+    "address_string": "Venice Italy"
+  },
+  "298564": {
+    "seed": "Kyoto, Japan",
+    "name": "Kyoto",
+    "address_string": "Kyoto Kyoto Prefecture"
+  },
+  "28924": {
+    "seed": "Grand Canyon, Arizona, USA",
+    "name": "Arizona",
+    "address_string": "AZ"
+  },
+  "143050": {
+    "seed": "Sequoia National Park, California, USA",
+    "name": "Sequoia and Kings Canyon National Park",
+    "address_string": "47050 Generals Highway Visitors Center, Sequoia and Kings Canyon National Park, CA"
+  },
+  "28923": {
+    "seed": "Alaska, USA",
+    "name": "Alaska",
+    "address_string": "AK"
+  },
+  "488177": {
+    "seed": "Los Angeles, California, USA",
+    "name": "Los Angeles",
+    "address_string": "Los Angeles Chile"
+  },
+  "34438": {
+    "seed": "Miami, Florida, USA",
+    "name": "Miami",
+    "address_string": "Miami, FL"
+  },
+  "34515": {
+    "seed": "Orlando, Florida, USA",
+    "name": "Orlando",
+    "address_string": "Orlando, FL"
+  },
+  "35805": {
+    "seed": "Chicago, Illinois, USA",
+    "name": "Chicago",
+    "address_string": "Chicago, IL"
+  },
+  "49644": {
+    "seed": "Washington, D.C., USA",
+    "name": "Washington",
+    "address_string": "Washington, NC"
+  },
+  "60745": {
+    "seed": "Boston, Massachusetts, USA",
+    "name": "Boston",
+    "address_string": "Boston, MA"
+  },
+  "41755": {
+    "seed": "New Orleans, Louisiana, USA",
+    "name": "Orleans",
+    "address_string": "Orleans, MA"
+  },
+  "60982": {
+    "seed": "Honolulu, Hawaii, USA",
+    "name": "Honolulu",
+    "address_string": "Honolulu, Oahu, HI"
+  },
+  "150807": {
+    "seed": "Cancun, Mexico",
+    "name": "Cancun",
+    "address_string": "Cancun Mexico"
+  },
+  "150800": {
+    "seed": "Mexico City, Mexico",
+    "name": "Mexico City",
+    "address_string": "Mexico City Mexico"
+  },
+  "529033": {
+    "seed": "Toronto, Canada",
+    "name": "Toronto",
+    "address_string": "Toronto, Lake Macquarie, New South Wales Australia"
+  },
+  "154943": {
+    "seed": "Vancouver, Canada",
+    "name": "Vancouver",
+    "address_string": "Vancouver, British Columbia Canada"
+  },
+  "1726266": {
+    "seed": "Montreal, Canada",
+    "name": "Montreal",
+    "address_string": "Montreal France"
+  },
+  "147271": {
+    "seed": "Havana, Cuba",
+    "name": "Havana",
+    "address_string": "Havana Cuba"
+  },
+  "312741": {
+    "seed": "Buenos Aires, Argentina",
+    "name": "Buenos Aires",
+    "address_string": "Buenos Aires Argentina"
+  },
+  "294305": {
+    "seed": "Santiago, Chile",
+    "name": "Santiago",
+    "address_string": "Santiago Chile"
+  },
+  "294316": {
+    "seed": "Lima, Peru",
+    "name": "Lima",
+    "address_string": "Lima Peru"
+  },
+  "294318": {
+    "seed": "Machu Picchu, Peru",
+    "name": "Machu Picchu",
+    "address_string": "Machu Picchu Peru"
+  },
+  "294074": {
+    "seed": "Bogota, Colombia",
+    "name": "Bogota",
+    "address_string": "Bogota Colombia"
+  },
+  "3360208": {
+    "seed": "Medellin, Colombia",
+    "name": "Medellin",
+    "address_string": "Medellin Philippines"
+  },
+  "188590": {
+    "seed": "Amsterdam, Netherlands",
+    "name": "Amsterdam",
+    "address_string": "Amsterdam The Netherlands"
+  },
+  "188644": {
+    "seed": "Brussels, Belgium",
+    "name": "Brussels",
+    "address_string": "Brussels Belgium"
+  },
+  "46025": {
+    "seed": "Berlin, Germany",
+    "name": "Berlin",
+    "address_string": "Berlin, NH"
+  },
+  "187309": {
+    "seed": "Munich, Germany",
+    "name": "Munich",
+    "address_string": "Munich, Bavaria Germany"
+  },
+  "190454": {
+    "seed": "Vienna, Austria",
+    "name": "Vienna",
+    "address_string": "Vienna Austria"
+  },
+  "274707": {
+    "seed": "Prague, Czech Republic",
+    "name": "Prague",
+    "address_string": "Prague Czech Republic"
+  },
+  "274887": {
+    "seed": "Budapest, Hungary",
+    "name": "Budapest",
+    "address_string": "Budapest Hungary"
+  },
+  "188113": {
+    "seed": "Zurich, Switzerland",
+    "name": "Zurich",
+    "address_string": "Zurich Switzerland"
+  },
+  "47777": {
+    "seed": "Geneva, Switzerland",
+    "name": "Geneva",
+    "address_string": "Geneva, NY"
+  },
+  "187895": {
+    "seed": "Florence, Italy",
+    "name": "Florence",
+    "address_string": "Florence Italy"
+  },
+  "187849": {
+    "seed": "Milan, Italy",
+    "name": "Milan",
+    "address_string": "Milan Italy"
+  },
+  "187785": {
+    "seed": "Naples, Italy",
+    "name": "Naples",
+    "address_string": "Naples Italy"
+  },
+  "189400": {
+    "seed": "Athens, Greece",
+    "name": "Athens",
+    "address_string": "Athens Greece"
+  },
+  "189433": {
+    "seed": "Santorini, Greece",
+    "name": "Santorini",
+    "address_string": "Greece"
+  },
+  "189430": {
+    "seed": "Mykonos, Greece",
+    "name": "Mykonos",
+    "address_string": "Greece"
+  },
+  "49614": {
+    "seed": "Istanbul, Turkey",
+    "name": "Turkey",
+    "address_string": "Turkey, NC"
+  },
+  "294201": {
+    "seed": "Cairo, Egypt",
+    "name": "Cairo",
+    "address_string": "Cairo Egypt"
+  },
+  "293734": {
+    "seed": "Marrakech, Morocco",
+    "name": "Marrakech",
+    "address_string": "Marrakech Morocco"
+  },
+  "1722390": {
+    "seed": "Cape Town, South Africa",
+    "name": "Cape Town",
+    "address_string": "South Africa"
+  },
+  "312578": {
+    "seed": "Johannesburg, South Africa",
+    "name": "Johannesburg",
+    "address_string": "Johannesburg South Africa"
+  },
+  "294207": {
+    "seed": "Nairobi, Kenya",
+    "name": "Nairobi",
+    "address_string": "Nairobi Kenya"
+  },
+  "293916": {
+    "seed": "Bangkok, Thailand",
+    "name": "Bangkok",
+    "address_string": "Bangkok Thailand"
+  },
+  "293920": {
+    "seed": "Phuket, Thailand",
+    "name": "Phuket",
+    "address_string": "Phuket Thailand"
+  },
+  "293917": {
+    "seed": "Chiang Mai, Thailand",
+    "name": "Chiang Mai",
+    "address_string": "Chiang Mai Thailand"
+  },
+  "294226": {
+    "seed": "Bali, Indonesia",
+    "name": "Bali",
+    "address_string": "Indonesia"
+  },
+  "294229": {
+    "seed": "Jakarta, Indonesia",
+    "name": "Jakarta",
+    "address_string": "Jakarta Indonesia"
+  },
+  "298570": {
+    "seed": "Kuala Lumpur, Malaysia",
+    "name": "Kuala Lumpur",
+    "address_string": "Kuala Lumpur Malaysia"
+  },
+  "293924": {
+    "seed": "Hanoi, Vietnam",
+    "name": "Hanoi",
+    "address_string": "Hanoi Vietnam"
+  },
+  "1498190": {
+    "seed": "Ho Chi Minh City, Vietnam",
+    "name": "Ho",
+    "address_string": "Ho Ghana"
+  },
+  "294197": {
+    "seed": "Seoul, South Korea",
+    "name": "Seoul",
+    "address_string": "Seoul South Korea"
+  },
+  "3194181": {
+    "seed": "Shanghai, China",
+    "name": "China",
+    "address_string": "China Mexico"
+  },
+  "298557": {
+    "seed": "Xi'an, China",
+    "name": "Xi'an",
+    "address_string": "Xi'an China"
+  },
+  "293913": {
+    "seed": "Taipei, Taiwan",
+    "name": "Taipei",
+    "address_string": "Taipei Taiwan"
+  },
+  "1811027": {
+    "seed": "Auckland, New Zealand",
+    "name": "Auckland",
+    "address_string": "Auckland New Zealand"
+  },
+  "255122": {
+    "seed": "Queenstown, New Zealand",
+    "name": "Queenstown",
+    "address_string": "Queenstown New Zealand"
+  },
+  "255100": {
+    "seed": "Melbourne, Australia",
+    "name": "Melbourne",
+    "address_string": "Melbourne, Victoria Australia"
+  },
+  "255103": {
+    "seed": "Perth, Australia",
+    "name": "Perth",
+    "address_string": "Perth, Western Australia Australia"
+  },
+  "294331": {
+    "seed": "Fiji",
+    "name": "Fiji",
+    "address_string": "Fiji"
+  }
+}
