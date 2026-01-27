@@ -1,0 +1,3712 @@
+{
+  "33344134": {
+    "name": "Leatherstocking Timber Products",
+    "seed_geo_id": "28953",
+    "seed_place": "Manhattan, New York, USA"
+  },
+  "9681910": {
+    "name": "C&C Taxi and Airport Transportation",
+    "seed_geo_id": "28953",
+    "seed_place": "Manhattan, New York, USA"
+  },
+  "19229164": {
+    "name": "Fortin Park",
+    "seed_geo_id": "28953",
+    "seed_place": "Manhattan, New York, USA"
+  },
+  "27041184": {
+    "name": "Caribbean Day Spa",
+    "seed_geo_id": "28953",
+    "seed_place": "Manhattan, New York, USA"
+  },
+  "2163160": {
+    "name": "Hanford Mills Museum",
+    "seed_geo_id": "28953",
+    "seed_place": "Manhattan, New York, USA"
+  },
+  "24990340": {
+    "name": "Skyhold Ranch",
+    "seed_geo_id": "28953",
+    "seed_place": "Manhattan, New York, USA"
+  },
+  "14912191": {
+    "name": "Mountain View Dairy",
+    "seed_geo_id": "28953",
+    "seed_place": "Manhattan, New York, USA"
+  },
+  "3315702": {
+    "name": "HaSu Ranch Alpacas",
+    "seed_geo_id": "28953",
+    "seed_place": "Manhattan, New York, USA"
+  },
+  "8110082": {
+    "name": "Emmons Pond Bog",
+    "seed_geo_id": "28953",
+    "seed_place": "Manhattan, New York, USA"
+  },
+  "10092085": {
+    "name": "Shaver Hill Maple Farm",
+    "seed_geo_id": "28953",
+    "seed_place": "Manhattan, New York, USA"
+  },
+  "26926818": {
+    "name": "Emirates Desert Adventure",
+    "seed_geo_id": "295424",
+    "seed_place": "Dubai, UAE"
+  },
+  "23637227": {
+    "name": "Dubai Dune Buggy",
+    "seed_geo_id": "295424",
+    "seed_place": "Dubai, UAE"
+  },
+  "19418798": {
+    "name": "Osman",
+    "seed_geo_id": "295424",
+    "seed_place": "Dubai, UAE"
+  },
+  "19260220": {
+    "name": "Meet The Locals",
+    "seed_geo_id": "295424",
+    "seed_place": "Dubai, UAE"
+  },
+  "23879591": {
+    "name": "Footlab Dubai",
+    "seed_geo_id": "295424",
+    "seed_place": "Dubai, UAE"
+  },
+  "23960957": {
+    "name": "Bikeon",
+    "seed_geo_id": "295424",
+    "seed_place": "Dubai, UAE"
+  },
+  "26346696": {
+    "name": "Truth yoga",
+    "seed_geo_id": "295424",
+    "seed_place": "Dubai, UAE"
+  },
+  "26501691": {
+    "name": "Dubai International Financial Centre",
+    "seed_geo_id": "295424",
+    "seed_place": "Dubai, UAE"
+  },
+  "26193218": {
+    "name": "Dubai Mall Chinatown",
+    "seed_geo_id": "295424",
+    "seed_place": "Dubai, UAE"
+  },
+  "24087502": {
+    "name": "Central Paddle Dubai",
+    "seed_geo_id": "295424",
+    "seed_place": "Dubai, UAE"
+  },
+  "1947717": {
+    "name": "Palace Cycling",
+    "seed_geo_id": "298184",
+    "seed_place": "Tokyo, Japan"
+  },
+  "10781857": {
+    "name": "Meiji Seimeikan",
+    "seed_geo_id": "298184",
+    "seed_place": "Tokyo, Japan"
+  },
+  "26551538": {
+    "name": "Remains of Wadakuramon Gate Guardhouse",
+    "seed_geo_id": "298184",
+    "seed_place": "Tokyo, Japan"
+  },
+  "26551537": {
+    "name": "Crown Prince Marriage Monument",
+    "seed_geo_id": "298184",
+    "seed_place": "Tokyo, Japan"
+  },
+  "1373711": {
+    "name": "Wadakura Fountain Park",
+    "seed_geo_id": "298184",
+    "seed_place": "Tokyo, Japan"
+  },
+  "17424115": {
+    "name": "Kikyo Gate",
+    "seed_geo_id": "298184",
+    "seed_place": "Tokyo, Japan"
+  },
+  "17424111": {
+    "name": "Sakashita Gate",
+    "seed_geo_id": "298184",
+    "seed_place": "Tokyo, Japan"
+  },
+  "8066135": {
+    "name": "Kusunoki Masashige Statue",
+    "seed_geo_id": "298184",
+    "seed_place": "Tokyo, Japan"
+  },
+  "12072587": {
+    "name": "Tokyo Free Guide",
+    "seed_geo_id": "298184",
+    "seed_place": "Tokyo, Japan"
+  },
+  "13993845": {
+    "name": "Chidorigafuchi Promenade",
+    "seed_geo_id": "298184",
+    "seed_place": "Tokyo, Japan"
+  },
+  "26442904": {
+    "name": "Scenic Hill",
+    "seed_geo_id": "7917565",
+    "seed_place": "Hong Kong"
+  },
+  "624841": {
+    "name": "Ngong Ping 360",
+    "seed_geo_id": "7917565",
+    "seed_place": "Hong Kong"
+  },
+  "15289536": {
+    "name": "Hong Kong-Zhuhai-Macao Bridge",
+    "seed_geo_id": "7917565",
+    "seed_place": "Hong Kong"
+  },
+  "11759541": {
+    "name": "Eardley Flower by Chisa",
+    "seed_geo_id": "7917565",
+    "seed_place": "Hong Kong"
+  },
+  "2008060": {
+    "name": "Citygate Outlets",
+    "seed_geo_id": "7917565",
+    "seed_place": "Hong Kong"
+  },
+  "10519569": {
+    "name": "Fu Tung Plaza",
+    "seed_geo_id": "7917565",
+    "seed_place": "Hong Kong"
+  },
+  "26709676": {
+    "name": "Goods of Desire - Hong Kong International Airport 2",
+    "seed_geo_id": "7917565",
+    "seed_place": "Hong Kong"
+  },
+  "25161890": {
+    "name": "Tea WG Boutique at Hong Kong International Airport",
+    "seed_geo_id": "7917565",
+    "seed_place": "Hong Kong"
+  },
+  "25180775": {
+    "name": "Chase Sapphire Lounge",
+    "seed_geo_id": "7917565",
+    "seed_place": "Hong Kong"
+  },
+  "26709655": {
+    "name": "Goods of Desire - Hong Kong International Airport 1",
+    "seed_geo_id": "7917565",
+    "seed_place": "Hong Kong"
+  },
+  "32978150": {
+    "name": "Cue 8 Billiards",
+    "seed_geo_id": "2146391",
+    "seed_place": "Singapore"
+  },
+  "2344540": {
+    "name": "GX-5 Extreme Swing",
+    "seed_geo_id": "2146391",
+    "seed_place": "Singapore"
+  },
+  "13007753": {
+    "name": "The Joy Of Toys",
+    "seed_geo_id": "2146391",
+    "seed_place": "Singapore"
+  },
+  "25394979": {
+    "name": "Queen Ginya",
+    "seed_geo_id": "2146391",
+    "seed_place": "Singapore"
+  },
+  "26612200": {
+    "name": "The Face Place",
+    "seed_geo_id": "2146391",
+    "seed_place": "Singapore"
+  },
+  "1892446": {
+    "name": "Clarke Quay Central",
+    "seed_geo_id": "2146391",
+    "seed_place": "Singapore"
+  },
+  "28249102": {
+    "name": "Cocktail Office",
+    "seed_geo_id": "2146391",
+    "seed_place": "Singapore"
+  },
+  "9459120": {
+    "name": "East Silk Palace",
+    "seed_geo_id": "2146391",
+    "seed_place": "Singapore"
+  },
+  "941492": {
+    "name": "GX5 Extreme Swing",
+    "seed_geo_id": "2146391",
+    "seed_place": "Singapore"
+  },
+  "2341761": {
+    "name": "MCI and MCCY Building",
+    "seed_geo_id": "2146391",
+    "seed_place": "Singapore"
+  },
+  "26224113": {
+    "name": "AME Home Care",
+    "seed_geo_id": "303506",
+    "seed_place": "Rio de Janeiro, Brazil"
+  },
+  "24064493": {
+    "name": "Monumento A Masacre De Jacarezinho",
+    "seed_geo_id": "303506",
+    "seed_place": "Rio de Janeiro, Brazil"
+  },
+  "23959860": {
+    "name": "Produtos Do Bem",
+    "seed_geo_id": "303506",
+    "seed_place": "Rio de Janeiro, Brazil"
+  },
+  "24020134": {
+    "name": "Camarote Arpoador",
+    "seed_geo_id": "303506",
+    "seed_place": "Rio de Janeiro, Brazil"
+  },
+  "33302394": {
+    "name": "Insight Architecture",
+    "seed_geo_id": "303506",
+    "seed_place": "Rio de Janeiro, Brazil"
+  },
+  "27421950": {
+    "name": "Rebecca Miller Tour",
+    "seed_geo_id": "303506",
+    "seed_place": "Rio de Janeiro, Brazil"
+  },
+  "25243150": {
+    "name": "Fly Over",
+    "seed_geo_id": "303506",
+    "seed_place": "Rio de Janeiro, Brazil"
+  },
+  "28153339": {
+    "name": "Guia de Turismo Renan Trips",
+    "seed_geo_id": "303506",
+    "seed_place": "Rio de Janeiro, Brazil"
+  },
+  "33220802": {
+    "name": "Catharina EmanuelleTour Guide",
+    "seed_geo_id": "303506",
+    "seed_place": "Rio de Janeiro, Brazil"
+  },
+  "26530272": {
+    "name": "Vivaz Tours",
+    "seed_geo_id": "303506",
+    "seed_place": "Rio de Janeiro, Brazil"
+  },
+  "28323038": {
+    "name": "Tom And Folks",
+    "seed_geo_id": "187147",
+    "seed_place": "Paris, France"
+  },
+  "27990758": {
+    "name": "Disneyland Paris Transfer",
+    "seed_geo_id": "187147",
+    "seed_place": "Paris, France"
+  },
+  "26223410": {
+    "name": "Promenade Maurice Careme",
+    "seed_geo_id": "187147",
+    "seed_place": "Paris, France"
+  },
+  "26262574": {
+    "name": "Quai De Conti",
+    "seed_geo_id": "187147",
+    "seed_place": "Paris, France"
+  },
+  "25575209": {
+    "name": "Grandes Carrieres District",
+    "seed_geo_id": "187147",
+    "seed_place": "Paris, France"
+  },
+  "26266831": {
+    "name": "Place Charles De Gaulle",
+    "seed_geo_id": "187147",
+    "seed_place": "Paris, France"
+  },
+  "32989590": {
+    "name": "Citymove Paris",
+    "seed_geo_id": "187147",
+    "seed_place": "Paris, France"
+  },
+  "25374868": {
+    "name": "Sba Transfer",
+    "seed_geo_id": "187147",
+    "seed_place": "Paris, France"
+  },
+  "26128397": {
+    "name": "Place De L'Opera",
+    "seed_geo_id": "187147",
+    "seed_place": "Paris, France"
+  },
+  "33345623": {
+    "name": "Undercover Paris",
+    "seed_geo_id": "187147",
+    "seed_place": "Paris, France"
+  },
+  "25969602": {
+    "name": "Red fox tours",
+    "seed_geo_id": "187497",
+    "seed_place": "Barcelona, Spain"
+  },
+  "25215431": {
+    "name": "Casa Del Guarda",
+    "seed_geo_id": "187497",
+    "seed_place": "Barcelona, Spain"
+  },
+  "25556275": {
+    "name": "Farola Avinguda Gaudi",
+    "seed_geo_id": "187497",
+    "seed_place": "Barcelona, Spain"
+  },
+  "25556273": {
+    "name": "Fuente Monumental de la Avenida Gaudi",
+    "seed_geo_id": "187497",
+    "seed_place": "Barcelona, Spain"
+  },
+  "25556270": {
+    "name": "Avinguda de Gaudi",
+    "seed_geo_id": "187497",
+    "seed_place": "Barcelona, Spain"
+  },
+  "28002869": {
+    "name": "Mount Tibidabo",
+    "seed_geo_id": "187497",
+    "seed_place": "Barcelona, Spain"
+  },
+  "23759219": {
+    "name": "Siempre Marruecos tours",
+    "seed_geo_id": "187497",
+    "seed_place": "Barcelona, Spain"
+  },
+  "25571415": {
+    "name": "Monumento a Maria Fortuny",
+    "seed_geo_id": "187497",
+    "seed_place": "Barcelona, Spain"
+  },
+  "25369825": {
+    "name": "Parc Esportiu Urba La Marina",
+    "seed_geo_id": "187497",
+    "seed_place": "Barcelona, Spain"
+  },
+  "25571414": {
+    "name": "La Barca de Gabriel Alabert",
+    "seed_geo_id": "187497",
+    "seed_place": "Barcelona, Spain"
+  },
+  "33345521": {
+    "name": "Arcibasilica Papale di  di San Giovanni in Laterano",
+    "seed_geo_id": "187791",
+    "seed_place": "Rome, Italy"
+  },
+  "26837121": {
+    "name": "Antonio Micocci",
+    "seed_geo_id": "187791",
+    "seed_place": "Rome, Italy"
+  },
+  "246137": {
+    "name": "Parco di Colle Oppio",
+    "seed_geo_id": "187791",
+    "seed_place": "Rome, Italy"
+  },
+  "27108759": {
+    "name": "Shirat Ha-Yam Synagogue",
+    "seed_geo_id": "187791",
+    "seed_place": "Rome, Italy"
+  },
+  "33345824": {
+    "name": "Basilica Of St. Sebastian Outside The Walls",
+    "seed_geo_id": "187791",
+    "seed_place": "Rome, Italy"
+  },
+  "26399811": {
+    "name": "Brandy Melville Rome",
+    "seed_geo_id": "187791",
+    "seed_place": "Rome, Italy"
+  },
+  "28584445": {
+    "name": "LaraPi Photo - Tour Fotografico",
+    "seed_geo_id": "187791",
+    "seed_place": "Rome, Italy"
+  },
+  "32729125": {
+    "name": "Lucas Travel World",
+    "seed_geo_id": "187791",
+    "seed_place": "Rome, Italy"
+  },
+  "33345599": {
+    "name": "Kenya Safari Lion",
+    "seed_geo_id": "187791",
+    "seed_place": "Rome, Italy"
+  },
+  "12865563": {
+    "name": "Chiesa di Santa Lucia in Selci",
+    "seed_geo_id": "187791",
+    "seed_place": "Rome, Italy"
+  },
+  "25217933": {
+    "name": "Sydney Up Close Tours",
+    "seed_geo_id": "255060",
+    "seed_place": "Sydney, Australia"
+  },
+  "23890958": {
+    "name": "Yurrabirong Sculpture",
+    "seed_geo_id": "255060",
+    "seed_place": "Sydney, Australia"
+  },
+  "25248950": {
+    "name": "The Big Bicycle",
+    "seed_geo_id": "255060",
+    "seed_place": "Sydney, Australia"
+  },
+  "23640324": {
+    "name": "Sydney Beach Club",
+    "seed_geo_id": "255060",
+    "seed_place": "Sydney, Australia"
+  },
+  "26552037": {
+    "name": "Jurassic World: The Exhibition",
+    "seed_geo_id": "255060",
+    "seed_place": "Sydney, Australia"
+  },
+  "23378320": {
+    "name": "Cantina OK!",
+    "seed_geo_id": "255060",
+    "seed_place": "Sydney, Australia"
+  },
+  "25349971": {
+    "name": "American Express Centurion Lounge Sydney Airport",
+    "seed_geo_id": "255060",
+    "seed_place": "Sydney, Australia"
+  },
+  "26310808": {
+    "name": "Harold Park",
+    "seed_geo_id": "255060",
+    "seed_place": "Sydney, Australia"
+  },
+  "25218827": {
+    "name": "Sydney Up Close Vip Tours",
+    "seed_geo_id": "255060",
+    "seed_place": "Sydney, Australia"
+  },
+  "28667101": {
+    "name": "Guided Rides Australia",
+    "seed_geo_id": "255060",
+    "seed_place": "Sydney, Australia"
+  },
+  "25227743": {
+    "name": "Jennydolll",
+    "seed_geo_id": "45963",
+    "seed_place": "Las Vegas, Nevada, USA"
+  },
+  "25755807": {
+    "name": "Ranch Mediterranean Market",
+    "seed_geo_id": "45963",
+    "seed_place": "Las Vegas, Nevada, USA"
+  },
+  "25325249": {
+    "name": "Put In Work Fitness & Online Coaching",
+    "seed_geo_id": "45963",
+    "seed_place": "Las Vegas, Nevada, USA"
+  },
+  "27703475": {
+    "name": "Mride",
+    "seed_geo_id": "45963",
+    "seed_place": "Las Vegas, Nevada, USA"
+  },
+  "7930016": {
+    "name": "Grand Bazaar Shops",
+    "seed_geo_id": "45963",
+    "seed_place": "Las Vegas, Nevada, USA"
+  },
+  "33679977": {
+    "name": "Puff Vegas smoke shop",
+    "seed_geo_id": "45963",
+    "seed_place": "Las Vegas, Nevada, USA"
+  },
+  "8153643": {
+    "name": "Fuel Bar",
+    "seed_geo_id": "45963",
+    "seed_place": "Las Vegas, Nevada, USA"
+  },
+  "11444817": {
+    "name": "Taste Buzz Food Tours",
+    "seed_geo_id": "45963",
+    "seed_place": "Las Vegas, Nevada, USA"
+  },
+  "553420": {
+    "name": "Drais After Hours",
+    "seed_geo_id": "45963",
+    "seed_place": "Las Vegas, Nevada, USA"
+  },
+  "8388404": {
+    "name": "Drai's Nightclub",
+    "seed_geo_id": "45963",
+    "seed_place": "Las Vegas, Nevada, USA"
+  },
+  "8455074": {
+    "name": "Jerusalem Nights",
+    "seed_geo_id": "293983",
+    "seed_place": "Jerusalem, Israel"
+  },
+  "7194024": {
+    "name": "Gatsby Cocktail Room",
+    "seed_geo_id": "293983",
+    "seed_place": "Jerusalem, Israel"
+  },
+  "26726848": {
+    "name": "Pantry Packers",
+    "seed_geo_id": "293983",
+    "seed_place": "Jerusalem, Israel"
+  },
+  "24133118": {
+    "name": "Ethiopian Monastery",
+    "seed_geo_id": "293983",
+    "seed_place": "Jerusalem, Israel"
+  },
+  "26523635": {
+    "name": "Jerusalem Wineries Visitor Center",
+    "seed_geo_id": "293983",
+    "seed_place": "Jerusalem, Israel"
+  },
+  "11828432": {
+    "name": "Chapa",
+    "seed_geo_id": "293983",
+    "seed_place": "Jerusalem, Israel"
+  },
+  "10833080": {
+    "name": "Biratenu - Jerusalem beer center",
+    "seed_geo_id": "293983",
+    "seed_place": "Jerusalem, Israel"
+  },
+  "25347241": {
+    "name": "Frances L. Hiatt Garden",
+    "seed_geo_id": "293983",
+    "seed_place": "Jerusalem, Israel"
+  },
+  "33962024": {
+    "name": "Israel Tours 4U",
+    "seed_geo_id": "293983",
+    "seed_place": "Jerusalem, Israel"
+  },
+  "33962023": {
+    "name": "Israel Tours 4U",
+    "seed_geo_id": "293983",
+    "seed_place": "Jerusalem, Israel"
+  },
+  "27531238": {
+    "name": "Wicked Bikes",
+    "seed_geo_id": "186338",
+    "seed_place": "London, UK"
+  },
+  "27131458": {
+    "name": "Barbican",
+    "seed_geo_id": "186338",
+    "seed_place": "London, UK"
+  },
+  "26267676": {
+    "name": "Barbican Theatre",
+    "seed_geo_id": "186338",
+    "seed_place": "London, UK"
+  },
+  "24967381": {
+    "name": "Moorgate Tube Station",
+    "seed_geo_id": "186338",
+    "seed_place": "London, UK"
+  },
+  "5916804": {
+    "name": "Rack and Tenter",
+    "seed_geo_id": "186338",
+    "seed_place": "London, UK"
+  },
+  "12128247": {
+    "name": "Barbican Cinema 1",
+    "seed_geo_id": "186338",
+    "seed_place": "London, UK"
+  },
+  "19784171": {
+    "name": "Barbican Conservatory",
+    "seed_geo_id": "186338",
+    "seed_place": "London, UK"
+  },
+  "26267994": {
+    "name": "A Strange Loop, Barbican. London",
+    "seed_geo_id": "186338",
+    "seed_place": "London, UK"
+  },
+  "5964455": {
+    "name": "Barbican Cinemas 2&3",
+    "seed_geo_id": "186338",
+    "seed_place": "London, UK"
+  },
+  "553600": {
+    "name": "Barbican Centre",
+    "seed_geo_id": "186338",
+    "seed_place": "London, UK"
+  },
+  "11804594": {
+    "name": "Tatehuari Jewelers y Galeria",
+    "seed_geo_id": "552077",
+    "seed_place": "San Francisco, California, USA"
+  },
+  "19815725": {
+    "name": "San Pancho Management",
+    "seed_geo_id": "552077",
+    "seed_place": "San Francisco, California, USA"
+  },
+  "2534161": {
+    "name": "Bikers San Pancho",
+    "seed_geo_id": "552077",
+    "seed_place": "San Francisco, California, USA"
+  },
+  "9986660": {
+    "name": "Mexicolate",
+    "seed_geo_id": "552077",
+    "seed_place": "San Francisco, California, USA"
+  },
+  "7694942": {
+    "name": "Sayulita Bird Watching Tours, West Mexico",
+    "seed_geo_id": "552077",
+    "seed_place": "San Francisco, California, USA"
+  },
+  "9727610": {
+    "name": "Hostel San Pancho Surf School",
+    "seed_geo_id": "552077",
+    "seed_place": "San Francisco, California, USA"
+  },
+  "5509771": {
+    "name": "San Pancho Birding Club Morning",
+    "seed_geo_id": "552077",
+    "seed_place": "San Francisco, California, USA"
+  },
+  "26129018": {
+    "name": "San Pancho Tours",
+    "seed_geo_id": "552077",
+    "seed_place": "San Francisco, California, USA"
+  },
+  "7757846": {
+    "name": "Entreamigos",
+    "seed_geo_id": "552077",
+    "seed_place": "San Francisco, California, USA"
+  },
+  "12373638": {
+    "name": "Moana Surf",
+    "seed_geo_id": "552077",
+    "seed_place": "San Francisco, California, USA"
+  },
+  "548966": {
+    "name": "General Staff Building",
+    "seed_geo_id": "298507",
+    "seed_place": "St. Petersburg, Russia"
+  },
+  "25413462": {
+    "name": "Profitable House of I. Ye. Chetchuyev",
+    "seed_geo_id": "298507",
+    "seed_place": "St. Petersburg, Russia"
+  },
+  "12370995": {
+    "name": "Tour Gratis Rusia",
+    "seed_geo_id": "298507",
+    "seed_place": "St. Petersburg, Russia"
+  },
+  "12389083": {
+    "name": "Free Tour Russia",
+    "seed_geo_id": "298507",
+    "seed_place": "St. Petersburg, Russia"
+  },
+  "2619641": {
+    "name": "St. Petersburg Printing Museum",
+    "seed_geo_id": "298507",
+    "seed_place": "St. Petersburg, Russia"
+  },
+  "25090433": {
+    "name": "Revenue House of A. A. Suvorin - Revenue House of M. P. Gau",
+    "seed_geo_id": "298507",
+    "seed_place": "St. Petersburg, Russia"
+  },
+  "25294614": {
+    "name": "Mansion of the Zhadimirovskikh",
+    "seed_geo_id": "298507",
+    "seed_place": "St. Petersburg, Russia"
+  },
+  "27461236": {
+    "name": "Kolesnitsa Slavy Sculptural Composition",
+    "seed_geo_id": "298507",
+    "seed_place": "St. Petersburg, Russia"
+  },
+  "11927703": {
+    "name": "Shipping Company Neptun",
+    "seed_geo_id": "298507",
+    "seed_place": "St. Petersburg, Russia"
+  },
+  "27120705": {
+    "name": "Nine Dragons Wall",
+    "seed_geo_id": "298507",
+    "seed_place": "St. Petersburg, Russia"
+  },
+  "27109794": {
+    "name": "New Years Eve Fireworks",
+    "seed_geo_id": "187870",
+    "seed_place": "Venice, Italy"
+  },
+  "26100922": {
+    "name": "JW Venice Spa",
+    "seed_geo_id": "187870",
+    "seed_place": "Venice, Italy"
+  },
+  "33067824": {
+    "name": "Ciao Italia Travel",
+    "seed_geo_id": "187870",
+    "seed_place": "Venice, Italy"
+  },
+  "25316498": {
+    "name": "Ponte dei Frari",
+    "seed_geo_id": "187870",
+    "seed_place": "Venice, Italy"
+  },
+  "26861343": {
+    "name": "Margherita Rossetto Ceramiche",
+    "seed_geo_id": "187870",
+    "seed_place": "Venice, Italy"
+  },
+  "13326184": {
+    "name": "Cantina Da Fior",
+    "seed_geo_id": "187870",
+    "seed_place": "Venice, Italy"
+  },
+  "33348048": {
+    "name": "Andrea Izzo",
+    "seed_geo_id": "187870",
+    "seed_place": "Venice, Italy"
+  },
+  "33348051": {
+    "name": "Emy Experiences Tours",
+    "seed_geo_id": "187870",
+    "seed_place": "Venice, Italy"
+  },
+  "15354799": {
+    "name": "Mare di Carta",
+    "seed_geo_id": "187870",
+    "seed_place": "Venice, Italy"
+  },
+  "12877391": {
+    "name": "Casa delle Cinque Teste",
+    "seed_geo_id": "187870",
+    "seed_place": "Venice, Italy"
+  },
+  "20324289": {
+    "name": "Shonen-ji Temple",
+    "seed_geo_id": "298564",
+    "seed_place": "Kyoto, Japan"
+  },
+  "20344689": {
+    "name": "Joshin-ji Temple",
+    "seed_geo_id": "298564",
+    "seed_place": "Kyoto, Japan"
+  },
+  "8309587": {
+    "name": "Ikebana Museum",
+    "seed_geo_id": "298564",
+    "seed_place": "Kyoto, Japan"
+  },
+  "15850423": {
+    "name": "Rokkakudo Temple Heso Ishi",
+    "seed_geo_id": "298564",
+    "seed_place": "Kyoto, Japan"
+  },
+  "9582851": {
+    "name": "Rokkakudo",
+    "seed_geo_id": "298564",
+    "seed_place": "Kyoto, Japan"
+  },
+  "25376073": {
+    "name": "Meiji Emperor's Small Rest House Hongan-ji Temple Former Daikyoko",
+    "seed_geo_id": "298564",
+    "seed_place": "Kyoto, Japan"
+  },
+  "20324910": {
+    "name": "Goshin-ji Temple",
+    "seed_geo_id": "298564",
+    "seed_place": "Kyoto, Japan"
+  },
+  "26446209": {
+    "name": "Kikuya Shoten",
+    "seed_geo_id": "298564",
+    "seed_place": "Kyoto, Japan"
+  },
+  "27738274": {
+    "name": "Multiculti Connection",
+    "seed_geo_id": "298564",
+    "seed_place": "Kyoto, Japan"
+  },
+  "20324378": {
+    "name": "Daiei-ji Temple",
+    "seed_geo_id": "298564",
+    "seed_place": "Kyoto, Japan"
+  },
+  "27494937": {
+    "name": "Velvet Spa At The Ambiente",
+    "seed_geo_id": "28924",
+    "seed_place": "Grand Canyon, Arizona, USA"
+  },
+  "26787821": {
+    "name": "Bass Pro Shops Glendale, Az",
+    "seed_geo_id": "28924",
+    "seed_place": "Grand Canyon, Arizona, USA"
+  },
+  "25337870": {
+    "name": "Artfully Balanced",
+    "seed_geo_id": "28924",
+    "seed_place": "Grand Canyon, Arizona, USA"
+  },
+  "27325806": {
+    "name": "Home Grown Shuttle Guiding  Rentals",
+    "seed_geo_id": "28924",
+    "seed_place": "Grand Canyon, Arizona, USA"
+  },
+  "25268478": {
+    "name": "Paseo Vista Recreation Area",
+    "seed_geo_id": "28924",
+    "seed_place": "Grand Canyon, Arizona, USA"
+  },
+  "8616241": {
+    "name": "Groome Transportation",
+    "seed_geo_id": "28924",
+    "seed_place": "Grand Canyon, Arizona, USA"
+  },
+  "1011318": {
+    "name": "Detours American West",
+    "seed_geo_id": "28924",
+    "seed_place": "Grand Canyon, Arizona, USA"
+  },
+  "146443": {
+    "name": "Moro Rock Trail",
+    "seed_geo_id": "143050",
+    "seed_place": "Sequoia National Park, California, USA"
+  },
+  "1178338": {
+    "name": "Sequoia Sightseeing Tours",
+    "seed_geo_id": "143050",
+    "seed_place": "Sequoia National Park, California, USA"
+  },
+  "8535608": {
+    "name": "Tunnel Log",
+    "seed_geo_id": "143050",
+    "seed_place": "Sequoia National Park, California, USA"
+  },
+  "145662": {
+    "name": "Crescent Meadow Loop",
+    "seed_geo_id": "143050",
+    "seed_place": "Sequoia National Park, California, USA"
+  },
+  "14216633": {
+    "name": "The President Tree",
+    "seed_geo_id": "143050",
+    "seed_place": "Sequoia National Park, California, USA"
+  },
+  "23644089": {
+    "name": "Hazelwood Nature Trail",
+    "seed_geo_id": "143050",
+    "seed_place": "Sequoia National Park, California, USA"
+  },
+  "20933365": {
+    "name": "Kings River",
+    "seed_geo_id": "143050",
+    "seed_place": "Sequoia National Park, California, USA"
+  },
+  "146441": {
+    "name": "Giant Forest",
+    "seed_geo_id": "143050",
+    "seed_place": "Sequoia National Park, California, USA"
+  },
+  "615769": {
+    "name": "Giant Forest Museum",
+    "seed_geo_id": "143050",
+    "seed_place": "Sequoia National Park, California, USA"
+  },
+  "146438": {
+    "name": "Generals Highway",
+    "seed_geo_id": "143050",
+    "seed_place": "Sequoia National Park, California, USA"
+  },
+  "26446911": {
+    "name": "Southeast Exposure",
+    "seed_geo_id": "28923",
+    "seed_place": "Alaska, USA"
+  },
+  "9851098": {
+    "name": "Plaza Pinto",
+    "seed_geo_id": "488177",
+    "seed_place": "Los Angeles, California, USA"
+  },
+  "2021352": {
+    "name": "Gran Casino Los Angeles",
+    "seed_geo_id": "488177",
+    "seed_place": "Los Angeles, California, USA"
+  },
+  "14978094": {
+    "name": "Libreria Que Leo Los Angeles",
+    "seed_geo_id": "488177",
+    "seed_place": "Los Angeles, California, USA"
+  },
+  "8732164": {
+    "name": "Plaza de Armas",
+    "seed_geo_id": "488177",
+    "seed_place": "Los Angeles, California, USA"
+  },
+  "8858170": {
+    "name": "Laguna Esmeralda",
+    "seed_geo_id": "488177",
+    "seed_place": "Los Angeles, California, USA"
+  },
+  "17738439": {
+    "name": "RAFTING BIO BIO KAYAK LAS AVES",
+    "seed_geo_id": "488177",
+    "seed_place": "Los Angeles, California, USA"
+  },
+  "18455087": {
+    "name": "Travel Up Adventure",
+    "seed_geo_id": "488177",
+    "seed_place": "Los Angeles, California, USA"
+  },
+  "19095519": {
+    "name": "Plaza Memorial Martires De Antuco",
+    "seed_geo_id": "488177",
+    "seed_place": "Los Angeles, California, USA"
+  },
+  "8720397": {
+    "name": "Catedral de Los Angeles",
+    "seed_geo_id": "488177",
+    "seed_place": "Los Angeles, California, USA"
+  },
+  "28045070": {
+    "name": "Parque Sierra Velluda",
+    "seed_geo_id": "488177",
+    "seed_place": "Los Angeles, California, USA"
+  },
+  "23588778": {
+    "name": "Nikki's Beachhouse Boutique South Miami",
+    "seed_geo_id": "34438",
+    "seed_place": "Miami, Florida, USA"
+  },
+  "26786029": {
+    "name": "Saint Andres Luxury Yachts",
+    "seed_geo_id": "34438",
+    "seed_place": "Miami, Florida, USA"
+  },
+  "25421834": {
+    "name": "American Airlines Admiral Club",
+    "seed_geo_id": "34438",
+    "seed_place": "Miami, Florida, USA"
+  },
+  "27660390": {
+    "name": "Durandis Group Inc",
+    "seed_geo_id": "34438",
+    "seed_place": "Miami, Florida, USA"
+  },
+  "27781408": {
+    "name": "Diamond Yacht Charters",
+    "seed_geo_id": "34438",
+    "seed_place": "Miami, Florida, USA"
+  },
+  "33251803": {
+    "name": "Silver Crescent Fly Fishing",
+    "seed_geo_id": "34438",
+    "seed_place": "Miami, Florida, USA"
+  },
+  "28668150": {
+    "name": "Forever Luxury Rentals",
+    "seed_geo_id": "34438",
+    "seed_place": "Miami, Florida, USA"
+  },
+  "25228160": {
+    "name": "Dade Heritage Trust",
+    "seed_geo_id": "34438",
+    "seed_place": "Miami, Florida, USA"
+  },
+  "27126006": {
+    "name": "Turkish Airlines Business Class Lounge",
+    "seed_geo_id": "34438",
+    "seed_place": "Miami, Florida, USA"
+  },
+  "27020726": {
+    "name": "One Thousand Museum",
+    "seed_geo_id": "34438",
+    "seed_place": "Miami, Florida, USA"
+  },
+  "8491076": {
+    "name": "Ace Luxury Transportation",
+    "seed_geo_id": "34515",
+    "seed_place": "Orlando, Florida, USA"
+  },
+  "26790113": {
+    "name": "Amazon Fulfillment Center",
+    "seed_geo_id": "34515",
+    "seed_place": "Orlando, Florida, USA"
+  },
+  "25409888": {
+    "name": "FunSpot America",
+    "seed_geo_id": "34515",
+    "seed_place": "Orlando, Florida, USA"
+  },
+  "25934777": {
+    "name": "Orlando Private Transportation",
+    "seed_geo_id": "34515",
+    "seed_place": "Orlando, Florida, USA"
+  },
+  "27122405": {
+    "name": "Sky Club Orlando Airport",
+    "seed_geo_id": "34515",
+    "seed_place": "Orlando, Florida, USA"
+  },
+  "25409895": {
+    "name": "FunSpot Orlando",
+    "seed_geo_id": "34515",
+    "seed_place": "Orlando, Florida, USA"
+  },
+  "8375961": {
+    "name": "Close Encounters Fishing Charters",
+    "seed_geo_id": "34515",
+    "seed_place": "Orlando, Florida, USA"
+  },
+  "215449": {
+    "name": "Wells’Built Museum of African American History and Culture",
+    "seed_geo_id": "34515",
+    "seed_place": "Orlando, Florida, USA"
+  },
+  "2012159": {
+    "name": "Kia Center",
+    "seed_geo_id": "34515",
+    "seed_place": "Orlando, Florida, USA"
+  },
+  "28003549": {
+    "name": "Kia Center",
+    "seed_geo_id": "34515",
+    "seed_place": "Orlando, Florida, USA"
+  },
+  "25926756": {
+    "name": "The Cauldron",
+    "seed_geo_id": "35805",
+    "seed_place": "Chicago, Illinois, USA"
+  },
+  "27997789": {
+    "name": "J&S Luxury Limo",
+    "seed_geo_id": "35805",
+    "seed_place": "Chicago, Illinois, USA"
+  },
+  "27989954": {
+    "name": "J&S Luxury Limo",
+    "seed_geo_id": "35805",
+    "seed_place": "Chicago, Illinois, USA"
+  },
+  "32880211": {
+    "name": "IQ Limousine",
+    "seed_geo_id": "35805",
+    "seed_place": "Chicago, Illinois, USA"
+  },
+  "28663513": {
+    "name": "Illinois Limo And Car Service",
+    "seed_geo_id": "35805",
+    "seed_place": "Chicago, Illinois, USA"
+  },
+  "25308774": {
+    "name": "Skyspace At University Of Illinois At Chicago",
+    "seed_geo_id": "35805",
+    "seed_place": "Chicago, Illinois, USA"
+  },
+  "25308409": {
+    "name": "Busy Beaver Button Co and Museum",
+    "seed_geo_id": "35805",
+    "seed_place": "Chicago, Illinois, USA"
+  },
+  "25303051": {
+    "name": "Nichols Tower At Homan Square",
+    "seed_geo_id": "35805",
+    "seed_place": "Chicago, Illinois, USA"
+  },
+  "25284923": {
+    "name": "Alamo Drafthouse",
+    "seed_geo_id": "35805",
+    "seed_place": "Chicago, Illinois, USA"
+  },
+  "19244216": {
+    "name": "Route 66 End Sign",
+    "seed_geo_id": "35805",
+    "seed_place": "Chicago, Illinois, USA"
+  },
+  "16693219": {
+    "name": "Washington Waterfront Underground Railroad Museum",
+    "seed_geo_id": "49644",
+    "seed_place": "Washington, D.C., USA"
+  },
+  "27048346": {
+    "name": "Patrick Cochran Memorial Skatepark",
+    "seed_geo_id": "49644",
+    "seed_place": "Washington, D.C., USA"
+  },
+  "27038106": {
+    "name": "Beebe Memorial Park",
+    "seed_geo_id": "49644",
+    "seed_place": "Washington, D.C., USA"
+  },
+  "27046591": {
+    "name": "The Sublime Touch, Healing Skin Spa",
+    "seed_geo_id": "49644",
+    "seed_place": "Washington, D.C., USA"
+  },
+  "23730269": {
+    "name": "Washington NC Audio Tours",
+    "seed_geo_id": "49644",
+    "seed_place": "Washington, D.C., USA"
+  },
+  "27009519": {
+    "name": "Washington Off-Leash Dog Park",
+    "seed_geo_id": "49644",
+    "seed_place": "Washington, D.C., USA"
+  },
+  "9783222": {
+    "name": "Market Street Pub",
+    "seed_geo_id": "49644",
+    "seed_place": "Washington, D.C., USA"
+  },
+  "143623": {
+    "name": "St. Peter's Episcopal Church",
+    "seed_geo_id": "49644",
+    "seed_place": "Washington, D.C., USA"
+  },
+  "14075127": {
+    "name": "Moss Landing Marina",
+    "seed_geo_id": "49644",
+    "seed_place": "Washington, D.C., USA"
+  },
+  "657650": {
+    "name": "North Carolina Estuarium",
+    "seed_geo_id": "49644",
+    "seed_place": "Washington, D.C., USA"
+  },
+  "26454564": {
+    "name": "Beacon Hill Books & Cafe",
+    "seed_geo_id": "60745",
+    "seed_place": "Boston, Massachusetts, USA"
+  },
+  "26269114": {
+    "name": "Boston Detective Tours",
+    "seed_geo_id": "60745",
+    "seed_place": "Boston, Massachusetts, USA"
+  },
+  "9718811": {
+    "name": "Commonwealth Books",
+    "seed_geo_id": "60745",
+    "seed_place": "Boston, Massachusetts, USA"
+  },
+  "34119954": {
+    "name": "Boston & Boston",
+    "seed_geo_id": "60745",
+    "seed_place": "Boston, Massachusetts, USA"
+  },
+  "16774789": {
+    "name": "Massage Therapy of Boston",
+    "seed_geo_id": "60745",
+    "seed_place": "Boston, Massachusetts, USA"
+  },
+  "33962617": {
+    "name": "Pure Oasis Cannabis Dispensary",
+    "seed_geo_id": "60745",
+    "seed_place": "Boston, Massachusetts, USA"
+  },
+  "8804059": {
+    "name": "Statue of Samuel Adams",
+    "seed_geo_id": "60745",
+    "seed_place": "Boston, Massachusetts, USA"
+  },
+  "104815": {
+    "name": "Museum of African American History",
+    "seed_geo_id": "60745",
+    "seed_place": "Boston, Massachusetts, USA"
+  },
+  "17795434": {
+    "name": "Boston Hysterical Society",
+    "seed_geo_id": "60745",
+    "seed_place": "Boston, Massachusetts, USA"
+  },
+  "1024067": {
+    "name": "Mystery Cafe",
+    "seed_geo_id": "60745",
+    "seed_place": "Boston, Massachusetts, USA"
+  },
+  "10593941": {
+    "name": "Sea Charters",
+    "seed_geo_id": "41755",
+    "seed_place": "New Orleans, Louisiana, USA"
+  },
+  "17694895": {
+    "name": "Eldredge Park",
+    "seed_geo_id": "41755",
+    "seed_place": "New Orleans, Louisiana, USA"
+  },
+  "27055975": {
+    "name": "Alias Gallery",
+    "seed_geo_id": "41755",
+    "seed_place": "New Orleans, Louisiana, USA"
+  },
+  "10592591": {
+    "name": "Orleans Firebirds Baseball Field",
+    "seed_geo_id": "41755",
+    "seed_place": "New Orleans, Louisiana, USA"
+  },
+  "3331333": {
+    "name": "Caleb Nickerson House",
+    "seed_geo_id": "41755",
+    "seed_place": "New Orleans, Louisiana, USA"
+  },
+  "2254068": {
+    "name": "Main Street Wine and Gourmet",
+    "seed_geo_id": "41755",
+    "seed_place": "New Orleans, Louisiana, USA"
+  },
+  "6979432": {
+    "name": "Orleans Chamber of Commerce",
+    "seed_geo_id": "41755",
+    "seed_place": "New Orleans, Louisiana, USA"
+  },
+  "6739495": {
+    "name": "Local Colour Resale Boutique",
+    "seed_geo_id": "41755",
+    "seed_place": "New Orleans, Louisiana, USA"
+  },
+  "21292196": {
+    "name": "Orleans Modern Art",
+    "seed_geo_id": "41755",
+    "seed_place": "New Orleans, Louisiana, USA"
+  },
+  "2445006": {
+    "name": "Image Makers Salon Spa",
+    "seed_geo_id": "41755",
+    "seed_place": "New Orleans, Louisiana, USA"
+  },
+  "26635251": {
+    "name": "United Club",
+    "seed_geo_id": "60982",
+    "seed_place": "Honolulu, Hawaii, USA"
+  },
+  "24174128": {
+    "name": "Bishop Museum",
+    "seed_geo_id": "60982",
+    "seed_place": "Honolulu, Hawaii, USA"
+  },
+  "27466242": {
+    "name": "Aloha Hawaii Massage Wellness",
+    "seed_geo_id": "60982",
+    "seed_place": "Honolulu, Hawaii, USA"
+  },
+  "9999268": {
+    "name": "Dillingham Transportation Building",
+    "seed_geo_id": "60982",
+    "seed_place": "Honolulu, Hawaii, USA"
+  },
+  "27080273": {
+    "name": "Hawaii Bowl",
+    "seed_geo_id": "60982",
+    "seed_place": "Honolulu, Hawaii, USA"
+  },
+  "19453711": {
+    "name": "Hawaii TownCars",
+    "seed_geo_id": "60982",
+    "seed_place": "Honolulu, Hawaii, USA"
+  },
+  "33035414": {
+    "name": "Hawaii Conference United Church Of Christ",
+    "seed_geo_id": "60982",
+    "seed_place": "Honolulu, Hawaii, USA"
+  },
+  "12449371": {
+    "name": "Kahala Kai Catamaran",
+    "seed_geo_id": "60982",
+    "seed_place": "Honolulu, Hawaii, USA"
+  },
+  "23826620": {
+    "name": "Jet Ski Oahu",
+    "seed_geo_id": "60982",
+    "seed_place": "Honolulu, Hawaii, USA"
+  },
+  "23771621": {
+    "name": "Foil Surfing Hawaii",
+    "seed_geo_id": "60982",
+    "seed_place": "Honolulu, Hawaii, USA"
+  },
+  "14197074": {
+    "name": "Paddle Board Experience Cancun",
+    "seed_geo_id": "150807",
+    "seed_place": "Cancun, Mexico"
+  },
+  "5848788": {
+    "name": "Scuba Diving Cancun",
+    "seed_geo_id": "150807",
+    "seed_place": "Cancun, Mexico"
+  },
+  "27946050": {
+    "name": "Day Yachts Cancun",
+    "seed_geo_id": "150807",
+    "seed_place": "Cancun, Mexico"
+  },
+  "27755961": {
+    "name": "Paragliding Cancun",
+    "seed_geo_id": "150807",
+    "seed_place": "Cancun, Mexico"
+  },
+  "28040463": {
+    "name": "Snorkeling Adventure Cancun",
+    "seed_geo_id": "150807",
+    "seed_place": "Cancun, Mexico"
+  },
+  "28298432": {
+    "name": "Seas The Day - The Best Yachts In Cancun",
+    "seed_geo_id": "150807",
+    "seed_place": "Cancun, Mexico"
+  },
+  "12665250": {
+    "name": "Caribbe Cab Cancun",
+    "seed_geo_id": "150807",
+    "seed_place": "Cancun, Mexico"
+  },
+  "27150221": {
+    "name": "Embarcadero Xailing",
+    "seed_geo_id": "150807",
+    "seed_place": "Cancun, Mexico"
+  },
+  "26267659": {
+    "name": "Isla Mujeres",
+    "seed_geo_id": "150807",
+    "seed_place": "Cancun, Mexico"
+  },
+  "25072572": {
+    "name": "Music Club Cancun",
+    "seed_geo_id": "150807",
+    "seed_place": "Cancun, Mexico"
+  },
+  "25391125": {
+    "name": "Parque Cuitlahuac",
+    "seed_geo_id": "150800",
+    "seed_place": "Mexico City, Mexico"
+  },
+  "25319780": {
+    "name": "Okuda San Miguel Metamorfosis",
+    "seed_geo_id": "150800",
+    "seed_place": "Mexico City, Mexico"
+  },
+  "26500669": {
+    "name": "Fuente de los Coyotes",
+    "seed_geo_id": "150800",
+    "seed_place": "Mexico City, Mexico"
+  },
+  "29940097": {
+    "name": "Mercado Melchor Muzquiz or Mercado de San Angel",
+    "seed_geo_id": "150800",
+    "seed_place": "Mexico City, Mexico"
+  },
+  "26073362": {
+    "name": "Plaza Aeropuerto",
+    "seed_geo_id": "150800",
+    "seed_place": "Mexico City, Mexico"
+  },
+  "24068009": {
+    "name": "HOLA WALKING TOURS CIUDAD DE MEXICO (OFFICIAL! )",
+    "seed_geo_id": "150800",
+    "seed_place": "Mexico City, Mexico"
+  },
+  "27171695": {
+    "name": "Monumento Hipsografico de Enrico Martinez",
+    "seed_geo_id": "150800",
+    "seed_place": "Mexico City, Mexico"
+  },
+  "11657398": {
+    "name": "Terraza Catedral",
+    "seed_geo_id": "150800",
+    "seed_place": "Mexico City, Mexico"
+  },
+  "12512701": {
+    "name": "Nuad SPAmovil",
+    "seed_geo_id": "150800",
+    "seed_place": "Mexico City, Mexico"
+  },
+  "10156439": {
+    "name": "Yawi Arte Tradicional",
+    "seed_geo_id": "150800",
+    "seed_place": "Mexico City, Mexico"
+  },
+  "28417493": {
+    "name": "Finnan Oval",
+    "seed_geo_id": "529033",
+    "seed_place": "Toronto, Canada"
+  },
+  "15033828": {
+    "name": "Blackalls Park Playground",
+    "seed_geo_id": "529033",
+    "seed_place": "Toronto, Canada"
+  },
+  "26357399": {
+    "name": "Tinkat Alley Art Studio",
+    "seed_geo_id": "529033",
+    "seed_place": "Toronto, Canada"
+  },
+  "28443588": {
+    "name": "Kevin Evans Oval",
+    "seed_geo_id": "529033",
+    "seed_place": "Toronto, Canada"
+  },
+  "28419985": {
+    "name": "Former Glory Emporium",
+    "seed_geo_id": "529033",
+    "seed_place": "Toronto, Canada"
+  },
+  "4089714": {
+    "name": "Best Tour Hunter Valley Wine Tasting Tours",
+    "seed_geo_id": "529033",
+    "seed_place": "Toronto, Canada"
+  },
+  "7927570": {
+    "name": "Lake Macquarie Light Rail",
+    "seed_geo_id": "529033",
+    "seed_place": "Toronto, Canada"
+  },
+  "16852868": {
+    "name": "The Yard Studio",
+    "seed_geo_id": "529033",
+    "seed_place": "Toronto, Canada"
+  },
+  "8673279": {
+    "name": "Mount Sugarloaf",
+    "seed_geo_id": "529033",
+    "seed_place": "Toronto, Canada"
+  },
+  "4071235": {
+    "name": "Watagans National Park",
+    "seed_geo_id": "529033",
+    "seed_place": "Toronto, Canada"
+  },
+  "16779957": {
+    "name": "PACIFIC CAR RENTALS",
+    "seed_geo_id": "154943",
+    "seed_place": "Vancouver, Canada"
+  },
+  "27743940": {
+    "name": "Nick Cosmic Criswell - Psychic Tarot Card Reader",
+    "seed_geo_id": "154943",
+    "seed_place": "Vancouver, Canada"
+  },
+  "32681933": {
+    "name": "Vancity Tours",
+    "seed_geo_id": "154943",
+    "seed_place": "Vancouver, Canada"
+  },
+  "27788161": {
+    "name": "Vancouver Eco Guide",
+    "seed_geo_id": "154943",
+    "seed_place": "Vancouver, Canada"
+  },
+  "23843782": {
+    "name": "Vancouver Public Library - Renfrew Branch",
+    "seed_geo_id": "154943",
+    "seed_place": "Vancouver, Canada"
+  },
+  "28260187": {
+    "name": "Kolby's Fishing Adventures",
+    "seed_geo_id": "154943",
+    "seed_place": "Vancouver, Canada"
+  },
+  "33418661": {
+    "name": "The Perfect Bite - Vancouver",
+    "seed_geo_id": "154943",
+    "seed_place": "Vancouver, Canada"
+  },
+  "501708": {
+    "name": "Vancouver Downtown",
+    "seed_geo_id": "154943",
+    "seed_place": "Vancouver, Canada"
+  },
+  "19755269": {
+    "name": "Republic Gallery",
+    "seed_geo_id": "154943",
+    "seed_place": "Vancouver, Canada"
+  },
+  "5920545": {
+    "name": "Kingston Taphouse",
+    "seed_geo_id": "154943",
+    "seed_place": "Vancouver, Canada"
+  },
+  "32877593": {
+    "name": "Guide Silure Aude",
+    "seed_geo_id": "1726266",
+    "seed_place": "Montreal, Canada"
+  },
+  "27425193": {
+    "name": "La Collegiale Saint Vincent",
+    "seed_geo_id": "1726266",
+    "seed_place": "Montreal, Canada"
+  },
+  "12088214": {
+    "name": "QBX Quadbike",
+    "seed_geo_id": "1726266",
+    "seed_place": "Montreal, Canada"
+  },
+  "7886779": {
+    "name": "Cinema Station Vu",
+    "seed_geo_id": "1726266",
+    "seed_place": "Montreal, Canada"
+  },
+  "27431169": {
+    "name": "Hotel De Boyer De Sorgues dit ausssi Hotel De Cassagnes",
+    "seed_geo_id": "1726266",
+    "seed_place": "Montreal, Canada"
+  },
+  "19269137": {
+    "name": "Jump R Parc",
+    "seed_geo_id": "1726266",
+    "seed_place": "Montreal, Canada"
+  },
+  "12073216": {
+    "name": "V and B Carcassonne",
+    "seed_geo_id": "1726266",
+    "seed_place": "Montreal, Canada"
+  },
+  "28347858": {
+    "name": "Brasseurs De La Cite - Bieres Ciutat",
+    "seed_geo_id": "1726266",
+    "seed_place": "Montreal, Canada"
+  },
+  "12335660": {
+    "name": "La Galerie - Geant Salvaza",
+    "seed_geo_id": "1726266",
+    "seed_place": "Montreal, Canada"
+  },
+  "7333167": {
+    "name": "Domaine Rose et Paul",
+    "seed_geo_id": "1726266",
+    "seed_place": "Montreal, Canada"
+  },
+  "26328162": {
+    "name": "Proyectongo",
+    "seed_geo_id": "147271",
+    "seed_place": "Havana, Cuba"
+  },
+  "26524732": {
+    "name": "Jorge Cuba Holidays",
+    "seed_geo_id": "147271",
+    "seed_place": "Havana, Cuba"
+  },
+  "25001649": {
+    "name": "Zen Havana",
+    "seed_geo_id": "147271",
+    "seed_place": "Havana, Cuba"
+  },
+  "12005407": {
+    "name": "Museo del Ferrocarril de Cuba",
+    "seed_geo_id": "147271",
+    "seed_place": "Havana, Cuba"
+  },
+  "28100003": {
+    "name": "My Cuba Is Your Cuba",
+    "seed_geo_id": "147271",
+    "seed_place": "Havana, Cuba"
+  },
+  "17850846": {
+    "name": "Infanta1057",
+    "seed_geo_id": "147271",
+    "seed_place": "Havana, Cuba"
+  },
+  "25337288": {
+    "name": "Inforksol Store",
+    "seed_geo_id": "147271",
+    "seed_place": "Havana, Cuba"
+  },
+  "12396095": {
+    "name": "Museo Quisicuaba",
+    "seed_geo_id": "147271",
+    "seed_place": "Havana, Cuba"
+  },
+  "17848472": {
+    "name": "Roots Travel Paris",
+    "seed_geo_id": "147271",
+    "seed_place": "Havana, Cuba"
+  },
+  "13009637": {
+    "name": "Plaza Carlos lll",
+    "seed_geo_id": "147271",
+    "seed_place": "Havana, Cuba"
+  },
+  "12518766": {
+    "name": "Facultad de Ingenieria",
+    "seed_geo_id": "312741",
+    "seed_place": "Buenos Aires, Argentina"
+  },
+  "10235146": {
+    "name": "Urban Paintball Extremo",
+    "seed_geo_id": "312741",
+    "seed_place": "Buenos Aires, Argentina"
+  },
+  "23539511": {
+    "name": "Libreria Norte",
+    "seed_geo_id": "312741",
+    "seed_place": "Buenos Aires, Argentina"
+  },
+  "311775": {
+    "name": "Recoleta",
+    "seed_geo_id": "312741",
+    "seed_place": "Buenos Aires, Argentina"
+  },
+  "32980818": {
+    "name": "Caminarte",
+    "seed_geo_id": "312741",
+    "seed_place": "Buenos Aires, Argentina"
+  },
+  "8481478": {
+    "name": "Monumento a Guillermo Rawson",
+    "seed_geo_id": "312741",
+    "seed_place": "Buenos Aires, Argentina"
+  },
+  "2311021": {
+    "name": "Casa de los 70 balcones",
+    "seed_geo_id": "312741",
+    "seed_place": "Buenos Aires, Argentina"
+  },
+  "8545306": {
+    "name": "Plazoleta Gelly y Obes",
+    "seed_geo_id": "312741",
+    "seed_place": "Buenos Aires, Argentina"
+  },
+  "8464539": {
+    "name": "Monumento a Bartolome Mitre",
+    "seed_geo_id": "312741",
+    "seed_place": "Buenos Aires, Argentina"
+  },
+  "9874065": {
+    "name": "Quinta El Ombu",
+    "seed_geo_id": "312741",
+    "seed_place": "Buenos Aires, Argentina"
+  },
+  "28022460": {
+    "name": "Juliete Cristine - Turismo no Chile",
+    "seed_geo_id": "294305",
+    "seed_place": "Santiago, Chile"
+  },
+  "27974609": {
+    "name": "Lari Pelo Chile",
+    "seed_geo_id": "294305",
+    "seed_place": "Santiago, Chile"
+  },
+  "33243762": {
+    "name": "Quero Viajar Chile",
+    "seed_geo_id": "294305",
+    "seed_place": "Santiago, Chile"
+  },
+  "26731237": {
+    "name": "Free Walking Tour Chile",
+    "seed_geo_id": "294305",
+    "seed_place": "Santiago, Chile"
+  },
+  "314520": {
+    "name": "Metropolitan Cathedral (Catedral Metropolitana)",
+    "seed_geo_id": "294305",
+    "seed_place": "Santiago, Chile"
+  },
+  "26627830": {
+    "name": "Gents Club de Caballeros",
+    "seed_geo_id": "294305",
+    "seed_place": "Santiago, Chile"
+  },
+  "2012772": {
+    "name": "Free Walking Tour of Santiago",
+    "seed_geo_id": "294305",
+    "seed_place": "Santiago, Chile"
+  },
+  "314517": {
+    "name": "Plaza de Armas",
+    "seed_geo_id": "294305",
+    "seed_place": "Santiago, Chile"
+  },
+  "8677243": {
+    "name": "Edificio de la Municipalidad de Santiago",
+    "seed_geo_id": "294305",
+    "seed_place": "Santiago, Chile"
+  },
+  "34116681": {
+    "name": "DarinkaOnTour",
+    "seed_geo_id": "294305",
+    "seed_place": "Santiago, Chile"
+  },
+  "33988530": {
+    "name": "Parque Media Luna",
+    "seed_geo_id": "294316",
+    "seed_place": "Lima, Peru"
+  },
+  "28038754": {
+    "name": "Kada Travel",
+    "seed_geo_id": "294316",
+    "seed_place": "Lima, Peru"
+  },
+  "28038759": {
+    "name": "Kada Travel",
+    "seed_geo_id": "294316",
+    "seed_place": "Lima, Peru"
+  },
+  "27518481": {
+    "name": "Vamos Por Ti Traslados en Silla de Ruedas",
+    "seed_geo_id": "294316",
+    "seed_place": "Lima, Peru"
+  },
+  "28038762": {
+    "name": "Kada Travel",
+    "seed_geo_id": "294316",
+    "seed_place": "Lima, Peru"
+  },
+  "28038758": {
+    "name": "Kada Travel",
+    "seed_geo_id": "294316",
+    "seed_place": "Lima, Peru"
+  },
+  "28038961": {
+    "name": "Kada Travel",
+    "seed_geo_id": "294316",
+    "seed_place": "Lima, Peru"
+  },
+  "28038962": {
+    "name": "Kada Travel",
+    "seed_geo_id": "294316",
+    "seed_place": "Lima, Peru"
+  },
+  "28038883": {
+    "name": "Kada Travel",
+    "seed_geo_id": "294316",
+    "seed_place": "Lima, Peru"
+  },
+  "28038763": {
+    "name": "Kada Travel",
+    "seed_geo_id": "294316",
+    "seed_place": "Lima, Peru"
+  },
+  "555219": {
+    "name": "Puyapatamarca",
+    "seed_geo_id": "294318",
+    "seed_place": "Machu Picchu, Peru"
+  },
+  "27459221": {
+    "name": "Viajeros Felices",
+    "seed_geo_id": "294318",
+    "seed_place": "Machu Picchu, Peru"
+  },
+  "311715": {
+    "name": "Inca Trail",
+    "seed_geo_id": "294318",
+    "seed_place": "Machu Picchu, Peru"
+  },
+  "548895": {
+    "name": "Intipuncu",
+    "seed_geo_id": "294318",
+    "seed_place": "Machu Picchu, Peru"
+  },
+  "776408": {
+    "name": "Inca Trail",
+    "seed_geo_id": "294318",
+    "seed_place": "Machu Picchu, Peru"
+  },
+  "550577": {
+    "name": "The Ruins of Intipata",
+    "seed_geo_id": "294318",
+    "seed_place": "Machu Picchu, Peru"
+  },
+  "7204965": {
+    "name": "Inca Bridge",
+    "seed_geo_id": "294318",
+    "seed_place": "Machu Picchu, Peru"
+  },
+  "19885511": {
+    "name": "Trek Adventure Machupicchu",
+    "seed_geo_id": "294318",
+    "seed_place": "Machu Picchu, Peru"
+  },
+  "9712733": {
+    "name": "Papis Treks",
+    "seed_geo_id": "294318",
+    "seed_place": "Machu Picchu, Peru"
+  },
+  "9465702": {
+    "name": "Tu Viaje Peru - Day Tour",
+    "seed_geo_id": "294318",
+    "seed_place": "Machu Picchu, Peru"
+  },
+  "26361395": {
+    "name": "Aventure Colombia",
+    "seed_geo_id": "294074",
+    "seed_place": "Bogota, Colombia"
+  },
+  "24173775": {
+    "name": "Tannit Wine Store & Tasting",
+    "seed_geo_id": "294074",
+    "seed_place": "Bogota, Colombia"
+  },
+  "19702800": {
+    "name": "Centro de Convenciones G12",
+    "seed_geo_id": "294074",
+    "seed_place": "Bogota, Colombia"
+  },
+  "17780485": {
+    "name": "Centro Wayra",
+    "seed_geo_id": "294074",
+    "seed_place": "Bogota, Colombia"
+  },
+  "34078757": {
+    "name": "Go Dring Factory",
+    "seed_geo_id": "294074",
+    "seed_place": "Bogota, Colombia"
+  },
+  "27981542": {
+    "name": "La Mecanica",
+    "seed_geo_id": "294074",
+    "seed_place": "Bogota, Colombia"
+  },
+  "25309943": {
+    "name": "Cigar Bar, Club Buenos Humos",
+    "seed_geo_id": "294074",
+    "seed_place": "Bogota, Colombia"
+  },
+  "9718381": {
+    "name": "Iglesia de San Alfonso Maria de Ligorio",
+    "seed_geo_id": "294074",
+    "seed_place": "Bogota, Colombia"
+  },
+  "15262906": {
+    "name": "Parque Rafael Pombo",
+    "seed_geo_id": "294074",
+    "seed_place": "Bogota, Colombia"
+  },
+  "9842089": {
+    "name": "HombreMono",
+    "seed_geo_id": "294074",
+    "seed_place": "Bogota, Colombia"
+  },
+  "23763523": {
+    "name": "Mala Hierba",
+    "seed_geo_id": "3360208",
+    "seed_place": "Medellin, Colombia"
+  },
+  "12318146": {
+    "name": "Queen's Island Golf and Resort",
+    "seed_geo_id": "3360208",
+    "seed_place": "Medellin, Colombia"
+  },
+  "24017704": {
+    "name": "Bamboo Forest",
+    "seed_geo_id": "3360208",
+    "seed_place": "Medellin, Colombia"
+  },
+  "22981956": {
+    "name": "Lessandra Bogo",
+    "seed_geo_id": "3360208",
+    "seed_place": "Medellin, Colombia"
+  },
+  "17690040": {
+    "name": "Orongan Beach resort",
+    "seed_geo_id": "3360208",
+    "seed_place": "Medellin, Colombia"
+  },
+  "33324350": {
+    "name": "Tripbox Souvenir",
+    "seed_geo_id": "3360208",
+    "seed_place": "Medellin, Colombia"
+  },
+  "13197276": {
+    "name": "Our Lady of Remedios Church",
+    "seed_geo_id": "3360208",
+    "seed_place": "Medellin, Colombia"
+  },
+  "3262161": {
+    "name": "Gibitngil Island",
+    "seed_geo_id": "3360208",
+    "seed_place": "Medellin, Colombia"
+  },
+  "25070687": {
+    "name": "Balay Pandan",
+    "seed_geo_id": "3360208",
+    "seed_place": "Medellin, Colombia"
+  },
+  "25456402": {
+    "name": "Gin&Tonic Bar",
+    "seed_geo_id": "188590",
+    "seed_place": "Amsterdam, Netherlands"
+  },
+  "267046": {
+    "name": "Amsterdam Gallery",
+    "seed_geo_id": "188590",
+    "seed_place": "Amsterdam, Netherlands"
+  },
+  "27107845": {
+    "name": "Skinny Bridge",
+    "seed_geo_id": "188590",
+    "seed_place": "Amsterdam, Netherlands"
+  },
+  "26696660": {
+    "name": "Stadswandeling Ode aan Amsterdam",
+    "seed_geo_id": "188590",
+    "seed_place": "Amsterdam, Netherlands"
+  },
+  "15513664": {
+    "name": "De Posthumus Winkel",
+    "seed_geo_id": "188590",
+    "seed_place": "Amsterdam, Netherlands"
+  },
+  "28437824": {
+    "name": "Moleskine",
+    "seed_geo_id": "188590",
+    "seed_place": "Amsterdam, Netherlands"
+  },
+  "189392": {
+    "name": "Kalverstraat",
+    "seed_geo_id": "188590",
+    "seed_place": "Amsterdam, Netherlands"
+  },
+  "27189199": {
+    "name": "Hofkerk (1929)",
+    "seed_geo_id": "188590",
+    "seed_place": "Amsterdam, Netherlands"
+  },
+  "27935066": {
+    "name": "Those Dam Boat Guys",
+    "seed_geo_id": "188590",
+    "seed_place": "Amsterdam, Netherlands"
+  },
+  "244498": {
+    "name": "Begijnhof",
+    "seed_geo_id": "188590",
+    "seed_place": "Amsterdam, Netherlands"
+  },
+  "6353346": {
+    "name": "Grand Casino Brussels - Viage",
+    "seed_geo_id": "188644",
+    "seed_place": "Brussels, Belgium"
+  },
+  "9842555": {
+    "name": "Anspach Shopping",
+    "seed_geo_id": "188644",
+    "seed_place": "Brussels, Belgium"
+  },
+  "15292359": {
+    "name": "Standaard Boekhandel",
+    "seed_geo_id": "188644",
+    "seed_place": "Brussels, Belgium"
+  },
+  "20224743": {
+    "name": "The Park",
+    "seed_geo_id": "188644",
+    "seed_place": "Brussels, Belgium"
+  },
+  "26397560": {
+    "name": "Gamestate",
+    "seed_geo_id": "188644",
+    "seed_place": "Brussels, Belgium"
+  },
+  "13001862": {
+    "name": "Prestige Limousine",
+    "seed_geo_id": "188644",
+    "seed_place": "Brussels, Belgium"
+  },
+  "28436036": {
+    "name": "Darkom Chicha",
+    "seed_geo_id": "188644",
+    "seed_place": "Brussels, Belgium"
+  },
+  "24075059": {
+    "name": "Banksy Museum - Brussels",
+    "seed_geo_id": "188644",
+    "seed_place": "Brussels, Belgium"
+  },
+  "28199986": {
+    "name": "58 Rooftop Brussel",
+    "seed_geo_id": "188644",
+    "seed_place": "Brussels, Belgium"
+  },
+  "7100947": {
+    "name": "La Tentation",
+    "seed_geo_id": "188644",
+    "seed_place": "Brussels, Belgium"
+  },
+  "27015958": {
+    "name": "Notre Dame Arena",
+    "seed_geo_id": "46025",
+    "seed_place": "Berlin, Germany"
+  },
+  "12879007": {
+    "name": "Jericho Mountain State Park",
+    "seed_geo_id": "46025",
+    "seed_place": "Berlin, Germany"
+  },
+  "14838267": {
+    "name": "Berlin Fish Hatchery",
+    "seed_geo_id": "46025",
+    "seed_place": "Berlin, Germany"
+  },
+  "14202742": {
+    "name": "Make Your Own Rings LJ Studio Metalsmith",
+    "seed_geo_id": "46025",
+    "seed_place": "Berlin, Germany"
+  },
+  "14202293": {
+    "name": "Assemble Artisan Studios",
+    "seed_geo_id": "46025",
+    "seed_place": "Berlin, Germany"
+  },
+  "2476402": {
+    "name": "Local Works Berlin Farmers’ Market",
+    "seed_geo_id": "46025",
+    "seed_place": "Berlin, Germany"
+  },
+  "27070893": {
+    "name": "TreeCity Arts",
+    "seed_geo_id": "46025",
+    "seed_place": "Berlin, Germany"
+  },
+  "12221961": {
+    "name": "North Country Bowling",
+    "seed_geo_id": "46025",
+    "seed_place": "Berlin, Germany"
+  },
+  "27008272": {
+    "name": "Northwoods Casino, LLC",
+    "seed_geo_id": "46025",
+    "seed_place": "Berlin, Germany"
+  },
+  "27083962": {
+    "name": "Moffett House Museum",
+    "seed_geo_id": "46025",
+    "seed_place": "Berlin, Germany"
+  },
+  "14109617": {
+    "name": "Bikram Hot Yoga",
+    "seed_geo_id": "187309",
+    "seed_place": "Munich, Germany"
+  },
+  "14416868": {
+    "name": "Merkurbrunnen",
+    "seed_geo_id": "187309",
+    "seed_place": "Munich, Germany"
+  },
+  "27157596": {
+    "name": "St. Georg (Ingenried)",
+    "seed_geo_id": "187309",
+    "seed_place": "Munich, Germany"
+  },
+  "25246584": {
+    "name": "Die Stadtdetektive",
+    "seed_geo_id": "187309",
+    "seed_place": "Munich, Germany"
+  },
+  "25350484": {
+    "name": "AIRTIME - Trampoline Nurnberg",
+    "seed_geo_id": "187309",
+    "seed_place": "Munich, Germany"
+  },
+  "10842334": {
+    "name": "DinnerHopping",
+    "seed_geo_id": "187309",
+    "seed_place": "Munich, Germany"
+  },
+  "24817941": {
+    "name": "Skulpturenpark Skulpturachse Tennenlohe",
+    "seed_geo_id": "187309",
+    "seed_place": "Munich, Germany"
+  },
+  "26103564": {
+    "name": "Lebenshofalpakas",
+    "seed_geo_id": "187309",
+    "seed_place": "Munich, Germany"
+  },
+  "25003609": {
+    "name": "Fly Station Munich",
+    "seed_geo_id": "187309",
+    "seed_place": "Munich, Germany"
+  },
+  "26223553": {
+    "name": "Figurentheater Maatz",
+    "seed_geo_id": "187309",
+    "seed_place": "Munich, Germany"
+  },
+  "23971001": {
+    "name": "Nehera",
+    "seed_geo_id": "190454",
+    "seed_place": "Vienna, Austria"
+  },
+  "15221979": {
+    "name": "World of Souvenirs",
+    "seed_geo_id": "190454",
+    "seed_place": "Vienna, Austria"
+  },
+  "25352975": {
+    "name": "Palais Trautson",
+    "seed_geo_id": "190454",
+    "seed_place": "Vienna, Austria"
+  },
+  "25310910": {
+    "name": "30 Gumpendorfer Strasse Building",
+    "seed_geo_id": "190454",
+    "seed_place": "Vienna, Austria"
+  },
+  "12954374": {
+    "name": "Airport Taxi Wien",
+    "seed_geo_id": "190454",
+    "seed_place": "Vienna, Austria"
+  },
+  "5571373": {
+    "name": "Manner Shop",
+    "seed_geo_id": "190454",
+    "seed_place": "Vienna, Austria"
+  },
+  "33374406": {
+    "name": "Erzbischofliches Palais",
+    "seed_geo_id": "190454",
+    "seed_place": "Vienna, Austria"
+  },
+  "25343382": {
+    "name": "Embassy Of France Building",
+    "seed_geo_id": "190454",
+    "seed_place": "Vienna, Austria"
+  },
+  "25264394": {
+    "name": "Petersplatz",
+    "seed_geo_id": "190454",
+    "seed_place": "Vienna, Austria"
+  },
+  "25326384": {
+    "name": "Wachterin Sculpture",
+    "seed_geo_id": "190454",
+    "seed_place": "Vienna, Austria"
+  },
+  "19126770": {
+    "name": "Dj Bar Tattoo",
+    "seed_geo_id": "274707",
+    "seed_place": "Prague, Czech Republic"
+  },
+  "33342588": {
+    "name": "May Studio",
+    "seed_geo_id": "274707",
+    "seed_place": "Prague, Czech Republic"
+  },
+  "26209275": {
+    "name": "Kaleean Lounge Bar",
+    "seed_geo_id": "274707",
+    "seed_place": "Prague, Czech Republic"
+  },
+  "24027798": {
+    "name": "Tribute To Women Statue",
+    "seed_geo_id": "274707",
+    "seed_place": "Prague, Czech Republic"
+  },
+  "25421495": {
+    "name": "Radnicke Schody",
+    "seed_geo_id": "274707",
+    "seed_place": "Prague, Czech Republic"
+  },
+  "26451422": {
+    "name": "Pohadka",
+    "seed_geo_id": "274707",
+    "seed_place": "Prague, Czech Republic"
+  },
+  "24000555": {
+    "name": "19 Malostranske Namesti Building",
+    "seed_geo_id": "274707",
+    "seed_place": "Prague, Czech Republic"
+  },
+  "27110059": {
+    "name": "Cannabis store",
+    "seed_geo_id": "274707",
+    "seed_place": "Prague, Czech Republic"
+  },
+  "25402223": {
+    "name": "Prague Meridian Line",
+    "seed_geo_id": "274707",
+    "seed_place": "Prague, Czech Republic"
+  },
+  "25421534": {
+    "name": "Third Castle Courtyard",
+    "seed_geo_id": "274707",
+    "seed_place": "Prague, Czech Republic"
+  },
+  "26858548": {
+    "name": "34 Vaci Utca Building",
+    "seed_geo_id": "274887",
+    "seed_place": "Budapest, Hungary"
+  },
+  "26867189": {
+    "name": "Ferenc Erkel Statue",
+    "seed_geo_id": "274887",
+    "seed_place": "Budapest, Hungary"
+  },
+  "26866318": {
+    "name": "Zielinski Bridge",
+    "seed_geo_id": "274887",
+    "seed_place": "Budapest, Hungary"
+  },
+  "32881767": {
+    "name": "Wardrobe Stories",
+    "seed_geo_id": "274887",
+    "seed_place": "Budapest, Hungary"
+  },
+  "2225396": {
+    "name": "Yellow Zebra Budapest",
+    "seed_geo_id": "274887",
+    "seed_place": "Budapest, Hungary"
+  },
+  "12522224": {
+    "name": "Le Bonbons",
+    "seed_geo_id": "274887",
+    "seed_place": "Budapest, Hungary"
+  },
+  "9587131": {
+    "name": "Well Thais Massage",
+    "seed_geo_id": "274887",
+    "seed_place": "Budapest, Hungary"
+  },
+  "12718486": {
+    "name": "Drink Bar",
+    "seed_geo_id": "274887",
+    "seed_place": "Budapest, Hungary"
+  },
+  "16805184": {
+    "name": "PARADISE TRAVEL",
+    "seed_geo_id": "274887",
+    "seed_place": "Budapest, Hungary"
+  },
+  "26859114": {
+    "name": "Saint Stephen Statue",
+    "seed_geo_id": "274887",
+    "seed_place": "Budapest, Hungary"
+  },
+  "13475362": {
+    "name": "Pestalozzianlage",
+    "seed_geo_id": "188113",
+    "seed_place": "Zurich, Switzerland"
+  },
+  "25384996": {
+    "name": "Tida Thai Massage",
+    "seed_geo_id": "188113",
+    "seed_place": "Zurich, Switzerland"
+  },
+  "13395977": {
+    "name": "Yves Rocher",
+    "seed_geo_id": "188113",
+    "seed_place": "Zurich, Switzerland"
+  },
+  "8782909": {
+    "name": "Swiss Travel Guide",
+    "seed_geo_id": "188113",
+    "seed_place": "Zurich, Switzerland"
+  },
+  "32837779": {
+    "name": "Pestalozzi-Denkmal",
+    "seed_geo_id": "188113",
+    "seed_place": "Zurich, Switzerland"
+  },
+  "23048902": {
+    "name": "Outdoor Escape Games Schweiz",
+    "seed_geo_id": "188113",
+    "seed_place": "Zurich, Switzerland"
+  },
+  "8698169": {
+    "name": "Amtshaus",
+    "seed_geo_id": "188113",
+    "seed_place": "Zurich, Switzerland"
+  },
+  "13399897": {
+    "name": "Clarins Boutique & Skin Spa",
+    "seed_geo_id": "188113",
+    "seed_place": "Zurich, Switzerland"
+  },
+  "20170153": {
+    "name": "Laderach Zurich ShopVille Lowenpassage",
+    "seed_geo_id": "188113",
+    "seed_place": "Zurich, Switzerland"
+  },
+  "23693628": {
+    "name": "Elizza & Co",
+    "seed_geo_id": "188113",
+    "seed_place": "Zurich, Switzerland"
+  },
+  "12986772": {
+    "name": "Lake City Hobby",
+    "seed_geo_id": "47777",
+    "seed_place": "Geneva, Switzerland"
+  },
+  "7854417": {
+    "name": "Lake Drum Brewing",
+    "seed_geo_id": "47777",
+    "seed_place": "Geneva, Switzerland"
+  },
+  "27018296": {
+    "name": "The Dove Block Project",
+    "seed_geo_id": "47777",
+    "seed_place": "Geneva, Switzerland"
+  },
+  "27024394": {
+    "name": "North Shore Wellness Club",
+    "seed_geo_id": "47777",
+    "seed_place": "Geneva, Switzerland"
+  },
+  "8039472": {
+    "name": "Lake Street Station Winery",
+    "seed_geo_id": "47777",
+    "seed_place": "Geneva, Switzerland"
+  },
+  "23538582": {
+    "name": "Sail Seneca",
+    "seed_geo_id": "47777",
+    "seed_place": "Geneva, Switzerland"
+  },
+  "33351202": {
+    "name": "Finger Lakes Rail Experience",
+    "seed_geo_id": "47777",
+    "seed_place": "Geneva, Switzerland"
+  },
+  "3594744": {
+    "name": "Finger Lakes Water Adventures",
+    "seed_geo_id": "47777",
+    "seed_place": "Geneva, Switzerland"
+  },
+  "5835766": {
+    "name": "Tiki Bar North",
+    "seed_geo_id": "47777",
+    "seed_place": "Geneva, Switzerland"
+  },
+  "12707867": {
+    "name": "Sup on Seneca",
+    "seed_geo_id": "47777",
+    "seed_place": "Geneva, Switzerland"
+  },
+  "195009": {
+    "name": "Ponte Vecchio",
+    "seed_geo_id": "187895",
+    "seed_place": "Florence, Italy"
+  },
+  "32995822": {
+    "name": "Viktoryia Parnitskaya",
+    "seed_geo_id": "187895",
+    "seed_place": "Florence, Italy"
+  },
+  "11913253": {
+    "name": "Fratelli Piccini Gioiellieri",
+    "seed_geo_id": "187895",
+    "seed_place": "Florence, Italy"
+  },
+  "27513946": {
+    "name": "Truly Italy Tours",
+    "seed_geo_id": "187895",
+    "seed_place": "Florence, Italy"
+  },
+  "27156781": {
+    "name": "Ugg Store",
+    "seed_geo_id": "187895",
+    "seed_place": "Florence, Italy"
+  },
+  "27103626": {
+    "name": "Enoteca Nazionale",
+    "seed_geo_id": "187895",
+    "seed_place": "Florence, Italy"
+  },
+  "26878434": {
+    "name": "Marco salumi e formaggi",
+    "seed_geo_id": "187895",
+    "seed_place": "Florence, Italy"
+  },
+  "26310213": {
+    "name": "RideMovi",
+    "seed_geo_id": "187895",
+    "seed_place": "Florence, Italy"
+  },
+  "26725351": {
+    "name": "Arnoboat",
+    "seed_geo_id": "187895",
+    "seed_place": "Florence, Italy"
+  },
+  "25072354": {
+    "name": "Antico Setificio Fiorentino",
+    "seed_geo_id": "187895",
+    "seed_place": "Florence, Italy"
+  },
+  "27107779": {
+    "name": "Scientopolis Milano",
+    "seed_geo_id": "187849",
+    "seed_place": "Milan, Italy"
+  },
+  "26766915": {
+    "name": "Targa In Memoria di Giacomo Leopardi",
+    "seed_geo_id": "187849",
+    "seed_place": "Milan, Italy"
+  },
+  "27695084": {
+    "name": "Palazzo Di Via Tommaso Grossi 1",
+    "seed_geo_id": "187849",
+    "seed_place": "Milan, Italy"
+  },
+  "8132871": {
+    "name": "Expoincitta Lounge / Diurno Elita",
+    "seed_geo_id": "187849",
+    "seed_place": "Milan, Italy"
+  },
+  "12896477": {
+    "name": "Spazio Cobianchi Galleria",
+    "seed_geo_id": "187849",
+    "seed_place": "Milan, Italy"
+  },
+  "27969614": {
+    "name": "Palazzo Ex Banco Di Sicilia",
+    "seed_geo_id": "187849",
+    "seed_place": "Milan, Italy"
+  },
+  "33999554": {
+    "name": "Via Santa Margherita",
+    "seed_geo_id": "187849",
+    "seed_place": "Milan, Italy"
+  },
+  "25756800": {
+    "name": "Spazio Fendi",
+    "seed_geo_id": "187849",
+    "seed_place": "Milan, Italy"
+  },
+  "26800320": {
+    "name": "Oasi lago dei cigni",
+    "seed_geo_id": "187849",
+    "seed_place": "Milan, Italy"
+  },
+  "26340781": {
+    "name": "Vertigo Cocktails & Pool",
+    "seed_geo_id": "187849",
+    "seed_place": "Milan, Italy"
+  },
+  "25462930": {
+    "name": "Mini So",
+    "seed_geo_id": "187785",
+    "seed_place": "Naples, Italy"
+  },
+  "26687469": {
+    "name": "Chiosco Aurelio",
+    "seed_geo_id": "187785",
+    "seed_place": "Naples, Italy"
+  },
+  "26530147": {
+    "name": "Locauto",
+    "seed_geo_id": "187785",
+    "seed_place": "Naples, Italy"
+  },
+  "26699518": {
+    "name": "La fabbrica delle meraviglie",
+    "seed_geo_id": "187785",
+    "seed_place": "Naples, Italy"
+  },
+  "26596218": {
+    "name": "Chalet Ciro",
+    "seed_geo_id": "187785",
+    "seed_place": "Naples, Italy"
+  },
+  "33286353": {
+    "name": "Casa Di Dodo Gioielli & Arredo",
+    "seed_geo_id": "187785",
+    "seed_place": "Naples, Italy"
+  },
+  "25458024": {
+    "name": "La Panchina di Nello",
+    "seed_geo_id": "187785",
+    "seed_place": "Naples, Italy"
+  },
+  "27095619": {
+    "name": "Murale Resis-Ti-Amo",
+    "seed_geo_id": "187785",
+    "seed_place": "Naples, Italy"
+  },
+  "26716372": {
+    "name": "Gran caffe al centro",
+    "seed_geo_id": "187785",
+    "seed_place": "Naples, Italy"
+  },
+  "25464966": {
+    "name": "Napoli sotterranea",
+    "seed_geo_id": "187785",
+    "seed_place": "Naples, Italy"
+  },
+  "24576634": {
+    "name": "The Arsakeion Building",
+    "seed_geo_id": "189400",
+    "seed_place": "Athens, Greece"
+  },
+  "33235879": {
+    "name": "Irena' Nail Salon",
+    "seed_geo_id": "189400",
+    "seed_place": "Athens, Greece"
+  },
+  "24369007": {
+    "name": "Plateia Estavromonou",
+    "seed_geo_id": "189400",
+    "seed_place": "Athens, Greece"
+  },
+  "12848936": {
+    "name": "Artemis Antiques",
+    "seed_geo_id": "189400",
+    "seed_place": "Athens, Greece"
+  },
+  "198777": {
+    "name": "Psirri",
+    "seed_geo_id": "189400",
+    "seed_place": "Athens, Greece"
+  },
+  "6999086": {
+    "name": "Sights of Athens",
+    "seed_geo_id": "189400",
+    "seed_place": "Athens, Greece"
+  },
+  "24171767": {
+    "name": "Makrigianni",
+    "seed_geo_id": "189400",
+    "seed_place": "Athens, Greece"
+  },
+  "24531194": {
+    "name": "Akadimias Park Fountain",
+    "seed_geo_id": "189400",
+    "seed_place": "Athens, Greece"
+  },
+  "24634082": {
+    "name": "Karolos Koun Statue",
+    "seed_geo_id": "189400",
+    "seed_place": "Athens, Greece"
+  },
+  "24172266": {
+    "name": "Lysikratous Square",
+    "seed_geo_id": "189400",
+    "seed_place": "Athens, Greece"
+  },
+  "26806070": {
+    "name": "Estate Argyros",
+    "seed_geo_id": "189433",
+    "seed_place": "Santorini, Greece"
+  },
+  "26834403": {
+    "name": "Paralia Perissa",
+    "seed_geo_id": "189433",
+    "seed_place": "Santorini, Greece"
+  },
+  "10440917": {
+    "name": "Poetry Olive Oil Tasting",
+    "seed_geo_id": "189433",
+    "seed_place": "Santorini, Greece"
+  },
+  "27796980": {
+    "name": "Viaggio Azzurro",
+    "seed_geo_id": "189433",
+    "seed_place": "Santorini, Greece"
+  },
+  "26806053": {
+    "name": "Mouseio oinou Santorinis",
+    "seed_geo_id": "189433",
+    "seed_place": "Santorini, Greece"
+  },
+  "26659898": {
+    "name": "Perfect Choice Travel",
+    "seed_geo_id": "189433",
+    "seed_place": "Santorini, Greece"
+  },
+  "25650632": {
+    "name": "Natura Spa by North Santorini Luxury Spa Hotel",
+    "seed_geo_id": "189433",
+    "seed_place": "Santorini, Greece"
+  },
+  "26799293": {
+    "name": "Ftelos Brewery",
+    "seed_geo_id": "189433",
+    "seed_place": "Santorini, Greece"
+  },
+  "25413869": {
+    "name": "Santorini Flying Dress",
+    "seed_geo_id": "189433",
+    "seed_place": "Santorini, Greece"
+  },
+  "23477077": {
+    "name": "LVB Tours Santorini",
+    "seed_geo_id": "189433",
+    "seed_place": "Santorini, Greece"
+  },
+  "33110212": {
+    "name": "The Transfer Guy Mykonos",
+    "seed_geo_id": "189430",
+    "seed_place": "Mykonos, Greece"
+  },
+  "32997271": {
+    "name": "Mykonos Must Driver Services",
+    "seed_geo_id": "189430",
+    "seed_place": "Mykonos, Greece"
+  },
+  "26129125": {
+    "name": "Bello Bello",
+    "seed_geo_id": "189430",
+    "seed_place": "Mykonos, Greece"
+  },
+  "23779730": {
+    "name": "Flickers Mykonos",
+    "seed_geo_id": "189430",
+    "seed_place": "Mykonos, Greece"
+  },
+  "10395118": {
+    "name": "Anasa Mykonos Massage",
+    "seed_geo_id": "189430",
+    "seed_place": "Mykonos, Greece"
+  },
+  "20558560": {
+    "name": "Flickers Mykonos - Candle Workshop & Gift Shop",
+    "seed_geo_id": "189430",
+    "seed_place": "Mykonos, Greece"
+  },
+  "14184390": {
+    "name": "Wheel Royale Mykonos",
+    "seed_geo_id": "189430",
+    "seed_place": "Mykonos, Greece"
+  },
+  "8635537": {
+    "name": "BikeCenterMykonos",
+    "seed_geo_id": "189430",
+    "seed_place": "Mykonos, Greece"
+  },
+  "28026742": {
+    "name": "Assimomitis",
+    "seed_geo_id": "189430",
+    "seed_place": "Mykonos, Greece"
+  },
+  "27704633": {
+    "name": "On Mykonos Wellness",
+    "seed_geo_id": "189430",
+    "seed_place": "Mykonos, Greece"
+  },
+  "13547324": {
+    "name": "Timberlake Golf Club",
+    "seed_geo_id": "49614",
+    "seed_place": "Istanbul, Turkey"
+  },
+  "7300187": {
+    "name": "Elizabeth's Pecan Products",
+    "seed_geo_id": "49614",
+    "seed_place": "Istanbul, Turkey"
+  },
+  "27090427": {
+    "name": "Duplin County Veterans Museum",
+    "seed_geo_id": "49614",
+    "seed_place": "Istanbul, Turkey"
+  },
+  "8671464": {
+    "name": "Country Squire Winery",
+    "seed_geo_id": "49614",
+    "seed_place": "Istanbul, Turkey"
+  },
+  "8444111": {
+    "name": "Sampson County History Museum",
+    "seed_geo_id": "49614",
+    "seed_place": "Istanbul, Turkey"
+  },
+  "27003118": {
+    "name": "Newkirk Park Advisory Committee",
+    "seed_geo_id": "49614",
+    "seed_place": "Istanbul, Turkey"
+  },
+  "23938798": {
+    "name": "Chabad Of Clinton, Ny",
+    "seed_geo_id": "49614",
+    "seed_place": "Istanbul, Turkey"
+  },
+  "26251700": {
+    "name": "Aspire Park",
+    "seed_geo_id": "49614",
+    "seed_place": "Istanbul, Turkey"
+  },
+  "28174788": {
+    "name": "East Park Cinema",
+    "seed_geo_id": "49614",
+    "seed_place": "Istanbul, Turkey"
+  },
+  "27051370": {
+    "name": "Self-Care Sanctuary & Spa",
+    "seed_geo_id": "49614",
+    "seed_place": "Istanbul, Turkey"
+  },
+  "26454236": {
+    "name": "Old Cairo",
+    "seed_geo_id": "294201",
+    "seed_place": "Cairo, Egypt"
+  },
+  "31677962": {
+    "name": "Egypt Tour Guide Photographer",
+    "seed_geo_id": "294201",
+    "seed_place": "Cairo, Egypt"
+  },
+  "33117462": {
+    "name": "Emad Tour Guide",
+    "seed_geo_id": "294201",
+    "seed_place": "Cairo, Egypt"
+  },
+  "25558176": {
+    "name": "Egyptian Postal museum",
+    "seed_geo_id": "294201",
+    "seed_place": "Cairo, Egypt"
+  },
+  "27134434": {
+    "name": "Sunny Day tour",
+    "seed_geo_id": "294201",
+    "seed_place": "Cairo, Egypt"
+  },
+  "26875760": {
+    "name": "Bath & Body Works",
+    "seed_geo_id": "294201",
+    "seed_place": "Cairo, Egypt"
+  },
+  "32709035": {
+    "name": "Book Nile Cruise",
+    "seed_geo_id": "294201",
+    "seed_place": "Cairo, Egypt"
+  },
+  "27102464": {
+    "name": "Souq Al-Gomaa",
+    "seed_geo_id": "294201",
+    "seed_place": "Cairo, Egypt"
+  },
+  "26441577": {
+    "name": "Open air mall",
+    "seed_geo_id": "294201",
+    "seed_place": "Cairo, Egypt"
+  },
+  "27147456": {
+    "name": "Black Zone Playstation Cafe",
+    "seed_geo_id": "294201",
+    "seed_place": "Cairo, Egypt"
+  },
+  "32872446": {
+    "name": "Le Yogavan",
+    "seed_geo_id": "293734",
+    "seed_place": "Marrakech, Morocco"
+  },
+  "28015847": {
+    "name": "Hafida Zizi Art Gallery",
+    "seed_geo_id": "293734",
+    "seed_place": "Marrakech, Morocco"
+  },
+  "24884224": {
+    "name": "Adrar Morocco Tours",
+    "seed_geo_id": "293734",
+    "seed_place": "Marrakech, Morocco"
+  },
+  "23432398": {
+    "name": "Albahia Spa",
+    "seed_geo_id": "293734",
+    "seed_place": "Marrakech, Morocco"
+  },
+  "26104732": {
+    "name": "Roaming Morocco",
+    "seed_geo_id": "293734",
+    "seed_place": "Marrakech, Morocco"
+  },
+  "24074822": {
+    "name": "Caravane Quads",
+    "seed_geo_id": "293734",
+    "seed_place": "Marrakech, Morocco"
+  },
+  "25573327": {
+    "name": "Marrakesh Bike Tour",
+    "seed_geo_id": "293734",
+    "seed_place": "Marrakech, Morocco"
+  },
+  "32881545": {
+    "name": "Ourika Excursion Limited",
+    "seed_geo_id": "293734",
+    "seed_place": "Marrakech, Morocco"
+  },
+  "28103981": {
+    "name": "Tour Desierto",
+    "seed_geo_id": "293734",
+    "seed_place": "Marrakech, Morocco"
+  },
+  "25273271": {
+    "name": "Khalalay Lakhdir",
+    "seed_geo_id": "293734",
+    "seed_place": "Marrakech, Morocco"
+  },
+  "24853863": {
+    "name": "African Hands Art Gallery",
+    "seed_geo_id": "1722390",
+    "seed_place": "Cape Town, South Africa"
+  },
+  "12128039": {
+    "name": "Kiff Kombi Tours",
+    "seed_geo_id": "1722390",
+    "seed_place": "Cape Town, South Africa"
+  },
+  "34036162": {
+    "name": "Luxe Haven Cape Town",
+    "seed_geo_id": "1722390",
+    "seed_place": "Cape Town, South Africa"
+  },
+  "18977323": {
+    "name": "SAFARI.COM",
+    "seed_geo_id": "1722390",
+    "seed_place": "Cape Town, South Africa"
+  },
+  "1648075": {
+    "name": "Auriols Tours",
+    "seed_geo_id": "1722390",
+    "seed_place": "Cape Town, South Africa"
+  },
+  "26639437": {
+    "name": "IQ Derma Cape Town",
+    "seed_geo_id": "1722390",
+    "seed_place": "Cape Town, South Africa"
+  },
+  "25153396": {
+    "name": "Picnic In The Park",
+    "seed_geo_id": "1722390",
+    "seed_place": "Cape Town, South Africa"
+  },
+  "27158073": {
+    "name": "TRU.U - Self Portrait Photo Studio",
+    "seed_geo_id": "1722390",
+    "seed_place": "Cape Town, South Africa"
+  },
+  "27086715": {
+    "name": "Bidvest International Departures",
+    "seed_geo_id": "1722390",
+    "seed_place": "Cape Town, South Africa"
+  },
+  "33065107": {
+    "name": "Zulazula 4x4",
+    "seed_geo_id": "1722390",
+    "seed_place": "Cape Town, South Africa"
+  },
+  "12794866": {
+    "name": "Msila Tours And Travel",
+    "seed_geo_id": "312578",
+    "seed_place": "Johannesburg, South Africa"
+  },
+  "480607": {
+    "name": "Top of Africa",
+    "seed_geo_id": "312578",
+    "seed_place": "Johannesburg, South Africa"
+  },
+  "313837": {
+    "name": "Wesselton Diamond Cutting Company",
+    "seed_geo_id": "312578",
+    "seed_place": "Johannesburg, South Africa"
+  },
+  "2098426": {
+    "name": "Idube Elihle Johannesburg Day Tour",
+    "seed_geo_id": "312578",
+    "seed_place": "Johannesburg, South Africa"
+  },
+  "7313035": {
+    "name": "Collectors Treasury",
+    "seed_geo_id": "312578",
+    "seed_place": "Johannesburg, South Africa"
+  },
+  "27483310": {
+    "name": "Shades of Ngwenya",
+    "seed_geo_id": "312578",
+    "seed_place": "Johannesburg, South Africa"
+  },
+  "8715483": {
+    "name": "Mpho Art & Design House",
+    "seed_geo_id": "312578",
+    "seed_place": "Johannesburg, South Africa"
+  },
+  "25280553": {
+    "name": "Caf Southern Africa",
+    "seed_geo_id": "312578",
+    "seed_place": "Johannesburg, South Africa"
+  },
+  "21293714": {
+    "name": "The Original Shoreline",
+    "seed_geo_id": "312578",
+    "seed_place": "Johannesburg, South Africa"
+  },
+  "17390737": {
+    "name": "Maile Ventures",
+    "seed_geo_id": "312578",
+    "seed_place": "Johannesburg, South Africa"
+  },
+  "28003898": {
+    "name": "Warm & Wild Safaris",
+    "seed_geo_id": "294207",
+    "seed_place": "Nairobi, Kenya"
+  },
+  "15804380": {
+    "name": "Lilac Roller Safaris",
+    "seed_geo_id": "294207",
+    "seed_place": "Nairobi, Kenya"
+  },
+  "26713444": {
+    "name": "4X4 Africa",
+    "seed_geo_id": "294207",
+    "seed_place": "Nairobi, Kenya"
+  },
+  "12579866": {
+    "name": "Budget Africa Safari",
+    "seed_geo_id": "294207",
+    "seed_place": "Nairobi, Kenya"
+  },
+  "13360811": {
+    "name": "African Comfort Zone Safaris",
+    "seed_geo_id": "294207",
+    "seed_place": "Nairobi, Kenya"
+  },
+  "19071875": {
+    "name": "Superlink Safaris",
+    "seed_geo_id": "294207",
+    "seed_place": "Nairobi, Kenya"
+  },
+  "23996251": {
+    "name": "Enkarewa Safaris Ltd",
+    "seed_geo_id": "294207",
+    "seed_place": "Nairobi, Kenya"
+  },
+  "16659771": {
+    "name": "Exotique Tours and Travel",
+    "seed_geo_id": "294207",
+    "seed_place": "Nairobi, Kenya"
+  },
+  "27764798": {
+    "name": "Chenggong  Tours",
+    "seed_geo_id": "294207",
+    "seed_place": "Nairobi, Kenya"
+  },
+  "12699003": {
+    "name": "Tukio Safaris",
+    "seed_geo_id": "294207",
+    "seed_place": "Nairobi, Kenya"
+  },
+  "25219093": {
+    "name": "Zenred Hair Salon Bangkok",
+    "seed_geo_id": "293916",
+    "seed_place": "Bangkok, Thailand"
+  },
+  "13778618": {
+    "name": "Bangkok Bootery",
+    "seed_geo_id": "293916",
+    "seed_place": "Bangkok, Thailand"
+  },
+  "25810881": {
+    "name": "N'Louis Happy Buds",
+    "seed_geo_id": "293916",
+    "seed_place": "Bangkok, Thailand"
+  },
+  "25150317": {
+    "name": "Gem Production",
+    "seed_geo_id": "293916",
+    "seed_place": "Bangkok, Thailand"
+  },
+  "30526598": {
+    "name": "Kliniq Spa",
+    "seed_geo_id": "293916",
+    "seed_place": "Bangkok, Thailand"
+  },
+  "7745213": {
+    "name": "Let's Relax",
+    "seed_geo_id": "293916",
+    "seed_place": "Bangkok, Thailand"
+  },
+  "32980077": {
+    "name": "First Aid Kiss House Of Scents",
+    "seed_geo_id": "293916",
+    "seed_place": "Bangkok, Thailand"
+  },
+  "27995220": {
+    "name": "Unisound Bangkok",
+    "seed_geo_id": "293916",
+    "seed_place": "Bangkok, Thailand"
+  },
+  "27995219": {
+    "name": "Unit Film Camera",
+    "seed_geo_id": "293916",
+    "seed_place": "Bangkok, Thailand"
+  },
+  "13426347": {
+    "name": "Selvedgework",
+    "seed_geo_id": "293916",
+    "seed_place": "Bangkok, Thailand"
+  },
+  "26524992": {
+    "name": "Elephant Swims @Lucky Beach, Tri Trang",
+    "seed_geo_id": "293920",
+    "seed_place": "Phuket, Thailand"
+  },
+  "2180508": {
+    "name": "Phuket Mining Museum",
+    "seed_geo_id": "293920",
+    "seed_place": "Phuket, Thailand"
+  },
+  "28215576": {
+    "name": "Seven Plus Travel Co., Ltd.",
+    "seed_geo_id": "293920",
+    "seed_place": "Phuket, Thailand"
+  },
+  "29018116": {
+    "name": "Know Plan Phuket Travel",
+    "seed_geo_id": "293920",
+    "seed_place": "Phuket, Thailand"
+  },
+  "34109361": {
+    "name": "Wasted Art Collective",
+    "seed_geo_id": "293920",
+    "seed_place": "Phuket, Thailand"
+  },
+  "33255481": {
+    "name": "Loudy Taxi Service",
+    "seed_geo_id": "293920",
+    "seed_place": "Phuket, Thailand"
+  },
+  "28126368": {
+    "name": "Boat Avenue Night Market",
+    "seed_geo_id": "293920",
+    "seed_place": "Phuket, Thailand"
+  },
+  "28265659": {
+    "name": "Seven Plus Travel",
+    "seed_geo_id": "293920",
+    "seed_place": "Phuket, Thailand"
+  },
+  "27927286": {
+    "name": "SEAscape",
+    "seed_geo_id": "293920",
+    "seed_place": "Phuket, Thailand"
+  },
+  "28133571": {
+    "name": "Rush Sports Academy",
+    "seed_geo_id": "293920",
+    "seed_place": "Phuket, Thailand"
+  },
+  "26860236": {
+    "name": "Isara Elephant Village",
+    "seed_geo_id": "293917",
+    "seed_place": "Chiang Mai, Thailand"
+  },
+  "25363756": {
+    "name": "Atitan Art and Antique",
+    "seed_geo_id": "293917",
+    "seed_place": "Chiang Mai, Thailand"
+  },
+  "25165204": {
+    "name": "Elephant in Wild Sanctuary",
+    "seed_geo_id": "293917",
+    "seed_place": "Chiang Mai, Thailand"
+  },
+  "8638599": {
+    "name": "Chiangmai Elephant Sanctuary",
+    "seed_geo_id": "293917",
+    "seed_place": "Chiang Mai, Thailand"
+  },
+  "27969755": {
+    "name": "Ziri Massage and Spa",
+    "seed_geo_id": "293917",
+    "seed_place": "Chiang Mai, Thailand"
+  },
+  "17450077": {
+    "name": "Nails & Brows By Ying",
+    "seed_geo_id": "293917",
+    "seed_place": "Chiang Mai, Thailand"
+  },
+  "1404084": {
+    "name": "Thai Orchid Cookery School",
+    "seed_geo_id": "293917",
+    "seed_place": "Chiang Mai, Thailand"
+  },
+  "26518846": {
+    "name": "All About Nails",
+    "seed_geo_id": "293917",
+    "seed_place": "Chiang Mai, Thailand"
+  },
+  "3646565": {
+    "name": "Pranom Health Massage",
+    "seed_geo_id": "293917",
+    "seed_place": "Chiang Mai, Thailand"
+  },
+  "6771962": {
+    "name": "Kad Klang Wiang",
+    "seed_geo_id": "293917",
+    "seed_place": "Chiang Mai, Thailand"
+  },
+  "23930454": {
+    "name": "Soma Fight Club",
+    "seed_geo_id": "294226",
+    "seed_place": "Bali, Indonesia"
+  },
+  "24919651": {
+    "name": "Jimb Reef Surfschool, Jimbaran",
+    "seed_geo_id": "294226",
+    "seed_place": "Bali, Indonesia"
+  },
+  "26448971": {
+    "name": "Bali Tangti Holidays",
+    "seed_geo_id": "294226",
+    "seed_place": "Bali, Indonesia"
+  },
+  "27794007": {
+    "name": "Jin Lin Rinjani",
+    "seed_geo_id": "294226",
+    "seed_place": "Bali, Indonesia"
+  },
+  "26878411": {
+    "name": "Ria's Massage on Call",
+    "seed_geo_id": "294226",
+    "seed_place": "Bali, Indonesia"
+  },
+  "26727382": {
+    "name": "Best Bali Guide",
+    "seed_geo_id": "294226",
+    "seed_place": "Bali, Indonesia"
+  },
+  "27800555": {
+    "name": "Senaru Trekking",
+    "seed_geo_id": "294226",
+    "seed_place": "Bali, Indonesia"
+  },
+  "15769062": {
+    "name": "Perkemahan Kampoeng Peneng",
+    "seed_geo_id": "294226",
+    "seed_place": "Bali, Indonesia"
+  },
+  "27506807": {
+    "name": "Lensa Rinjani Trekker",
+    "seed_geo_id": "294226",
+    "seed_place": "Bali, Indonesia"
+  },
+  "28163416": {
+    "name": "Runia Rinjani",
+    "seed_geo_id": "294226",
+    "seed_place": "Bali, Indonesia"
+  },
+  "26610650": {
+    "name": "Jwjajajaj",
+    "seed_geo_id": "294229",
+    "seed_place": "Jakarta, Indonesia"
+  },
+  "13172723": {
+    "name": "T Lounge",
+    "seed_geo_id": "294229",
+    "seed_place": "Jakarta, Indonesia"
+  },
+  "13172722": {
+    "name": "Pool Bar DoubleTree",
+    "seed_geo_id": "294229",
+    "seed_place": "Jakarta, Indonesia"
+  },
+  "6725477": {
+    "name": "Cikini Gold Center",
+    "seed_geo_id": "294229",
+    "seed_place": "Jakarta, Indonesia"
+  },
+  "27178339": {
+    "name": "Local Cinema",
+    "seed_geo_id": "294229",
+    "seed_place": "Jakarta, Indonesia"
+  },
+  "33399247": {
+    "name": "Jembatan Petek'an",
+    "seed_geo_id": "294229",
+    "seed_place": "Jakarta, Indonesia"
+  },
+  "2587868": {
+    "name": "Flea Market at Jalan Surabaya",
+    "seed_geo_id": "294229",
+    "seed_place": "Jakarta, Indonesia"
+  },
+  "23419093": {
+    "name": "Inasports88",
+    "seed_geo_id": "294229",
+    "seed_place": "Jakarta, Indonesia"
+  },
+  "27166027": {
+    "name": "Kedaton Tropical Spa",
+    "seed_geo_id": "294229",
+    "seed_place": "Jakarta, Indonesia"
+  },
+  "26310110": {
+    "name": "Ghjjk",
+    "seed_geo_id": "294229",
+    "seed_place": "Jakarta, Indonesia"
+  },
+  "26222810": {
+    "name": "Good Times DIY Baking Studio",
+    "seed_geo_id": "298570",
+    "seed_place": "Kuala Lumpur, Malaysia"
+  },
+  "25184529": {
+    "name": "Devnani Jewels",
+    "seed_geo_id": "298570",
+    "seed_place": "Kuala Lumpur, Malaysia"
+  },
+  "26340057": {
+    "name": "Tsutaya Books Bukit Jalil",
+    "seed_geo_id": "298570",
+    "seed_place": "Kuala Lumpur, Malaysia"
+  },
+  "13565322": {
+    "name": "Pertama Complex",
+    "seed_geo_id": "298570",
+    "seed_place": "Kuala Lumpur, Malaysia"
+  },
+  "456584": {
+    "name": "Jalan Tuanku Abdul Rahman",
+    "seed_geo_id": "298570",
+    "seed_place": "Kuala Lumpur, Malaysia"
+  },
+  "8815639": {
+    "name": "Ayasofea Hammami Spa & Salon",
+    "seed_geo_id": "298570",
+    "seed_place": "Kuala Lumpur, Malaysia"
+  },
+  "15547304": {
+    "name": "Medan Mara",
+    "seed_geo_id": "298570",
+    "seed_place": "Kuala Lumpur, Malaysia"
+  },
+  "1460665": {
+    "name": "Semua House",
+    "seed_geo_id": "298570",
+    "seed_place": "Kuala Lumpur, Malaysia"
+  },
+  "32719254": {
+    "name": "Namaste Nails & Spa",
+    "seed_geo_id": "298570",
+    "seed_place": "Kuala Lumpur, Malaysia"
+  },
+  "19031158": {
+    "name": "Masjid India",
+    "seed_geo_id": "298570",
+    "seed_place": "Kuala Lumpur, Malaysia"
+  },
+  "32812824": {
+    "name": "Phuong Noi Souvenir",
+    "seed_geo_id": "293924",
+    "seed_place": "Hanoi, Vietnam"
+  },
+  "28986296": {
+    "name": "Pu Luong Retreat",
+    "seed_geo_id": "293924",
+    "seed_place": "Hanoi, Vietnam"
+  },
+  "24832066": {
+    "name": "Toptour Viet Nam Travel",
+    "seed_geo_id": "293924",
+    "seed_place": "Hanoi, Vietnam"
+  },
+  "25442823": {
+    "name": "Xin Chao Tours",
+    "seed_geo_id": "293924",
+    "seed_place": "Hanoi, Vietnam"
+  },
+  "27801307": {
+    "name": "Authentic Hanoi Travel",
+    "seed_geo_id": "293924",
+    "seed_place": "Hanoi, Vietnam"
+  },
+  "1442944": {
+    "name": "Phuc Loi Shop",
+    "seed_geo_id": "293924",
+    "seed_place": "Hanoi, Vietnam"
+  },
+  "15153328": {
+    "name": "Việt Anh Travel",
+    "seed_geo_id": "293924",
+    "seed_place": "Hanoi, Vietnam"
+  },
+  "26454028": {
+    "name": "GP Home Handicraft",
+    "seed_geo_id": "293924",
+    "seed_place": "Hanoi, Vietnam"
+  },
+  "34088977": {
+    "name": "Kenny Travel And  Tours",
+    "seed_geo_id": "293924",
+    "seed_place": "Hanoi, Vietnam"
+  },
+  "33393912": {
+    "name": "Home Massage - Relax & Heal",
+    "seed_geo_id": "293924",
+    "seed_place": "Hanoi, Vietnam"
+  },
+  "32894718": {
+    "name": "Champmont Waypoint",
+    "seed_geo_id": "1498190",
+    "seed_place": "Ho Chi Minh City, Vietnam"
+  },
+  "14176058": {
+    "name": "Kalakpa Nature Reserve",
+    "seed_geo_id": "1498190",
+    "seed_place": "Ho Chi Minh City, Vietnam"
+  },
+  "26158828": {
+    "name": "Hyu Cafe",
+    "seed_geo_id": "294197",
+    "seed_place": "Seoul, South Korea"
+  },
+  "26688594": {
+    "name": "The Foot Shop",
+    "seed_geo_id": "294197",
+    "seed_place": "Seoul, South Korea"
+  },
+  "27622354": {
+    "name": "Jhouse",
+    "seed_geo_id": "294197",
+    "seed_place": "Seoul, South Korea"
+  },
+  "3727477": {
+    "name": "Spa Lei",
+    "seed_geo_id": "294197",
+    "seed_place": "Seoul, South Korea"
+  },
+  "2321641": {
+    "name": "Q Spa & Clinic",
+    "seed_geo_id": "294197",
+    "seed_place": "Seoul, South Korea"
+  },
+  "25094842": {
+    "name": "Hangang Bridge",
+    "seed_geo_id": "294197",
+    "seed_place": "Seoul, South Korea"
+  },
+  "25091805": {
+    "name": "Taewonjeon",
+    "seed_geo_id": "294197",
+    "seed_place": "Seoul, South Korea"
+  },
+  "27165821": {
+    "name": "Hanahzo",
+    "seed_geo_id": "294197",
+    "seed_place": "Seoul, South Korea"
+  },
+  "25094844": {
+    "name": "Dongjak Bridge",
+    "seed_geo_id": "294197",
+    "seed_place": "Seoul, South Korea"
+  },
+  "26641110": {
+    "name": "SK Olympic Handball Gymnasium",
+    "seed_geo_id": "294197",
+    "seed_place": "Seoul, South Korea"
+  },
+  "27121457": {
+    "name": "Xi'an Romance shows",
+    "seed_geo_id": "298557",
+    "seed_place": "Xi'an, China"
+  },
+  "26286225": {
+    "name": "Cultural Palace Singing & Dancing Hall",
+    "seed_geo_id": "298557",
+    "seed_place": "Xi'an, China"
+  },
+  "27122711": {
+    "name": "Xi'an Qianguqing",
+    "seed_geo_id": "298557",
+    "seed_place": "Xi'an, China"
+  },
+  "27125730": {
+    "name": "Xi'an QianGuQing",
+    "seed_geo_id": "298557",
+    "seed_place": "Xi'an, China"
+  },
+  "1805614": {
+    "name": "Hanguanmen Site Museum of Xi'an Tang City Wall",
+    "seed_geo_id": "298557",
+    "seed_place": "Xi'an, China"
+  },
+  "2454427": {
+    "name": "Tianshuijing Catholic Church",
+    "seed_geo_id": "298557",
+    "seed_place": "Xi'an, China"
+  },
+  "28027977": {
+    "name": "Luan Ma 1/2 Photography",
+    "seed_geo_id": "298557",
+    "seed_place": "Xi'an, China"
+  },
+  "3373968": {
+    "name": "Suzaku flower Market",
+    "seed_geo_id": "298557",
+    "seed_place": "Xi'an, China"
+  },
+  "2452529": {
+    "name": "Tour Easy China",
+    "seed_geo_id": "298557",
+    "seed_place": "Xi'an, China"
+  },
+  "27884436": {
+    "name": "City Wall, Xiao Nanmen, Xi'an",
+    "seed_geo_id": "298557",
+    "seed_place": "Xi'an, China"
+  },
+  "1997057": {
+    "name": "Zhonghua Gongyi Guan",
+    "seed_geo_id": "293913",
+    "seed_place": "Taipei, Taiwan"
+  },
+  "25952533": {
+    "name": "Wenshan Forest Park",
+    "seed_geo_id": "293913",
+    "seed_place": "Taipei, Taiwan"
+  },
+  "2071593": {
+    "name": "Evergreen Maritime Museum",
+    "seed_geo_id": "293913",
+    "seed_place": "Taipei, Taiwan"
+  },
+  "552578": {
+    "name": "National Theatre",
+    "seed_geo_id": "293913",
+    "seed_place": "Taipei, Taiwan"
+  },
+  "10793967": {
+    "name": "Bridal Street (Aiguo East Road)",
+    "seed_geo_id": "293913",
+    "seed_place": "Taipei, Taiwan"
+  },
+  "8455033": {
+    "name": "Jingshishuxuan",
+    "seed_geo_id": "293913",
+    "seed_place": "Taipei, Taiwan"
+  },
+  "10671192": {
+    "name": "Museum of Medical Humanities",
+    "seed_geo_id": "293913",
+    "seed_place": "Taipei, Taiwan"
+  },
+  "12049501": {
+    "name": "Liberty Square",
+    "seed_geo_id": "293913",
+    "seed_place": "Taipei, Taiwan"
+  },
+  "25210332": {
+    "name": "Painted Nail Salon",
+    "seed_geo_id": "293913",
+    "seed_place": "Taipei, Taiwan"
+  },
+  "23481217": {
+    "name": "Authentravel",
+    "seed_geo_id": "293913",
+    "seed_place": "Taipei, Taiwan"
+  },
+  "25182305": {
+    "name": "Skydrive Auckland International Airport",
+    "seed_geo_id": "1811027",
+    "seed_place": "Auckland, New Zealand"
+  },
+  "25263119": {
+    "name": "New Zealand Natural Mission Bay",
+    "seed_geo_id": "1811027",
+    "seed_place": "Auckland, New Zealand"
+  },
+  "34093730": {
+    "name": "Tahaki Reserve",
+    "seed_geo_id": "1811027",
+    "seed_place": "Auckland, New Zealand"
+  },
+  "10213275": {
+    "name": "Mobile Art Gallery",
+    "seed_geo_id": "1811027",
+    "seed_place": "Auckland, New Zealand"
+  },
+  "13566446": {
+    "name": "Airport Shuttle Transfers & Taxi Services",
+    "seed_geo_id": "1811027",
+    "seed_place": "Auckland, New Zealand"
+  },
+  "12839924": {
+    "name": "Linenz Direct Homeware & Gifts",
+    "seed_geo_id": "1811027",
+    "seed_place": "Auckland, New Zealand"
+  },
+  "3971657": {
+    "name": "Forme Spa & Wellbeing Mt Eden",
+    "seed_geo_id": "1811027",
+    "seed_place": "Auckland, New Zealand"
+  },
+  "28578440": {
+    "name": "Naree Thai Massage",
+    "seed_geo_id": "1811027",
+    "seed_place": "Auckland, New Zealand"
+  },
+  "8775183": {
+    "name": "Time Out Bookstore",
+    "seed_geo_id": "1811027",
+    "seed_place": "Auckland, New Zealand"
+  },
+  "13368301": {
+    "name": "Hair & Bodybliss",
+    "seed_geo_id": "1811027",
+    "seed_place": "Auckland, New Zealand"
+  },
+  "26368851": {
+    "name": "Birdy Queenstown",
+    "seed_geo_id": "255122",
+    "seed_place": "Queenstown, New Zealand"
+  },
+  "23920807": {
+    "name": "Bright Ink Bookshop",
+    "seed_geo_id": "255122",
+    "seed_place": "Queenstown, New Zealand"
+  },
+  "25260297": {
+    "name": "Hello Physio",
+    "seed_geo_id": "255122",
+    "seed_place": "Queenstown, New Zealand"
+  },
+  "25293748": {
+    "name": "Adventure Junkies",
+    "seed_geo_id": "255122",
+    "seed_place": "Queenstown, New Zealand"
+  },
+  "15110941": {
+    "name": "Sergios Menswear",
+    "seed_geo_id": "255122",
+    "seed_place": "Queenstown, New Zealand"
+  },
+  "1592800": {
+    "name": "Canyon Explorers",
+    "seed_geo_id": "255122",
+    "seed_place": "Queenstown, New Zealand"
+  },
+  "8678957": {
+    "name": "Hetties Rock & Crystal Shop",
+    "seed_geo_id": "255122",
+    "seed_place": "Queenstown, New Zealand"
+  },
+  "12371608": {
+    "name": "Department Of Conservation-whakatipu-waimaori/queenstown Visitor Centre",
+    "seed_geo_id": "255122",
+    "seed_place": "Queenstown, New Zealand"
+  },
+  "8370190": {
+    "name": "GreatSights",
+    "seed_geo_id": "255122",
+    "seed_place": "Queenstown, New Zealand"
+  },
+  "2018911": {
+    "name": "HeliBike NZ",
+    "seed_geo_id": "255122",
+    "seed_place": "Queenstown, New Zealand"
+  },
+  "23902424": {
+    "name": "The Strand",
+    "seed_geo_id": "255100",
+    "seed_place": "Melbourne, Australia"
+  },
+  "25103473": {
+    "name": "Australia's Jack the Ripper Tpur",
+    "seed_geo_id": "255100",
+    "seed_place": "Melbourne, Australia"
+  },
+  "23703606": {
+    "name": "Centenary Reserve",
+    "seed_geo_id": "255100",
+    "seed_place": "Melbourne, Australia"
+  },
+  "26245224": {
+    "name": "John’s Car Hire-Driver",
+    "seed_geo_id": "255100",
+    "seed_place": "Melbourne, Australia"
+  },
+  "27109911": {
+    "name": "MB caulking",
+    "seed_geo_id": "255100",
+    "seed_place": "Melbourne, Australia"
+  },
+  "19140981": {
+    "name": "The Reuniting Family Sculpture",
+    "seed_geo_id": "255100",
+    "seed_place": "Melbourne, Australia"
+  },
+  "34105677": {
+    "name": "Cloud Nine Saturdays",
+    "seed_geo_id": "255100",
+    "seed_place": "Melbourne, Australia"
+  },
+  "15048884": {
+    "name": "former York Butter Factory",
+    "seed_geo_id": "255100",
+    "seed_place": "Melbourne, Australia"
+  },
+  "5991177": {
+    "name": "The Lui Bar",
+    "seed_geo_id": "255100",
+    "seed_place": "Melbourne, Australia"
+  },
+  "23920026": {
+    "name": "Highlander Lane",
+    "seed_geo_id": "255100",
+    "seed_place": "Melbourne, Australia"
+  },
+  "12289770": {
+    "name": "Art Collective WA",
+    "seed_geo_id": "255103",
+    "seed_place": "Perth, Australia"
+  },
+  "28442447": {
+    "name": "Cool Change",
+    "seed_geo_id": "255103",
+    "seed_place": "Perth, Australia"
+  },
+  "17571839": {
+    "name": "Cathedral Square",
+    "seed_geo_id": "255103",
+    "seed_place": "Perth, Australia"
+  },
+  "15620056": {
+    "name": "Ascalon",
+    "seed_geo_id": "255103",
+    "seed_place": "Perth, Australia"
+  },
+  "526734": {
+    "name": "St. George's Anglican Cathedral",
+    "seed_geo_id": "255103",
+    "seed_place": "Perth, Australia"
+  },
+  "33444626": {
+    "name": "Sideways Tours",
+    "seed_geo_id": "255103",
+    "seed_place": "Perth, Australia"
+  },
+  "23755440": {
+    "name": "Kangaroos",
+    "seed_geo_id": "255103",
+    "seed_place": "Perth, Australia"
+  },
+  "17594361": {
+    "name": "Ore Obelisk",
+    "seed_geo_id": "255103",
+    "seed_place": "Perth, Australia"
+  },
+  "7119310": {
+    "name": "Council House",
+    "seed_geo_id": "255103",
+    "seed_place": "Perth, Australia"
+  },
+  "25325319": {
+    "name": "Fanny Balbuk Yooreel Statue",
+    "seed_geo_id": "255103",
+    "seed_place": "Perth, Australia"
+  },
+  "27463109": {
+    "name": "Waitui Pursuit",
+    "seed_geo_id": "294331",
+    "seed_place": "Fiji"
+  },
+  "27511441": {
+    "name": "Waitui Pursuit",
+    "seed_geo_id": "294331",
+    "seed_place": "Fiji"
+  },
+  "24019193": {
+    "name": "Coral Coast Transfer And Tours",
+    "seed_geo_id": "294331",
+    "seed_place": "Fiji"
+  }
+}
