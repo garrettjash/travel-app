@@ -55,6 +55,10 @@ body {
   color: #1d4ed8;
 }
 
+.status-missing {
+  color: #7b8794;
+}
+
 .note {
   margin-top: 12px;
   color: #52606d;

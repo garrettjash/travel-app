@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { supabase } from "../lib/supabaseClient";
 
 type HealthState = {
   status: "loading" | "ok" | "error";
@@ -10,6 +11,9 @@ export default function Home() {
     status: "loading",
     message: ""
   });
+  const [supabaseStatus, setSupabaseStatus] = useState<
+    "loading" | "ok" | "error" | "missing"
+  >(supabase ? "loading" : "missing");
 
   useEffect(() => {
     let isMounted = true;
@@ -38,6 +42,32 @@ export default function Home() {
       isMounted = false;
     };
   }, []);
+  useEffect(() => {
+    if (!supabase) {
+      return;
+    }
+
+    let isMounted = true;
+
+    async function checkSupabase() {
+      const { error } = await supabase.auth.getSession();
+      if (!isMounted) {
+        return;
+      }
+
+      setSupabaseStatus(error ? "error" : "ok");
+    }
+
+    checkSupabase().catch(() => {
+      if (isMounted) {
+        setSupabaseStatus("error");
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <main className="page">
@@ -51,6 +81,22 @@ export default function Home() {
           {health.status === "loading" ? "Checking..." : health.message}
         </p>
         <p className="note">Health check is served from /api/health.</p>
+      </section>
+      <section className="card">
+        <h2>Supabase status</h2>
+        <p className={`status status-${supabaseStatus}`}>
+          {supabaseStatus === "loading" && "Checking..."}
+          {supabaseStatus === "ok" && "Supabase client initialized"}
+          {supabaseStatus === "error" && "Supabase check failed"}
+          {supabaseStatus === "missing" &&
+            "Missing NEXT_PUBLIC_SUPABASE_* env vars"}
+        </p>
+        <p className="note">
+          Update <code>.env.local</code> with your Supabase URL and anon key.
+        </p>
+        <p className="note">
+          Test data page: <a href="/attractions">/attractions</a>
+        </p>
       </section>
     </main>
   );
