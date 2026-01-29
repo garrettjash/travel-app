@@ -28,3 +28,6 @@ The frontend calls the health check at `/api/health`.
 ```
 npm run lint
 ```
+
+## ERD
+https://drive.google.com/file/d/1Kuw2Z2jBo8kG9XY9axR5OcgbPoac1_DT/view?usp=sharing
