@@ -1,0 +1,10 @@
+requests
+beautifulsoup4
+tldextract
+selenium
+webdriver-manager
+boto3
+python-dotenv
+pydantic
+openai
+supabase

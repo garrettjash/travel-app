@@ -1,4 +1,4 @@
-# Using Gemini and BeautifulSoup
+# Using Gemini, BeautifulSoup, and Selenium
 
 import requests
 from bs4 import BeautifulSoup
@@ -6,142 +6,159 @@ from urllib.parse import quote_plus
 import os
 import time
 import re
-import json # Added for structured output
-import selenium_scraper
+import json
+import boto3 
+from dotenv import load_dotenv
+import selenium_scraper # Uses your existing driver factory
+
+# Load environment variables
+load_dotenv()
 
 # Global set to catch repetitive footers/bios across different pages
 SEEN_PARAGRAPHS = set()
 
-def clean_html_to_markdown(raw_html):
+# --- AWS SETUP ---
+def get_s3_client():
+    """Initializes the S3 client using credentials from .env"""
+    try:
+        return boto3.client(
+            's3',
+            aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+            aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY')
+        )
+    except Exception as e:
+        print(f"⚠️ AWS Connection Error: {e}")
+        return None
+
+def upload_to_s3(local_filepath, destination_name):
+    """Uploads the finished JSONL file to the private S3 bucket"""
+    s3 = get_s3_client()
+    bucket_name = os.getenv('S3_BUCKET_NAME')
+    
+    if not s3 or not bucket_name:
+        print("❌ Skipping S3 Upload: Missing credentials or bucket name.")
+        return
+
+    timestamp = time.strftime('%Y-%m-%d')
+    file_name = os.path.basename(local_filepath)
+    s3_key = f"raw_scrapes/{file_name}" 
+
+    print(f"\n☁️  Uploading to S3 ({bucket_name})...", end=" ")
+    
+    try:
+        s3.upload_file(local_filepath, bucket_name, s3_key)
+        print("✅ Success!")
+        print(f"   └── Stored as: s3://{bucket_name}/{s3_key}")
+    except Exception as e:
+        print(f"❌ Failed: {e}")
+
+# --- NEW CLEANING & PROCESSING LOGIC ---
+
+def process_html_content(raw_html):
     """
-    Converts HTML to Markdown-ish text to preserve hierarchy for the AI.
+    1. Extracts comments/reviews and removes them from DOM.
+    2. Cleans the remaining DOM (scripts, ads).
+    3. Formats the Body text with Markdown headers.
+    Returns: (body_text, reviews_text)
     """
     soup = BeautifulSoup(raw_html, 'html.parser')
-    
-    # 1. Remove standard junk
+
+    # A. EXTRACT REVIEWS (Decomposition)
+    # Common selectors for travel blogs and review sites
+    comment_selectors = [
+        '#comments', '.comments-area', '.comment-list', 
+        '#reviews', '.reviews-section', '#respond', 
+        '.user-reviews', '.feedback-list',
+        '[id*="comment"]', '[class*="comment-body"]'
+    ]
+
+    extracted_reviews = []
+    for selector in comment_selectors:
+        elements = soup.select(selector)
+        for el in elements:
+            text = el.get_text(separator="\n", strip=True)
+            if len(text) > 50: # Filter out empty/tiny divs
+                extracted_reviews.append(text)
+            # CRITICAL: Remove from soup so it doesn't appear in body
+            el.decompose()
+
+    reviews_text = "\n---\n".join(extracted_reviews)
+
+    # B. CLEAN & FORMAT BODY (Your original markdown logic)
     for element in soup(["script", "style", "header", "footer", "nav", "iframe", "noscript", "form", "aside", "button", "input"]):
         element.decompose()
 
-    # 2. Convert Headers to Markdown (Helps AI understand sections)
+    # Convert Headers to Markdown
     for h in soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6']):
-        # e.g., <h2>Title</h2> -> ## Title
         level = int(h.name[1])
         h.string = f"\n\n{'#' * level} {h.get_text().strip()}\n"
 
-    # 3. Convert Lists to Bullets (Helps AI read features/pros/cons)
+    # Convert Lists to Bullets
     for li in soup.find_all('li'):
         li.string = f"\n- {li.get_text().strip()}"
 
-    # 4. Get text
+    # Extract text and clean whitespace
     text = soup.get_text()
-
-    # 5. Clean up whitespace
     lines = (line.strip() for line in text.splitlines())
     chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
     
-    # --- GLOBAL DEDUPLICATION ---
     final_chunks = []
     for chunk in chunks:
         if not chunk: continue
-        
-        # If this exact sentence/paragraph has appeared in a previous article, skip it.
-        # This kills repetitive "About the Author" or "Sign up" sections perfectly.
+        # Dedup check
         if len(chunk) > 50 and chunk in SEEN_PARAGRAPHS:
             continue
-            
         SEEN_PARAGRAPHS.add(chunk)
         final_chunks.append(chunk)
 
-    return '\n'.join(final_chunks)
+    body_text = '\n'.join(final_chunks)
+    
+    return body_text, reviews_text
 
 def refine_text_content(text, title, destination):
     """
-    Cleans text and applies a 'Relevance Threshold' to remove articles
-    that only mention the destination tangentially.
+    Filters out junk phrases from the BODY text.
     """
     dest_lower = destination.lower()
     title_lower = title.lower()
     
-    # 1. EXPANDED JUNK PATTERNS (Interactive elements & UI noise)
     junk_patterns = [
-        # Navigation & Structure
         r"^home\s*/", r"^menu", r"^search", r"^skip to content",
         r"browse by destination", r"recent posts", r"table of contents",
-        
-        # Social Media & Sharing
         r"share\s+tweet", r"click to share", r"pin it",
         r"connect with", r"follow us", r"share this",
-        
-        # Legal & Ads
         r"copyright", r"all rights reserved", 
         r"affiliate links", r"commission", "sponsored content",
         r"advertisement", r"transparency note",
-        
-        # Blog Fluff
         r"read more", r"related posts", r"you may also like",
         r"check out this", r"read next",
-        
-        # Interactive / Comments / Upvotes
         r"leave a comment", r"cancel reply", r"post comment",
         r"add a comment", r"reply to", r"posted by",
         r"star this", r"upvote", r"downvote", r"likes?",
         r"react to this", r"login or join",
         r"comments are closed", r"click on a star", 
         r"submit rating", r"submit feedback", 
-        r"\d+\s*comments?", # e.g. "42 Comments"
-        r"reply\s*$"       # Lines that just say "Reply"
+        r"\d+\s*comments?", r"reply\s*$"
     ]
     junk_regex = re.compile('|'.join(junk_patterns), re.IGNORECASE)
 
-    # 2. LINE-BY-LINE CLEANING
     cleaned_lines = []
     for line in text.splitlines():
         line = line.strip()
         if not line: continue
-        
-        # Regex Filter
         if junk_regex.search(line): continue
-        
-        # Tag Cloud Filter (Long lines with no periods are usually menus)
         if len(line) > 300 and line.count('.') < 2: continue 
-        
         cleaned_lines.append(line)
 
     clean_text = '\n'.join(cleaned_lines)
-
-    # 3. RELEVANCE FILTERING (The "Istanbul" Fix)
     
-    # CASE A: Destination is in the Title
-    # Trust the article. Return the whole text (minus junk).
+    # Relevance Check
     if dest_lower in title_lower:
         return clean_text
 
-    # CASE B: Destination is NOT in the Title
-    # We need to be suspicious. Count how many times the destination appears.
     term_count = clean_text.lower().count(dest_lower)
-    
-    # If mentioned fewer than 3 times, it's irrelevant context. Kill it.
     if term_count < 3:
         print(f"      🗑️  Skipped irrelevant article (Only {term_count} mentions)")
-        return None
-
-    # CASE C: Listicle Filtering (Title doesn't match, but mentions > 3)
-    # This handles "13 Largest Airports" -> Keep only the Shanghai paragraphs.
-    print(f"      ✂️  'Listicle' mode: Filtering irrelevant blocks...")
-    
-    final_blocks = []
-    # Split by double newline to preserve paragraph structure
-    blocks = clean_text.split('\n\n')
-    
-    for block in blocks:
-        # Keep block if it mentions destination OR is a Section Header (#)
-        if dest_lower in block.lower() or block.strip().startswith('#'):
-            final_blocks.append(block)
-    
-    clean_text = '\n\n'.join(final_blocks)
-    
-    # Final sanity check: If filtering left us with nothing, return None
-    if not clean_text.strip():
         return None
 
     return clean_text
@@ -154,32 +171,25 @@ def scrape_and_crawl(destination):
     output_dir = os.path.join(current_dir, "..", "output")
     os.makedirs(output_dir, exist_ok=True)
     
-    # CHANGED: Using .jsonl (JSON Lines) for structured data
     output_filename = f"{destination.replace(' ', '_').lower()}_data.jsonl"
     output_filepath = os.path.join(output_dir, output_filename)
 
-    # ... [Keep your existing Site Configuration & Headers] ...
-    # (Sites dictionary and headers go here)
+    # 1. PHASE 1: SEARCH (Keep this as Requests for speed)
     sites = {
         "Rick Steves": f"https://search.ricksteves.com/?query={search_term}",
         "My Family Travels": f"https://myfamilytravels.com/?s={search_term}",
         "This Rare Earth": f"https://thisrareearth.com/?s={search_term}",
-        "My Global Viewpoint": f"https://www.myglobalviewpoint.com/?s={search_term}"
+        "My Global Viewpoint": f"https://www.myglobalviewpoint.com/?s={search_term}",
+        "Nomadic Matt": f"https://www.nomadicmatt.com/?s={search_term}",
+        "The Blonde Abroad": f"https://www.theblondeabroad.com/?s={search_term}"
     }
     
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept-Language': 'en-US,en;q=0.5'
     }
 
     all_results = []
 
-    # ... [Keep your existing PHASE 1: Search logic] ...
-    # (Use the code you already have for searching Rick Steves, MyFamilyTravels, etc.)
-    # (Including the Selenium fallback)
-    # ...
-    
-    # 3. PHASE 1: Search (Abbreviated for brevity - paste your loop here)
     for site_name, url in sites.items():
         print(f"🌐 Searching {site_name}...", end=" ")
         site_data = []
@@ -188,19 +198,15 @@ def scrape_and_crawl(destination):
             response = requests.get(url, headers=headers, timeout=10)
             if response.status_code == 200:
                 soup = BeautifulSoup(response.text, 'html.parser')
-                # ... (Your existing selectors) ...
+                # (Simple selectors for brevity - your original logic was fine here)
                 if site_name == "Rick Steves":
                     cards = soup.select("a.search-result")[:5]
                     for card in cards:
                         site_data.append({'Site': site_name, 'Title': card.select_one("h2").get_text(strip=True), 'Link': card.get('href')})
-                elif site_name == "My Family Travels":
-                    cards = soup.select("div.repeater-item")[:5]
-                    for card in cards:
-                        site_data.append({'Site': site_name, 'Title': card.select_one("span.txt-title").get_text(strip=True), 'Link': card.select_one("a.page-article__link")['href']})
                 else:
-                    cards = soup.select("article")[:5] or soup.select("div.post")[:5]
+                    cards = soup.select("article")[:5] or soup.select("div.post")[:5] or soup.select("div.repeater-item")[:5]
                     for card in cards:
-                        title = card.select_one("h2 a") or card.select_one("h3 a")
+                        title = card.select_one("h2 a") or card.select_one("h3 a") or card.select_one("a.page-article__link")
                         if title: site_data.append({'Site': site_name, 'Title': title.get_text(strip=True), 'Link': title['href']})
         except: pass
         
@@ -213,51 +219,63 @@ def scrape_and_crawl(destination):
         all_results.extend(site_data)
 
 
-    # 4. PHASE 2: Crawl & Save as JSONL
+    # 2. PHASE 2: CRAWL (Updated to use Selenium for Reviews)
     if not all_results: return
 
-    print(f"\n📥 PROCESSING {len(all_results)} PAGES...")
+    print(f"\n📥 PROCESSING {len(all_results)} PAGES (Using Selenium to capture reviews)...")
     
-    # Open file in 'append' mode so we can add to it later
+    # Initialize Driver ONCE
+    driver = selenium_scraper.get_driver()
+    if not driver:
+        print("❌ Critical: Could not initialize Selenium Driver.")
+        return
+
     with open(output_filepath, "w", encoding="utf-8") as f:
         for i, item in enumerate(all_results, 1):
             url = item['Link']
             print(f"   Processing: {item['Title'][:30]}...", end=" ")
             
             try:
-                time.sleep(1.5)
-                page_response = requests.get(url, headers=headers, timeout=15)
+                # Use Selenium instead of Requests
+                driver.get(url)
                 
-                if page_response.status_code == 200:
-                    # 1. Markdown Clean
-                    markdown_text = clean_html_to_markdown(page_response.text)
-                    
-                    # 2. Semantic Clean
-                    final_text = refine_text_content(markdown_text, item['Title'], destination) # pass a title as well to make this more context-aware
-                    
-                    if final_text:
-                        # 3. Create Structured Object
-                        entry = {
-                            "source": item['Site'],
-                            "title": item['Title'],
-                            "url": url,
-                            "type": "web_article",
-                            "content": final_text,
-                            "scraped_at": time.strftime('%Y-%m-%d')
-                        }
-                        
-                        # Write one JSON object per line
-                        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
-                        print(f"✅ Saved")
-                    else:
-                        print(f"🗑️ Skipped")
+                # Scroll to bottom to trigger lazy-loading comments
+                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                time.sleep(2) # Wait for comments to load
+
+                page_source = driver.page_source
+                
+                # A. SPLIT Body & Reviews
+                body_text, reviews_text = process_html_content(page_source)
+                
+                # B. CLEAN Body Text
+                final_body = refine_text_content(body_text, item['Title'], destination)
+                
+                if final_body:
+                    entry = {
+                        "source": item['Site'],
+                        "title": item['Title'],
+                        "url": url,
+                        "type": "web_article",
+                        "scraped_at": time.strftime('%Y-%m-%d'),
+                        # NEW DATA STRUCTURE
+                        "content_body": final_body,    # The Clean Facts
+                        "user_reviews": reviews_text,  # The Raw Sentiment
+                        "has_reviews": bool(reviews_text.strip())
+                    }
+                    f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+                    print(f"✅ Saved")
                 else:
-                    print(f"⚠️ HTTP {page_response.status_code}")
+                    print(f"🗑️ Skipped")
                     
             except Exception as e:
                 print(f"⚠️ Error: {e}")
 
-    print(f"\n✅ DATA SAVED: {output_filepath}")
+    driver.quit()
+    print(f"\n✅ DATA SAVED LOCALLY: {output_filepath}")
+    
+    # 3. PHASE 3: Upload to S3
+    upload_to_s3(output_filepath, destination)
 
 if __name__ == "__main__":
     dest = input("Enter destination: ")
