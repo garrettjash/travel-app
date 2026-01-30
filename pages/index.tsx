@@ -10,6 +10,9 @@ export default function Home() {
     status: "loading",
     message: ""
   });
+  const [supabaseStatus, setSupabaseStatus] = useState<
+    "loading" | "ok" | "error"
+  >("loading");
 
   useEffect(() => {
     let isMounted = true;
@@ -38,6 +41,29 @@ export default function Home() {
       isMounted = false;
     };
   }, []);
+  useEffect(() => {
+    let isMounted = true;
+
+    async function checkSupabase() {
+      try {
+        const response = await fetch("/api/attractions?limit=1");
+        if (!isMounted) {
+          return;
+        }
+        setSupabaseStatus(response.ok ? "ok" : "error");
+      } catch {
+        if (isMounted) {
+          setSupabaseStatus("error");
+        }
+      }
+    }
+
+    checkSupabase();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <main className="page">
@@ -51,6 +77,20 @@ export default function Home() {
           {health.status === "loading" ? "Checking..." : health.message}
         </p>
         <p className="note">Health check is served from /api/health.</p>
+      </section>
+      <section className="card">
+        <h2>Supabase status</h2>
+        <p className={`status status-${supabaseStatus}`}>
+          {supabaseStatus === "loading" && "Checking..."}
+          {supabaseStatus === "ok" && "Supabase API route ok"}
+          {supabaseStatus === "error" && "Supabase check failed"}
+        </p>
+        <p className="note">
+          Update <code>.env.local</code> with your Supabase URL and anon key.
+        </p>
+        <p className="note">
+          Test data page: <a href="/attractions">/attractions</a>
+        </p>
       </section>
     </main>
   );
