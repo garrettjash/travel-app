@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 type HealthState = {
   status: "loading" | "ok" | "error";
@@ -89,7 +90,7 @@ export default function Home() {
           Update <code>.env.local</code> with your Supabase URL and anon key.
         </p>
         <p className="note">
-          Test data page: <a href="/attractions">/attractions</a>
+          Test data page: <Link href="/attractions">/attractions</Link>
         </p>
       </section>
     </main>
