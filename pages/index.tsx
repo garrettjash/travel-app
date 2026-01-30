@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { supabase } from "../lib/supabaseClient";
 
 type HealthState = {
   status: "loading" | "ok" | "error";
@@ -12,8 +11,8 @@ export default function Home() {
     message: ""
   });
   const [supabaseStatus, setSupabaseStatus] = useState<
-    "loading" | "ok" | "error" | "missing"
-  >(supabase ? "loading" : "missing");
+    "loading" | "ok" | "error"
+  >("loading");
 
   useEffect(() => {
     let isMounted = true;
@@ -43,26 +42,23 @@ export default function Home() {
     };
   }, []);
   useEffect(() => {
-    if (!supabase) {
-      return;
-    }
-
     let isMounted = true;
 
     async function checkSupabase() {
-      const { error } = await supabase.auth.getSession();
-      if (!isMounted) {
-        return;
+      try {
+        const response = await fetch("/api/attractions?limit=1");
+        if (!isMounted) {
+          return;
+        }
+        setSupabaseStatus(response.ok ? "ok" : "error");
+      } catch {
+        if (isMounted) {
+          setSupabaseStatus("error");
+        }
       }
-
-      setSupabaseStatus(error ? "error" : "ok");
     }
 
-    checkSupabase().catch(() => {
-      if (isMounted) {
-        setSupabaseStatus("error");
-      }
-    });
+    checkSupabase();
 
     return () => {
       isMounted = false;
@@ -86,10 +82,8 @@ export default function Home() {
         <h2>Supabase status</h2>
         <p className={`status status-${supabaseStatus}`}>
           {supabaseStatus === "loading" && "Checking..."}
-          {supabaseStatus === "ok" && "Supabase client initialized"}
+          {supabaseStatus === "ok" && "Supabase API route ok"}
           {supabaseStatus === "error" && "Supabase check failed"}
-          {supabaseStatus === "missing" &&
-            "Missing NEXT_PUBLIC_SUPABASE_* env vars"}
         </p>
         <p className="note">
           Update <code>.env.local</code> with your Supabase URL and anon key.

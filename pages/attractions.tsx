@@ -1,42 +1,37 @@
 import { useEffect, useState } from "react";
-import { supabase } from "../lib/supabaseClient";
 
 type Attraction = Record<string, unknown>;
 
 type LoadState =
   | { status: "loading" }
-  | { status: "missing-env" }
   | { status: "error"; message: string }
   | { status: "ok"; data: Attraction[] };
 
 export default function AttractionsPage() {
-  const [state, setState] = useState<LoadState>(
-    supabase ? { status: "loading" } : { status: "missing-env" }
-  );
+  const [state, setState] = useState<LoadState>({ status: "loading" });
 
   useEffect(() => {
-    if (!supabase) {
-      return;
-    }
-
     let isMounted = true;
 
     async function loadAttractions() {
-      const { data, error } = await supabase
-        .from("attraction")
-        .select("*")
-        .limit(25);
+      const response = await fetch("/api/attractions");
+      const payload = (await response.json()) as
+        | { data: Attraction[] }
+        | { error: string };
 
       if (!isMounted) {
         return;
       }
 
-      if (error) {
-        setState({ status: "error", message: error.message });
+      if (!response.ok || "error" in payload) {
+        setState({
+          status: "error",
+          message: "error" in payload ? payload.error : "Request failed"
+        });
         return;
       }
 
-      setState({ status: "ok", data: data ?? [] });
+      setState({ status: "ok", data: payload.data ?? [] });
     }
 
     loadAttractions().catch(() => {
@@ -58,9 +53,6 @@ export default function AttractionsPage() {
       </header>
       <section className="card">
         {state.status === "loading" && <p>Loading...</p>}
-        {state.status === "missing-env" && (
-          <p>Missing NEXT_PUBLIC_SUPABASE_* env vars.</p>
-        )}
         {state.status === "error" && <p>Error: {state.message}</p>}
         {state.status === "ok" && (
           <>
