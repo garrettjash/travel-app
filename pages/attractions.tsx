@@ -49,7 +49,7 @@ export default function AttractionsPage() {
     <main className="page">
       <header className="hero">
         <h1>Attractions (test)</h1>
-        <p>Reading from the Supabase table named "attraction".</p>
+        <p>Reading from the Supabase table named &quot;attraction&quot;.</p>
       </header>
       <section className="card">
         {state.status === "loading" && <p>Loading...</p>}
