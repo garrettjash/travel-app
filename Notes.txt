@@ -1,0 +1,85 @@
+    count = 0
+
+    for item in attractions:
+
+        # Changed 'name' to 'attraction_name'
+
+        existing_attr = supabase.table('attraction') \
+
+            .select('attraction_id') \
+
+            .eq('attraction_name', item.name) \
+
+            .eq('place_id', place_id) \
+
+            .execute()
+
+
+
+        logistics_json = item.logistics.model_dump(exclude_none=True)
+
+
+
+        if existing_attr.data:
+
+            attraction_id = existing_attr.data[0]['attraction_id']
+
+        else:
+
+            new_attr_data = {
+
+                'place_id': place_id,
+
+                # Changed 'name' to 'attraction_name'
+
+                'attraction_name': item.name, 
+
+                'attraction_summary': item.description_summary,
+
+                'attraction_vibe': item.vibes,
+
+                'attraction_rawdata': logistics_json,
+
+                'attraction_latitude': 0.0,
+
+                'attraction_longitude': 0.0
+
+            }
+
+            res = supabase.table('attraction').insert(new_attr_data).execute()
+
+            attraction_id = res.data[0]['attraction_id']
+
+
+
+For Attraction, I need these populated:
+
+- attraction_embedding
+
+- attraction_city --> can be the exact city for this thing rather than calling everything the 'place' name. Some attractions will be in the city itself, though
+
+- attraction_stateprovince
+
+- attraction_countryregion
+
+- attraction_latitude
+
+- attraction_longitude
+
+- attraction_distancefromplace
+
+- attraction_lastrefreshed --> the datetime in YYYY-MM-DD HH:MM:SS+XX
+
+- attraction_rawdata --> most of these for each attraction is populated, but some are not. Maybe there's not enough info from the source files?
+
+- attraction_normalizedrating --> 
+
+- attraction_totalcountratings --> 
+
+- attraction_credibilitytier --> depending on how credible the source is.
+
+- attraction_reviewsummary
+
+- attraction_popularityscore
+
+- attration_pricelevel
