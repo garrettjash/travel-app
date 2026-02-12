@@ -53,6 +53,8 @@ const supabaseKey =
 
 const DEFAULT_PAGE_SIZE = 6;
 const MAX_PAGE_SIZE = 24;
+const ATTRACTION_SELECT =
+  "attraction_id, attraction_name, attraction_city, attraction_countryregion, attraction_summary, attraction_vibe, attraction_normalizedrating, attraction_pricelevel, attraction_popularityscore";
 
 function asString(value: string | string[] | undefined) {
   const raw = Array.isArray(value) ? value[0] : value;
@@ -203,20 +205,7 @@ export default async function handler(
 
     let query = supabase
       .from("attraction")
-      .select(
-        [
-          "attraction_id",
-          "attraction_name",
-          "attraction_city",
-          "attraction_countryregion",
-          "attraction_summary",
-          "attraction_vibe",
-          "attraction_normalizedrating",
-          "attraction_pricelevel",
-          "attraction_popularityscore"
-        ].join(", "),
-        { count: "exact" }
-      )
+      .select(ATTRACTION_SELECT, { count: "exact" })
       .order("attraction_popularityscore", { ascending: false, nullsFirst: false })
       .range(offset, offset + limit - 1);
 
@@ -257,7 +246,7 @@ export default async function handler(
       return;
     }
 
-    const attractionRows = (data ?? []) as AttractionRow[];
+    const attractionRows = (data ?? []) as unknown as AttractionRow[];
     const attractionIds = attractionRows.map((row) => row.attraction_id);
 
     let categoriesByAttraction = new Map<number, string[]>();
