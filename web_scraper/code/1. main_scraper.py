@@ -10,6 +10,9 @@ import json
 import boto3 
 from dotenv import load_dotenv
 import selenium_scraper # Uses your existing driver factory
+import subprocess
+import sys
+from pathlib import Path
 
 # Load environment variables
 load_dotenv()
@@ -277,6 +280,18 @@ def scrape_and_crawl(destination):
     # 3. PHASE 3: Upload to S3
     upload_to_s3(output_filepath, destination)
 
+def run_tripadvisor_scraper(destination):
+    repo_root = Path(__file__).resolve().parents[2]
+    ta_path = repo_root / "data" / "TripAdvisor" / "ta_scraper.py"
+    if not ta_path.exists():
+        print(f"⚠️ TripAdvisor scraper not found at: {ta_path}")
+        return
+    env = os.environ.copy()
+    env["TA_SEED_PLACE"] = destination
+    print(f"\n🧭 Running TripAdvisor scraper for: {destination}")
+    subprocess.run([sys.executable, str(ta_path)], env=env, check=False)
+
 if __name__ == "__main__":
     dest = input("Enter destination: ")
     scrape_and_crawl(dest)
+    run_tripadvisor_scraper(dest)

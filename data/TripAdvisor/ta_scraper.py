@@ -3,6 +3,7 @@ import time
 import json
 import boto3
 import requests
+import importlib.util
 from pathlib import Path
 from datetime import datetime, timezone
 
@@ -22,6 +23,7 @@ load_dotenv(repo_root / ".env")
 API_KEY = os.getenv("TA_API_KEY")
 S3_BUCKET = os.getenv("S3_BUCKET_NAME")
 S3_PREFIX = "raw_scrapes/"
+TA_SEED_PLACE_ENV = os.getenv("TA_SEED_PLACE")
 
 if not API_KEY:
     raise RuntimeError("Set TA_API_KEY in your environment.")
@@ -45,6 +47,47 @@ BOUNDING_BOXES = [
 
 # Optional seed places if USE_BOUNDING_BOXES = False
 SEED_PLACES = []
+
+# --- OPTIONAL USER SEED + WEB SCRAPER BRIDGE ---
+USE_INTERACTIVE_SEED = True
+WEB_SCRAPER_PATH = repo_root / "web_scraper" / "code" / "1. main_scraper.py"
+
+def load_web_scraper():
+    if not WEB_SCRAPER_PATH.exists():
+        print(f"⚠️ Web scraper not found at: {WEB_SCRAPER_PATH}")
+        return None
+    try:
+        spec = importlib.util.spec_from_file_location("main_scraper", WEB_SCRAPER_PATH)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+    except Exception as exc:
+        print(f"⚠️ Failed to load web scraper: {exc}")
+        return None
+
+def prompt_seed_place():
+    if not USE_INTERACTIVE_SEED:
+        return None
+    if TA_SEED_PLACE_ENV:
+        return TA_SEED_PLACE_ENV.strip()
+    try:
+        raw = input("Enter seed place (leave blank to use bounding boxes): ").strip()
+    except EOFError:
+        return None
+    return raw or None
+
+def maybe_run_web_scraper(place_name):
+    if not place_name:
+        return
+    module = load_web_scraper()
+    if not module:
+        return
+    scraper_fn = getattr(module, "scrape_and_crawl", None)
+    if not scraper_fn:
+        print("⚠️ Web scraper missing scrape_and_crawl()")
+        return
+    print(f"🌐 Running web scraper for: {place_name}")
+    scraper_fn(place_name)
 
 # --- API HELPERS ---
 BASE = "https://api.content.tripadvisor.com/api/v1"
@@ -157,6 +200,12 @@ def flatten_details(d):
 # --- RESOLVE SEEDS (optional) ---
 top_places = {}
 unresolved = []
+user_seed = prompt_seed_place()
+if user_seed:
+    USE_BOUNDING_BOXES = False
+    SEED_PLACES = [user_seed]
+    maybe_run_web_scraper(user_seed)
+
 if not USE_BOUNDING_BOXES:
     for place in SEED_PLACES:
         try:
