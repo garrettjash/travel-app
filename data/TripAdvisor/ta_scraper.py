@@ -91,6 +91,11 @@ def s3_upload_file(s3, bucket, key, source_path):
     s3.upload_file(str(source_path), bucket, key)
     print(f"⬆️ Uploaded {key} to S3")
 
+def s3_upload_jsonl(s3, bucket, key, lines):
+    payload = "\n".join(json.dumps(line, ensure_ascii=False) for line in lines) + "\n"
+    s3.put_object(Bucket=bucket, Key=key, Body=payload.encode("utf-8"))
+    print(f"⬆️ Uploaded {key} to S3")
+
 def load_web_scraper():
     if not WEB_SCRAPER_PATH.exists():
         print(f"⚠️ Web scraper not found at: {WEB_SCRAPER_PATH}")
@@ -402,6 +407,67 @@ if s3_client:
     s3_upload_file(s3_client, S3_BUCKET, STATE_S3_KEY, STATE_PATH)
     if PERSIST_ATTRACTIONS:
         s3_upload_file(s3_client, S3_BUCKET, ATTRACTIONS_S3_KEY, ATTRACTIONS_PATH)
+
+if s3_client and new_rows:
+    def place_key(row):
+        city = (row.get("city") or "").strip()
+        country = (row.get("country") or "").strip()
+        if city and country:
+            return f"{city}, {country}"
+        if city:
+            return city
+        seed = (row.get("seed_place") or "").strip()
+        return seed or "Unknown"
+
+    def slugify(text):
+        cleaned = "".join(ch if ch.isalnum() else "_" for ch in text)
+        while "__" in cleaned:
+            cleaned = cleaned.replace("__", "_")
+        return cleaned.strip("_") or "unknown"
+
+    grouped = {}
+    for a in new_rows:
+        key = place_key(a)
+        grouped.setdefault(key, []).append(a)
+
+    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    for key, rows_for_place in grouped.items():
+        lines = []
+        for a in rows_for_place:
+            title = a.get("name") or "Unknown Attraction"
+            city = a.get("city") or ""
+            country = a.get("country") or ""
+            address = a.get("address") or ""
+            rating = a.get("rating") or ""
+            reviews = a.get("num_reviews") or ""
+            price = a.get("price_level") or ""
+            website = a.get("website") or ""
+            seed_place = key
+
+            content_body = (
+                f"Attraction: {title}\n"
+                f"Location: {city}, {country}\n"
+                f"Detected city: {city}, {country}\n"
+                f"Address: {address}\n"
+                f"Rating: {rating} (reviews: {reviews})\n"
+                f"Price level: {price}\n"
+                f"Website: {website}\n"
+                f"Seed place: {seed_place}\n"
+            ).strip()
+
+            lines.append({
+                "source": "TripAdvisor",
+                "title": title,
+                "url": a.get("web_url") or website or "",
+                "content_body": content_body,
+                "location_id": a.get("location_id"),
+                "seed_place": seed_place,
+                "seed_geo_id": a.get("seed_geo_id"),
+            })
+
+        file_slug = slugify(key)
+        s3_key = f"{S3_PREFIX}ta_{file_slug}_{stamp}.jsonl"
+        s3_upload_jsonl(s3_client, S3_BUCKET, s3_key, lines)
 
 print("Saved attractions.json")
 print("New rows:", len(new_rows), "Errors:", len(detail_errors), "Total:", len(merged_rows))
