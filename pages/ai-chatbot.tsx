@@ -1,4 +1,4 @@
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 
 type ChatMessage = {
   id: string;
@@ -9,10 +9,7 @@ type ChatMessage = {
 
 function formatTimestamp(value: string) {
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return "Unknown time";
-  }
-
+  if (Number.isNaN(date.getTime())) return "Unknown time";
   return date.toLocaleString();
 }
 
@@ -48,67 +45,72 @@ export default function AiChatbotPage() {
     [draft, isSending]
   );
 
+  // Fetch all messages from the DB
+  const fetchMessages = async () => {
+    try {
+      const res = await fetch("/api/chat-messages");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to fetch messages");
+
+      // Map DB fields to ChatMessage using message_id
+      const mapped: ChatMessage[] = (data.data ?? []).map((msg: any) => ({
+        id: msg.message_id.toString(), // <-- changed here
+        role: msg.sender === "assistant" ? "assistant" : "user",
+        content: msg.content,
+        createdAt: msg.created_at ?? new Date().toISOString(),
+      }));
+
+      setMessages(mapped);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unknown error fetching messages");
+    }
+  };
+
+  useEffect(() => {
+    fetchMessages();
+  }, []);
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const content = draft.trim();
-
-    if (!content || isSending) {
-      return;
-    }
+    if (!content || isSending) return;
 
     setIsSending(true);
-    try {
-      const userMessage: ChatMessage = {
-        id: `${Date.now()}-user`,
-        role: "user",
-        content,
-        createdAt: new Date().toISOString()
-      };
-      setMessages((prev) => [...prev, userMessage]);
-      setDraft("");
-      setError(null);
+    setDraft("");
+    setError(null);
 
+    try {
+      // Send user message to the agent
       const agentResponse = await fetch("/api/agent", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          prompt: content,
-          session_id: sessionId
-        })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: content, session_id: sessionId }),
       });
+
       const agentRawResponse = await agentResponse.text();
       if (!agentResponse.ok) {
         let errorMessage = agentRawResponse;
         try {
-          const parsed = JSON.parse(agentRawResponse) as {
-            error?: string;
-            requestId?: string;
-          };
-          if (typeof parsed.error === "string") {
-            errorMessage = parsed.error;
-          }
-          if (typeof parsed.requestId === "string") {
-            errorMessage = `${errorMessage} (requestId: ${parsed.requestId})`;
-          }
-        } catch {
-          // Keep raw response text.
-        }
-        throw new Error(`Agent request failed (${agentResponse.status}): ${errorMessage}`);
+          const parsed = JSON.parse(agentRawResponse);
+          if (parsed.error) errorMessage = parsed.error;
+        } catch {}
+        throw new Error(errorMessage);
       }
 
-      const assistantMessage: ChatMessage = {
-        id: `${Date.now()}-assistant`,
-        role: "assistant",
-        content: extractAssistantText(agentRawResponse),
-        createdAt: new Date().toISOString()
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
-    } catch (sendError) {
-      setError(
-        sendError instanceof Error ? sendError.message : "Failed to send message."
-      );
+      // Optionally, store the assistant message in DB server-side
+      await fetch("/api/chat-messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: extractAssistantText(agentRawResponse),
+          sender: "assistant",
+        }),
+      });
+
+      // Refresh messages from DB
+      await fetchMessages();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to send message");
     } finally {
       setIsSending(false);
     }
@@ -123,22 +125,20 @@ export default function AiChatbotPage() {
         </header>
 
         <div className="chat-messages" role="log" aria-live="polite">
-          {messages.length === 0 && (
-            <p className="chat-state">No messages yet. Start the conversation.</p>
-          )}
-          {messages.map((message) => (
-            <article className="chat-message" key={message.id}>
+          {messages.length === 0 && <p className="chat-state">No messages yet.</p>}
+          {messages.map((msg) => (
+            <article className="chat-message" key={msg.id}>
               <div className="chat-message-meta">
-                <strong>{message.role}</strong>
-                <span>{formatTimestamp(message.createdAt)}</span>
+                <strong>{msg.role}</strong>
+                <span>{formatTimestamp(msg.createdAt)}</span>
               </div>
-              <p>{message.content}</p>
+              <p>{msg.content}</p>
             </article>
           ))}
         </div>
 
         <form className="chat-form" onSubmit={handleSubmit}>
-          <label className="chat-form-label" htmlFor="chat-input">
+          <label htmlFor="chat-input" className="chat-form-label">
             Message
           </label>
           <div className="chat-form-row">
@@ -147,11 +147,11 @@ export default function AiChatbotPage() {
               className="chat-input"
               type="text"
               value={draft}
-              onChange={(event) => setDraft(event.target.value)}
+              onChange={(e) => setDraft(e.target.value)}
               placeholder="Type your message..."
               maxLength={2000}
             />
-            <button className="chat-send-button" type="submit" disabled={!canSend}>
+            <button type="submit" disabled={!canSend} className="chat-send-button">
               {isSending ? "Sending..." : "Send"}
             </button>
           </div>
