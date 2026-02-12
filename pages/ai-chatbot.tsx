@@ -1,4 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/router";
+import AttractionsExplorer from "../components/AttractionsExplorer";
 
 type ChatMessage = {
   message_id: string;
@@ -14,7 +16,9 @@ function formatTimestamp(value: string) {
 }
 
 export default function AiChatbotPage() {
+  const router = useRouter();
   const sessionId = "57076c76-ad4c-4124-8a80-f4c151366844";
+  const isChatView = router.query.view === "chat";
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState("");
@@ -37,7 +41,7 @@ export default function AiChatbotPage() {
         message_id: String(msg.message_id),
         role: msg.role === "assistant" ? "assistant" : "user",
         content: msg.content,
-        createdAt: msg.created_at ?? new Date().toISOString(),
+        createdAt: msg.created_at ?? new Date().toISOString()
       }));
 
       setMessages(mapped);
@@ -47,8 +51,9 @@ export default function AiChatbotPage() {
   };
 
   useEffect(() => {
+    if (!isChatView) return;
     fetchMessages();
-  }, []);
+  }, [isChatView]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -63,7 +68,7 @@ export default function AiChatbotPage() {
       const agentResponse = await fetch("/api/agent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: content, session_id: sessionId }),
+        body: JSON.stringify({ prompt: content, session_id: sessionId })
       });
 
       const agentData = await agentResponse.json();
@@ -80,10 +85,60 @@ export default function AiChatbotPage() {
     }
   };
 
+  if (!isChatView) {
+    return (
+      <main className="destinations-page">
+        <header className="destinations-topbar">
+          <span className="destinations-brand">TravelApp</span>
+          <button type="button" className="destinations-login">Login</button>
+        </header>
+
+        <section className="destinations-layout">
+          <nav className="destinations-sidebar" aria-label="Main navigation">
+            <button type="button" className="destinations-tab">
+              <span aria-hidden="true">🛏️</span>
+              <span>Stays</span>
+            </button>
+            <button type="button" className="destinations-tab">
+              <span aria-hidden="true">✈️</span>
+              <span>Flights</span>
+            </button>
+            <button type="button" className="destinations-tab destinations-tab-active">
+              <span aria-hidden="true">🗺️</span>
+              <span>Destinations</span>
+            </button>
+            <button type="button" className="destinations-tab">
+              <span aria-hidden="true">💾</span>
+              <span>Saved Trips</span>
+            </button>
+            <button
+              type="button"
+              className="destinations-tab"
+              onClick={() => router.push("/ai-chatbot?view=chat")}
+            >
+              <span aria-hidden="true">✨</span>
+              <span>AI Chatbot</span>
+            </button>
+          </nav>
+
+          <div className="destinations-content">
+            <AttractionsExplorer
+              title="Top Choices For Your Selections"
+              subtitle="Explore attractions based on your filters."
+            />
+          </div>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <main className="chat-page">
       <section className="chat-shell">
         <header className="chat-header">
+          <button type="button" className="chat-back-button" onClick={() => router.back()}>
+            ← Back
+          </button>
           <h1>AI Travel Chatbot</h1>
           <p>Ask travel questions and view the conversation from your database.</p>
         </header>
