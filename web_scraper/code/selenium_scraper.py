@@ -184,10 +184,34 @@ def _scrape_reddit(driver, destination):
     url = f"https://www.reddit.com/search/?q={quote_plus(destination)}&type=link&sort=relevance"
     driver.get(url)
     
-    _wait_for_any(driver, ["a[data-testid='post-title']", "h3", "a"])
+    print(f"   📍 Reddit URL: {driver.current_url}")
+    
+    # Wait for page to stabilize and any JS to render
+    try:
+        WebDriverWait(driver, 10).until(
+            lambda d: len(d.find_elements(By.TAG_NAME, "a")) > 10
+        )
+    except Exception as e:
+        print(f"   ⚠️ Wait timeout: {e}")
+    
+    time.sleep(2)  # Extra wait for dynamic content
+    
+    # First, check what's actually on the page
+    all_links = driver.find_elements(By.TAG_NAME, "a")
+    print(f"   🔍 Total links on page: {len(all_links)}")
+    
+    # Try multiple selector strategies
     selectors = [
         "a[data-testid='post-title']",
         "h3 a",
-        "[data-testid='post-container'] a[href*='/r/']",
+        "span a",
+        "[data-testid*='post'] a",
+        "a[href*='/r/']",
     ]
+    
+    for selector in selectors:
+        count = len(driver.find_elements(By.CSS_SELECTOR, selector))
+        if count > 0:
+            print(f"   ✅ Selector '{selector}' found {count} elements")
+    
     return _collect_ranked_links(driver, selectors, destination, "Reddit", limit=5)
