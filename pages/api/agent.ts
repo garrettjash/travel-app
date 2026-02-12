@@ -1,97 +1,62 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
 type AgentResponse = {
-  data?: unknown;
-  error?: string;
-  requestId?: string;
+  output: string;
+  session_id: string;
 };
 
-const upstreamUrl =
-  "https://t795umrb49.execute-api.us-east-1.amazonaws.com/agent";
-const upstreamApiKey = process.env.AGENT_API_KEY;
+const agentEndpointUrl = "https://t795umrb49.execute-api.us-east-1.amazonaws.com/agent";
 
 export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<AgentResponse>
+  request: NextApiRequest,
+  response: NextApiResponse<AgentResponse | { error: string}>
 ) {
-  if (req.method !== "POST") {
-    res.setHeader("Allow", "POST");
-    res.status(405).json({ error: "Method Not Allowed" });
-    return;
+  if (request.method !== "POST") {
+    return response.status(405).json({ error: "Method Not Allowed" });
   }
 
-  const prompt = typeof req.body?.prompt === "string" ? req.body.prompt : "";
-  const sessionId =
-    typeof req.body?.session_id === "string" ? req.body.session_id : "";
+  const prompt = request.body?.prompt ?? "";
+  const sessionId = request.body?.session_id ?? "";
+  const agentApiKey = process.env.AGENT_API_KEY;
 
   if (!prompt.trim()) {
-    res.status(400).json({ error: "Prompt is required." });
+    response.status(400).json({ error: "Prompt is required." });
     return;
   }
 
-  if (!upstreamApiKey) {
-    res.status(500).json({
+  if (!agentApiKey) {
+    response.status(500).json({
       error: "Missing AGENT_API_KEY on server."
     });
     return;
   }
 
   try {
-    const upstreamResponse = await fetch(upstreamUrl, {
+    const agentResponse = await fetch(agentEndpointUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-api-key": upstreamApiKey
+        "x-api-key": agentApiKey
       },
       body: JSON.stringify({
         prompt,
         session_id: sessionId
       })
     });
+    
+    const responseData = await agentResponse.json();
 
-    const rawBody = await upstreamResponse.text();
-    let parsedBody: unknown = rawBody;
-
-    try {
-      parsedBody = JSON.parse(rawBody);
-    } catch {
-      // Keep plain text when upstream does not return JSON.
+    if (!agentResponse.ok) {
+      console.error("[api/agent] Upstream error:", responseData);
+      return response
+        .status(agentResponse.status)
+        .json({ error: "Upstream service returned an error." });
     }
 
-    if (!upstreamResponse.ok) {
-      const requestId =
-        upstreamResponse.headers.get("x-amzn-requestid") || "unknown";
-      let errorMessage = "Upstream service returned an error.";
-      if (typeof parsedBody === "string") {
-        errorMessage = parsedBody;
-      } else if (
-        parsedBody &&
-        typeof parsedBody === "object" &&
-        "message" in parsedBody &&
-        typeof (parsedBody as { message?: unknown }).message === "string"
-      ) {
-        errorMessage = (parsedBody as { message: string }).message;
-      } else {
-        errorMessage = JSON.stringify(parsedBody);
-      }
-
-      console.error(
-        `[api/agent] Upstream error ${upstreamResponse.status} requestId=${requestId} body=${rawBody.slice(
-          0,
-          1000
-        )}`
-      );
-
-      res.status(upstreamResponse.status).json({
-        error: errorMessage,
-        requestId
-      });
-      return;
-    }
-
-    res.status(200).json({ data: parsedBody });
+    return response.status(200).json(responseData);
   } catch (error) {
-    res.status(500).json({
+    console.error("[api/agent] Fetch failed:", error);
+    return response.status(500).json({
       error:
         error instanceof Error
           ? error.message

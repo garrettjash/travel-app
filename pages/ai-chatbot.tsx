@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
 type ChatMessage = {
-  id: string;
+  message_id: string;
   role: "user" | "assistant";
   content: string;
   createdAt: string;
@@ -11,25 +11,6 @@ function formatTimestamp(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "Unknown time";
   return date.toLocaleString();
-}
-
-function extractAssistantText(rawResponse: string) {
-  try {
-    const parsed = JSON.parse(rawResponse) as Record<string, unknown>;
-    const payload =
-      parsed && typeof parsed.data === "object" && parsed.data !== null
-        ? (parsed.data as Record<string, unknown>)
-        : parsed;
-    if (typeof payload.response === "string") return payload.response;
-    if (typeof payload.answer === "string") return payload.answer;
-    if (typeof payload.output === "string") return payload.output;
-    if (typeof payload.message === "string") return payload.message;
-    if (typeof payload.body === "string") return payload.body;
-    if (typeof parsed.data === "string") return parsed.data;
-    return JSON.stringify(parsed, null, 2);
-  } catch {
-    return rawResponse;
-  }
 }
 
 export default function AiChatbotPage() {
@@ -45,17 +26,16 @@ export default function AiChatbotPage() {
     [draft, isSending]
   );
 
-  // Fetch all messages from the DB
   const fetchMessages = async () => {
     try {
       const res = await fetch("/api/chat-messages");
       const data = await res.json();
+
       if (!res.ok) throw new Error(data.error || "Failed to fetch messages");
 
-      // Map DB fields to ChatMessage using message_id
       const mapped: ChatMessage[] = (data.data ?? []).map((msg: any) => ({
-        id: msg.message_id.toString(), // <-- changed here
-        role: msg.sender === "assistant" ? "assistant" : "user",
+        message_id: String(msg.message_id),
+        role: msg.role === "assistant" ? "assistant" : "user",
         content: msg.content,
         createdAt: msg.created_at ?? new Date().toISOString(),
       }));
@@ -80,34 +60,18 @@ export default function AiChatbotPage() {
     setError(null);
 
     try {
-      // Send user message to the agent
       const agentResponse = await fetch("/api/agent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: content, session_id: sessionId }),
       });
 
-      const agentRawResponse = await agentResponse.text();
+      const agentData = await agentResponse.json();
+
       if (!agentResponse.ok) {
-        let errorMessage = agentRawResponse;
-        try {
-          const parsed = JSON.parse(agentRawResponse);
-          if (parsed.error) errorMessage = parsed.error;
-        } catch {}
-        throw new Error(errorMessage);
+        throw new Error(agentData.error || "Failed to send message");
       }
 
-      // Optionally, store the assistant message in DB server-side
-      await fetch("/api/chat-messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          content: extractAssistantText(agentRawResponse),
-          sender: "assistant",
-        }),
-      });
-
-      // Refresh messages from DB
       await fetchMessages();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to send message");
@@ -127,7 +91,7 @@ export default function AiChatbotPage() {
         <div className="chat-messages" role="log" aria-live="polite">
           {messages.length === 0 && <p className="chat-state">No messages yet.</p>}
           {messages.map((msg) => (
-            <article className="chat-message" key={msg.id}>
+            <article className="chat-message" key={msg.message_id}>
               <div className="chat-message-meta">
                 <strong>{msg.role}</strong>
                 <span>{formatTimestamp(msg.createdAt)}</span>
