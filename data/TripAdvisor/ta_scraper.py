@@ -7,6 +7,7 @@ import importlib.util
 import sys
 from pathlib import Path
 from datetime import datetime, timezone
+from botocore.exceptions import ClientError
 
 try:
     from dotenv import load_dotenv
@@ -25,6 +26,11 @@ API_KEY = os.getenv("TA_API_KEY")
 S3_BUCKET = os.getenv("S3_BUCKET_NAME")
 S3_PREFIX = "raw_scrapes/"
 TA_SEED_PLACE_ENV = os.getenv("TA_SEED_PLACE")
+STATE_S3_KEY = os.getenv("TA_STATE_S3_KEY", "ta_state/ta_state.json")
+OLD_STATE_S3_KEY = os.getenv("TA_OLD_STATE_S3_KEY", f"{S3_PREFIX}ta_state.json")
+ATTRACTIONS_S3_KEY = os.getenv("TA_ATTRACTIONS_S3_KEY", f"{S3_PREFIX}attractions.json")
+PERSIST_ATTRACTIONS = os.getenv("TA_PERSIST_ATTRACTIONS", "").lower() in ("1", "true", "yes")
+MAX_NEW_ATTRACTIONS = int(os.getenv("TA_DAILY_LIMIT", "25"))
 
 if not API_KEY:
     raise RuntimeError("Set TA_API_KEY in your environment.")
@@ -34,7 +40,7 @@ CACHE_DIR = DATA_DIR / "ta_cache"
 CACHE_DIR.mkdir(exist_ok=True)
 
 # If True, discover attractions by scanning lat/lon grids in bounding boxes.
-USE_BOUNDING_BOXES = True
+USE_BOUNDING_BOXES = False
 BOUNDING_BOXES = [
     {
         "name": "us_northeast",
@@ -48,10 +54,43 @@ BOUNDING_BOXES = [
 
 # Optional seed places if USE_BOUNDING_BOXES = False
 SEED_PLACES = []
+SEED_PLACES_PATH = DATA_DIR / "seed_places.json"
+if SEED_PLACES_PATH.exists():
+    try:
+        raw_seeds = json.loads(SEED_PLACES_PATH.read_text("utf-8"))
+        if isinstance(raw_seeds, list):
+            SEED_PLACES = [str(p).strip() for p in raw_seeds if str(p).strip()]
+    except json.JSONDecodeError:
+        print(f"⚠️ Invalid JSON in {SEED_PLACES_PATH}")
+
+SEED_PLACES_ENV = os.getenv("TA_SEED_PLACES")
+if SEED_PLACES_ENV:
+    SEED_PLACES = [p.strip() for p in SEED_PLACES_ENV.split(",") if p.strip()]
 
 # --- OPTIONAL USER SEED + WEB SCRAPER BRIDGE ---
-USE_INTERACTIVE_SEED = True
+USE_INTERACTIVE_SEED = os.getenv("TA_NON_INTERACTIVE", "").lower() not in ("1", "true", "yes")
 WEB_SCRAPER_PATH = repo_root / "web_scraper" / "code" / "1. main_scraper.py"
+
+def get_s3_client():
+    if not S3_BUCKET:
+        return None
+    return boto3.client("s3")
+
+def s3_download_if_exists(s3, bucket, key, dest_path):
+    try:
+        s3.download_file(bucket, key, str(dest_path))
+        print(f"⬇️ Downloaded {key} from S3")
+        return True
+    except ClientError as exc:
+        code = exc.response.get("Error", {}).get("Code")
+        if code in ("404", "NoSuchKey"):
+            print(f"ℹ️ S3 key not found: {key}")
+            return False
+        raise
+
+def s3_upload_file(s3, bucket, key, source_path):
+    s3.upload_file(str(source_path), bucket, key)
+    print(f"⬆️ Uploaded {key} to S3")
 
 def load_web_scraper():
     if not WEB_SCRAPER_PATH.exists():
@@ -204,6 +243,47 @@ def flatten_details(d):
     }
 
 
+# --- STATE + EXISTING DATA ---
+STATE_PATH = DATA_DIR / "ta_state.json"
+ATTRACTIONS_PATH = DATA_DIR / "attractions.json"
+
+s3_client = get_s3_client()
+if s3_client:
+    downloaded_state = s3_download_if_exists(s3_client, S3_BUCKET, STATE_S3_KEY, STATE_PATH)
+    if not downloaded_state and OLD_STATE_S3_KEY:
+        if s3_download_if_exists(s3_client, S3_BUCKET, OLD_STATE_S3_KEY, STATE_PATH):
+            s3_upload_file(s3_client, S3_BUCKET, STATE_S3_KEY, STATE_PATH)
+    if PERSIST_ATTRACTIONS:
+        s3_download_if_exists(s3_client, S3_BUCKET, ATTRACTIONS_S3_KEY, ATTRACTIONS_PATH)
+
+existing_rows = []
+existing_ids = set()
+if ATTRACTIONS_PATH.exists():
+    with open(ATTRACTIONS_PATH, "r", encoding="utf-8") as f:
+        try:
+            existing_rows = json.load(f)
+        except json.JSONDecodeError:
+            existing_rows = []
+    existing_ids = {str(r.get("location_id")) for r in existing_rows if r.get("location_id")}
+
+state = {}
+if STATE_PATH.exists():
+    try:
+        with open(STATE_PATH, "r", encoding="utf-8") as f:
+            state = json.load(f)
+    except json.JSONDecodeError:
+        state = {}
+
+seen_ids = set(str(x) for x in state.get("seen_attraction_ids", [])) or existing_ids
+seed_index = 0
+if isinstance(state.get("seed_index"), int):
+    seed_index = state["seed_index"]
+elif isinstance(state.get("seed_index"), str) and state["seed_index"].isdigit():
+    seed_index = int(state["seed_index"])
+
+if not USE_BOUNDING_BOXES and SEED_PLACES:
+    print(f"Seed rotation start index: {seed_index} of {len(SEED_PLACES)}")
+
 # --- RESOLVE SEEDS (optional) ---
 top_places = {}
 unresolved = []
@@ -213,29 +293,11 @@ if user_seed:
     SEED_PLACES = [user_seed]
     maybe_run_web_scraper(user_seed)
 
-if not USE_BOUNDING_BOXES:
-    for place in SEED_PLACES:
-        try:
-            candidates = location_search(place, category="geos")
-            best = pick_best_geo_result(place, candidates)
-            if not best or not best.get("location_id"):
-                unresolved.append({"seed": place, "reason": "no_best_match"})
-                continue
-
-            loc_id = best["location_id"]
-            addr = best.get("address_obj") or {}
-            top_places[loc_id] = {
-                "seed": place,
-                "name": best.get("name"),
-                "address_string": addr.get("address_string"),
-            }
-        except Exception as e:
-            unresolved.append({"seed": place, "reason": str(e)})
-
 # --- DISCOVER ATTRACTIONS ---
 RADIUS_MILES = 10
 attractions_map = {}
 seed_errors = []
+next_seed_index = seed_index
 
 if USE_BOUNDING_BOXES:
     for box in BOUNDING_BOXES:
@@ -258,56 +320,71 @@ if USE_BOUNDING_BOXES:
             except Exception as e:
                 seed_errors.append({"seed_geo_id": None, "seed": box_name, "error": str(e)})
 else:
-    for seed_geo_id, meta in top_places.items():
-        try:
-            geo = location_details(seed_geo_id)
-            lat = geo.get("latitude")
-            lon = geo.get("longitude")
-            if lat is None or lon is None:
-                seed_errors.append({"seed_geo_id": seed_geo_id, "seed": meta["seed"], "error": "missing lat/lon"})
-                continue
-
-            nearby = nearby_search(lat, lon, category="attractions", radius=RADIUS_MILES, radius_unit="mi")
-            for item in nearby:
-                aid = item.get("location_id")
-                if not aid:
-                    continue
-                if aid not in attractions_map:
-                    attractions_map[aid] = {
-                        "name": item.get("name"),
-                        "seed_geo_id": seed_geo_id,
-                        "seed_place": meta["seed"],
+    if not SEED_PLACES:
+        print("No seed places configured.")
+    else:
+        seed_count = len(SEED_PLACES)
+        if seed_count:
+            seed_index = seed_index % seed_count
+        processed = 0
+        idx = seed_index
+        while processed < seed_count and len(attractions_map) < MAX_NEW_ATTRACTIONS:
+            place = SEED_PLACES[idx]
+            try:
+                candidates = location_search(place, category="geos")
+                best = pick_best_geo_result(place, candidates)
+                if not best or not best.get("location_id"):
+                    unresolved.append({"seed": place, "reason": "no_best_match"})
+                else:
+                    seed_geo_id = best["location_id"]
+                    addr = best.get("address_obj") or {}
+                    top_places[seed_geo_id] = {
+                        "seed": place,
+                        "name": best.get("name"),
+                        "address_string": addr.get("address_string"),
                     }
-        except Exception as e:
-            seed_errors.append({"seed_geo_id": seed_geo_id, "seed": meta["seed"], "error": str(e)})
+
+                    geo = location_details(seed_geo_id)
+                    lat = geo.get("latitude")
+                    lon = geo.get("longitude")
+                    if lat is None or lon is None:
+                        seed_errors.append({
+                            "seed_geo_id": seed_geo_id,
+                            "seed": place,
+                            "error": "missing lat/lon"
+                        })
+                    else:
+                        nearby = nearby_search(lat, lon, category="attractions", radius=RADIUS_MILES, radius_unit="mi")
+                        for item in nearby:
+                            aid = item.get("location_id")
+                            if not aid:
+                                continue
+                            if str(aid) in seen_ids:
+                                continue
+                            if aid not in attractions_map:
+                                attractions_map[aid] = {
+                                    "name": item.get("name"),
+                                    "seed_geo_id": seed_geo_id,
+                                    "seed_place": place,
+                                }
+                                if len(attractions_map) >= MAX_NEW_ATTRACTIONS:
+                                    break
+            except Exception as e:
+                unresolved.append({"seed": place, "reason": str(e)})
+
+            processed += 1
+            idx = (idx + 1) % seed_count
+
+        next_seed_index = idx
+        print(f"Seed rotation next index: {next_seed_index} of {seed_count}")
 
 print("Unique attractions found:", len(attractions_map))
 print("Seed geo errors:", len(seed_errors))
 
 # --- INCREMENTAL DETAILS FETCH ---
-STATE_PATH = DATA_DIR / "ta_state.json"
-ATTRACTIONS_PATH = DATA_DIR / "attractions.json"
-
-existing_rows = []
-existing_ids = set()
-if ATTRACTIONS_PATH.exists():
-    with open(ATTRACTIONS_PATH, "r", encoding="utf-8") as f:
-        try:
-            existing_rows = json.load(f)
-        except json.JSONDecodeError:
-            existing_rows = []
-    existing_ids = {str(r.get("location_id")) for r in existing_rows if r.get("location_id")}
-
-state = {}
-if STATE_PATH.exists():
-    try:
-        with open(STATE_PATH, "r", encoding="utf-8") as f:
-            state = json.load(f)
-    except json.JSONDecodeError:
-        state = {}
-
-seen_ids = set(str(x) for x in state.get("seen_attraction_ids", [])) or existing_ids
 new_attraction_ids = [aid for aid in attractions_map.keys() if str(aid) not in seen_ids]
+if MAX_NEW_ATTRACTIONS > 0:
+    new_attraction_ids = new_attraction_ids[:MAX_NEW_ATTRACTIONS]
 new_attractions_map = {aid: attractions_map[aid] for aid in new_attraction_ids}
 
 print("Seen attractions:", len(seen_ids))
@@ -348,87 +425,18 @@ all_seen.update(str(r.get("location_id")) for r in new_rows if r.get("location_i
 state = {
     "last_run": datetime.now(timezone.utc).isoformat(),
     "seen_attraction_ids": sorted(all_seen),
+    "seed_index": next_seed_index,
 }
 with open(STATE_PATH, "w", encoding="utf-8") as f:
     json.dump(state, f, ensure_ascii=False, indent=2)
 
+if s3_client:
+    s3_upload_file(s3_client, S3_BUCKET, STATE_S3_KEY, STATE_PATH)
+    if PERSIST_ATTRACTIONS:
+        s3_upload_file(s3_client, S3_BUCKET, ATTRACTIONS_S3_KEY, ATTRACTIONS_PATH)
+
 print("Saved attractions.json")
 print("New rows:", len(new_rows), "Errors:", len(detail_errors), "Total:", len(merged_rows))
-
-# --- JSONL + S3 EXPORT (new rows only, grouped by place) ---
-if not new_rows:
-    print("No new rows to export.")
-elif not S3_BUCKET:
-    raise RuntimeError("Set S3_BUCKET_NAME in your env.")
-else:
-    def place_key(row):
-        city = (row.get("city") or "").strip()
-        country = (row.get("country") or "").strip()
-        if city and country:
-            return f"{city}, {country}"
-        if city:
-            return city
-        seed = (row.get("seed_place") or "").strip()
-        return seed or "Unknown"
-
-    def slugify(text):
-        cleaned = "".join(ch if ch.isalnum() else "_" for ch in text)
-        while "__" in cleaned:
-            cleaned = cleaned.replace("__", "_")
-        return cleaned.strip("_") or "unknown"
-
-    grouped = {}
-    for a in new_rows:
-        key = place_key(a)
-        grouped.setdefault(key, []).append(a)
-
-    s3 = boto3.client("s3")
-    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-
-    for key, rows_for_place in grouped.items():
-        lines = []
-        for a in rows_for_place:
-            title = a.get("name") or "Unknown Attraction"
-            city = a.get("city") or ""
-            country = a.get("country") or ""
-            address = a.get("address") or ""
-            rating = a.get("rating") or ""
-            reviews = a.get("num_reviews") or ""
-            price = a.get("price_level") or ""
-            website = a.get("website") or ""
-            # Use the grouped place key as the seed to avoid cross-city leakage
-            seed_place = key
-
-            content_body = (
-                f"Attraction: {title}\n"
-                f"Location: {city}, {country}\n"
-                f"Detected city: {city}, {country}\n"
-                f"Address: {address}\n"
-                f"Rating: {rating} (reviews: {reviews})\n"
-                f"Price level: {price}\n"
-                f"Website: {website}\n"
-                f"Seed place: {seed_place}\n"
-            ).strip()
-
-            lines.append({
-                "source": "TripAdvisor",
-                "title": title,
-                "url": a.get("web_url") or website or "",
-                "content_body": content_body,
-                "location_id": a.get("location_id"),
-                "seed_place": seed_place,
-                "seed_geo_id": a.get("seed_geo_id"),
-            })
-
-        file_slug = slugify(key)
-        jsonl_path = DATA_DIR / f"{file_slug}_{stamp}.jsonl"
-        with open(jsonl_path, "w", encoding="utf-8") as f:
-            for line in lines:
-                f.write(json.dumps(line, ensure_ascii=False) + "\n")
-
-        s3_key = f"{S3_PREFIX}{file_slug}_{stamp}.jsonl"
-        s3.upload_file(str(jsonl_path), S3_BUCKET, s3_key)
-        print("Uploaded:", f"s3://{S3_BUCKET}/{s3_key}")
 """
 # Imports and environment setup
 import os

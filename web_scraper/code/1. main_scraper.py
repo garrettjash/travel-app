@@ -170,12 +170,6 @@ def scrape_and_crawl(destination):
     print(f"\n🔎 STARTING SCRAPE FOR: {destination.upper()}\n" + "="*40)
     
     search_term = quote_plus(destination)
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    output_dir = os.path.join(current_dir, "..", "output")
-    os.makedirs(output_dir, exist_ok=True)
-    
-    output_filename = f"{destination.replace(' ', '_').lower()}_data.jsonl"
-    output_filepath = os.path.join(output_dir, output_filename)
 
     # 1. PHASE 1: SEARCH (Keep this as Requests for speed)
     sites = {
@@ -229,8 +223,10 @@ def scrape_and_crawl(destination):
     reddit_data = selenium_scraper.scrape_links_selenium("Reddit", destination)
     if reddit_data:
         print(f"Found {len(reddit_data)}")
+        for item in reddit_data:
+            print(f"   - {item.get('Title', 'No Title')[:50]}")
     else:
-        print("Trying Selenium...")
+        print("No results found")
     all_results.extend(reddit_data)
 
 
@@ -245,52 +241,36 @@ def scrape_and_crawl(destination):
         print("❌ Critical: Could not initialize Selenium Driver.")
         return
 
-    with open(output_filepath, "w", encoding="utf-8") as f:
-        for i, item in enumerate(all_results, 1):
-            url = item['Link']
-            print(f"   Processing: {item['Title'][:30]}...", end=" ")
+    for i, item in enumerate(all_results, 1):
+        url = item['Link']
+        print(f"   Processing: {item['Title'][:30]}...", end=" ")
+        
+        try:
+            # Use Selenium instead of Requests
+            driver.get(url)
             
-            try:
-                # Use Selenium instead of Requests
-                driver.get(url)
-                
-                # Scroll to bottom to trigger lazy-loading comments
-                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-                time.sleep(2) # Wait for comments to load
+            # Scroll to bottom to trigger lazy-loading comments
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            time.sleep(2) # Wait for comments to load
 
-                page_source = driver.page_source
+            page_source = driver.page_source
+            
+            # A. SPLIT Body & Reviews
+            body_text, reviews_text = process_html_content(page_source)
+            
+            # B. CLEAN Body Text
+            final_body = refine_text_content(body_text, item['Title'], destination)
+            
+            if final_body:
+                print(f"✅ Processed")
+            else:
+                print(f"🗑️ Skipped")
                 
-                # A. SPLIT Body & Reviews
-                body_text, reviews_text = process_html_content(page_source)
-                
-                # B. CLEAN Body Text
-                final_body = refine_text_content(body_text, item['Title'], destination)
-                
-                if final_body:
-                    entry = {
-                        "source": item['Site'],
-                        "title": item['Title'],
-                        "url": url,
-                        "type": "web_article",
-                        "scraped_at": time.strftime('%Y-%m-%d'),
-                        # NEW DATA STRUCTURE
-                        "content_body": final_body,    # The Clean Facts
-                        "user_reviews": reviews_text,  # The Raw Sentiment
-                        "has_reviews": bool(reviews_text.strip())
-                    }
-                    f.write(json.dumps(entry, ensure_ascii=False) + "\n")
-                    print(f"✅ Saved")
-                else:
-                    print(f"🗑️ Skipped")
-                    
-            except Exception as e:
-                print(f"⚠️ Error: {e}")
+        except Exception as e:
+            print(f"⚠️ Error: {e}")
 
     driver.quit()
-    print(f"\n✅ DATA SAVED LOCALLY: {output_filepath}")
-    
-    # 3. PHASE 3: Upload to S3
-    upload_to_s3(output_filepath, destination)
+    print(f"\n✅ PROCESSING COMPLETE")
 
 def run_tripadvisor_scraper(destination):
     repo_root = Path(__file__).resolve().parents[2]
@@ -304,7 +284,17 @@ def run_tripadvisor_scraper(destination):
     print(f"\n🧭 Running TripAdvisor scraper for: {destination}")
     subprocess.run([sys.executable, str(ta_path)], env=env, check=False)
 
+def run_ai_processor():
+    repo_root = Path(__file__).resolve().parents[2]
+    ai_path = repo_root / "ai_database" / "ai_processor.py"
+    if not ai_path.exists():
+        print(f"⚠️ AI processor not found at: {ai_path}")
+        return
+    print(f"\n🤖 Running AI processor...")
+    subprocess.run([sys.executable, str(ai_path)], check=False)
+
 if __name__ == "__main__":
     dest = input("Enter destination: ")
     scrape_and_crawl(dest)
     run_tripadvisor_scraper(dest)
+    run_ai_processor()

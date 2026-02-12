@@ -314,7 +314,7 @@ def save_attraction(item, place_id, source_id, article, s3_key, ref_lat, ref_lon
         'source_id': source_id,
         'attraction_sources_url': article['url'],
         'attraction_sources_filename': os.path.basename(s3_key),
-        'attraction_sources_rawtext': item.source_quote_or_summary,
+        'attraction_sources_rawtext': article.get('content_body', ''),
         'attraction_sources_sourcesummary': item.source_quote_or_summary,
         'attraction_sources_rating': item.rating_score,
         'attraction_sources_maxrating': item.rating_max,
