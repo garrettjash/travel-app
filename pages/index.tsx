@@ -72,7 +72,7 @@ export default function LandingPage() {
           <button
             type="button"
             className="landing-go-button"
-            onClick={() => router.push("/destinations")}
+            onClick={() => router.push("/ai-chatbot")}
           >
             <span>Go</span>
             <span aria-hidden="true">→</span>
