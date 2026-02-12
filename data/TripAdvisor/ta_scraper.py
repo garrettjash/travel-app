@@ -4,6 +4,7 @@ import json
 import boto3
 import requests
 import importlib.util
+import sys
 from pathlib import Path
 from datetime import datetime, timezone
 
@@ -15,7 +16,7 @@ except ImportError as exc:
     ) from exc
 
 # --- ENV LOADING ---
-repo_root = Path(__file__).resolve().parents[1]
+repo_root = Path(__file__).resolve().parents[2]
 load_dotenv(repo_root / ".env.local")
 load_dotenv(repo_root / ".env")
 
@@ -57,6 +58,10 @@ def load_web_scraper():
         print(f"⚠️ Web scraper not found at: {WEB_SCRAPER_PATH}")
         return None
     try:
+        # Ensure sibling imports (e.g., selenium_scraper.py) resolve correctly.
+        scraper_dir = str(WEB_SCRAPER_PATH.parent)
+        if scraper_dir not in sys.path:
+            sys.path.insert(0, scraper_dir)
         spec = importlib.util.spec_from_file_location("main_scraper", WEB_SCRAPER_PATH)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
@@ -78,6 +83,8 @@ def prompt_seed_place():
 
 def maybe_run_web_scraper(place_name):
     if not place_name:
+        return
+    if os.getenv("TA_SKIP_WEB_SCRAPER"):
         return
     module = load_web_scraper()
     if not module:

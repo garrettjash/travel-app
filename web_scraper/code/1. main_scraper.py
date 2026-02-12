@@ -187,6 +187,9 @@ def scrape_and_crawl(destination):
         "The Blonde Abroad": f"https://www.theblondeabroad.com/?s={search_term}"
     }
     
+    # Sites that should ONLY use Selenium (skip requests-based scraping)
+    selenium_only_sites = {"Reddit"}
+    
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     }
@@ -220,6 +223,15 @@ def scrape_and_crawl(destination):
             print(f"Found {len(site_data)}")
         
         all_results.extend(site_data)
+    
+    # Add Reddit (Selenium only)
+    print(f"🌐 Searching Reddit...", end=" ")
+    reddit_data = selenium_scraper.scrape_links_selenium("Reddit", destination)
+    if reddit_data:
+        print(f"Found {len(reddit_data)}")
+    else:
+        print("Trying Selenium...")
+    all_results.extend(reddit_data)
 
 
     # 2. PHASE 2: CRAWL (Updated to use Selenium for Reviews)
@@ -288,6 +300,7 @@ def run_tripadvisor_scraper(destination):
         return
     env = os.environ.copy()
     env["TA_SEED_PLACE"] = destination
+    env["TA_SKIP_WEB_SCRAPER"] = "1"
     print(f"\n🧭 Running TripAdvisor scraper for: {destination}")
     subprocess.run([sys.executable, str(ta_path)], env=env, check=False)
 

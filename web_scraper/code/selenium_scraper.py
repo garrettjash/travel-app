@@ -1,6 +1,8 @@
 # Let's try Selenium
 
 import time
+import re
+from urllib.parse import quote_plus
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.firefox.service import Service as FirefoxService
@@ -59,6 +61,12 @@ def scrape_links_selenium(site_name, destination):
     try:
         if site_name == "Travellerspoint":
             results = _scrape_travellerspoint(driver, destination)
+        elif site_name == "Nomadic Matt":
+            results = _scrape_nomadic_matt(driver, destination)
+        elif site_name == "The Blonde Abroad":
+            results = _scrape_blonde_abroad(driver, destination)
+        elif site_name == "Reddit":
+            results = _scrape_reddit(driver, destination)
         # Add other sites here as needed (elif site_name == "TripAdvisor"...)
         else:
             print(f"   ⚠️ No Selenium logic defined for {site_name}")
@@ -99,3 +107,87 @@ def _scrape_travellerspoint(driver, destination):
             continue
     
     return valid_results[:5] # Limit to top 5
+
+def _wait_for_any(driver, selectors, timeout=10):
+    for selector in selectors:
+        try:
+            WebDriverWait(driver, timeout).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, selector))
+            )
+            return
+        except Exception:
+            continue
+
+def _collect_ranked_links(driver, selectors, destination, site_name, limit=5):
+    results = []
+    seen = set()
+    for selector in selectors:
+        for el in driver.find_elements(By.CSS_SELECTOR, selector):
+            try:
+                if el.tag_name.lower() == "a":
+                    anchor = el
+                else:
+                    anchor = el.find_element(By.CSS_SELECTOR, "a")
+                title = (anchor.text or "").strip()
+                link = anchor.get_attribute("href")
+                if not link:
+                    continue
+                if link in seen:
+                    continue
+                seen.add(link)
+                results.append({"Site": site_name, "Title": title, "Link": link})
+            except Exception:
+                continue
+
+    if not results:
+        return []
+
+    tokens = [t for t in re.split(r"\s+", destination.lower()) if len(t) > 2]
+    for item in results:
+        haystack = f"{item.get('Title','')} {item.get('Link','')}".lower()
+        score = sum(1 for t in tokens if t in haystack)
+        item["_score"] = score
+
+    results.sort(key=lambda x: x.get("_score", 0), reverse=True)
+    trimmed = [{k: v for k, v in item.items() if k != "_score"} for item in results]
+    return trimmed[:limit]
+
+def _scrape_nomadic_matt(driver, destination):
+    url = f"https://www.nomadicmatt.com/?s={quote_plus(destination)}"
+    driver.get(url)
+
+    _wait_for_any(driver, ["article", "h2", "a"])
+    selectors = [
+        "article h2 a",
+        ".entry-title a",
+        "h2 a",
+        ".post-title a",
+    ]
+    return _collect_ranked_links(driver, selectors, destination, "Nomadic Matt")
+
+def _scrape_blonde_abroad(driver, destination):
+    url = f"https://www.theblondeabroad.com/?s={quote_plus(destination)}"
+    driver.get(url)
+
+    _wait_for_any(driver, ["article", "h2", "a"])
+    selectors = [
+        "article h2 a",
+        "h2.entry-title a",
+        "h2 a",
+        ".post-title a",
+        ".grid-item a",
+    ]
+    return _collect_ranked_links(driver, selectors, destination, "The Blonde Abroad")
+
+def _scrape_reddit(driver, destination):
+    """Scrape Reddit search results for travel discussions."""
+    url = f"https://www.reddit.com/search/?q={quote_plus(destination)}&type=link&sort=relevance"
+    driver.get(url)
+    
+    _wait_for_any(driver, ["a[data-testid='post-title']", "h3", "a"])
+    selectors = [
+        "a[data-testid='post-title']",
+        "h3 a",
+        "[data-testid='post-container'] a[href*='/r/']",
+    ]
+    return _collect_ranked_links(driver, selectors, destination, "Reddit", limit=5)
