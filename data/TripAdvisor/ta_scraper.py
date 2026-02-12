@@ -26,7 +26,8 @@ API_KEY = os.getenv("TA_API_KEY")
 S3_BUCKET = os.getenv("S3_BUCKET_NAME")
 S3_PREFIX = "raw_scrapes/"
 TA_SEED_PLACE_ENV = os.getenv("TA_SEED_PLACE")
-STATE_S3_KEY = os.getenv("TA_STATE_S3_KEY", f"{S3_PREFIX}ta_state.json")
+STATE_S3_KEY = os.getenv("TA_STATE_S3_KEY", "ta_state/ta_state.json")
+OLD_STATE_S3_KEY = os.getenv("TA_OLD_STATE_S3_KEY", f"{S3_PREFIX}ta_state.json")
 ATTRACTIONS_S3_KEY = os.getenv("TA_ATTRACTIONS_S3_KEY", f"{S3_PREFIX}attractions.json")
 PERSIST_ATTRACTIONS = os.getenv("TA_PERSIST_ATTRACTIONS", "").lower() in ("1", "true", "yes")
 MAX_NEW_ATTRACTIONS = int(os.getenv("TA_DAILY_LIMIT", "25"))
@@ -248,7 +249,10 @@ ATTRACTIONS_PATH = DATA_DIR / "attractions.json"
 
 s3_client = get_s3_client()
 if s3_client:
-    s3_download_if_exists(s3_client, S3_BUCKET, STATE_S3_KEY, STATE_PATH)
+    downloaded_state = s3_download_if_exists(s3_client, S3_BUCKET, STATE_S3_KEY, STATE_PATH)
+    if not downloaded_state and OLD_STATE_S3_KEY:
+        if s3_download_if_exists(s3_client, S3_BUCKET, OLD_STATE_S3_KEY, STATE_PATH):
+            s3_upload_file(s3_client, S3_BUCKET, STATE_S3_KEY, STATE_PATH)
     if PERSIST_ATTRACTIONS:
         s3_download_if_exists(s3_client, S3_BUCKET, ATTRACTIONS_S3_KEY, ATTRACTIONS_PATH)
 
