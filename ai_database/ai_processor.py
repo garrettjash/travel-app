@@ -13,10 +13,13 @@ from pydantic import BaseModel, Field, ConfigDict
 from openai import OpenAI
 from supabase import create_client, Client
 from dotenv import load_dotenv
+from pathlib import Path
 from geopy.geocoders import Nominatim
 from geopy.distance import geodesic
 
-load_dotenv()
+# Load .env.local/.env from repo root (works from any cwd)
+repo_root = Path(__file__).resolve().parents[1]
+load_dotenv(repo_root / ".env")
 
 # --- GLOBAL LOCKS ---
 CACHE_LOCK = threading.Lock() # Prevents cache file corruption
@@ -134,10 +137,28 @@ def infer_popularity(item):
     if any(w in keywords for w in ['hidden gem', 'quiet', 'secret']): score += 10 
     return min(100, score)
 
-def resolve_geo_cached(query, ref_lat=None, ref_lon=None):
+def parse_place_parts(place_str):
+    if not place_str:
+        return None, None
+    parts = [p.strip() for p in place_str.split(",") if p.strip()]
+    if not parts:
+        return None, None
+    city = parts[0]
+    country = parts[-1] if len(parts) > 1 else None
+    return city, country
+
+def resolve_geo_cached(query, ref_lat=None, ref_lon=None, country_hint=None):
     # 1. Fast Cache Check (Thread Safe Read)
     with CACHE_LOCK:
-        if query in GEO_CACHE: return GEO_CACHE[query]
+        cached = GEO_CACHE.get(query, "__missing__")
+
+    if cached != "__missing__":
+        if cached and country_hint and cached.get("country") and cached.get("country") != country_hint:
+            cached = "__mismatch__"
+        elif cached is None and country_hint:
+            cached = "__mismatch__"
+        else:
+            return cached
 
     # 2. API CALL - STRICTLY SERIALIZED
     # This block ensures only ONE thread hits OpenStreetMap at a time
@@ -172,8 +193,11 @@ def resolve_geo_cached(query, ref_lat=None, ref_lon=None):
             with PRINT_LOCK: print(f"      ⚠️ GeoAPI Error: {e}")
             return None
 
-def analyze_chunk(text, title, source):
-    with PRINT_LOCK: print(f"   🧠 Analyzing chunk ({len(text)} chars)...")
+def analyze_chunk(text, title, source, idx=None, total=None):
+    if idx is not None and total is not None:
+        with PRINT_LOCK: print(f"   🧠 Analyzing chunk ({len(text)} chars)... [{idx}/{total}]")
+    else:
+        with PRINT_LOCK: print(f"   🧠 Analyzing chunk ({len(text)} chars)...")
     prompt = f"""
     You are a Travel Data Extractor. Source: {source}. Title: {title}.
     Extract attractions.
@@ -207,14 +231,31 @@ def save_attraction(item, place_id, source_id, article, s3_key, ref_lat, ref_lon
     price_int = price_map.get(item.price_level, None)
 
     # Geo Logic
-    search_city = item.detected_city if item.detected_city else main_place_name
+    detected_city, detected_country = parse_place_parts(item.detected_city) if item.detected_city else (None, None)
+    search_city = detected_city or main_place_name
+    address_text = None
+    if item.logistics and item.logistics.address:
+        address_text = item.logistics.address
+
+    if address_text:
+        query = f"{item.name}, {address_text}"
+        if detected_country and detected_country not in address_text:
+            query = f"{query}, {detected_country}"
+        elif p_country and p_country not in address_text:
+            query = f"{query}, {p_country}"
+    elif p_country and p_country != "Unknown":
+        query = f"{item.name}, {search_city}, {p_country}"
+    else:
+        query = f"{item.name}, {search_city}"
+
     with PRINT_LOCK: print(f"      📍 Geocoding: {item.name} in {search_city}...")
     
-    attr_geo = resolve_geo_cached(f"{item.name}, {search_city}", ref_lat, ref_lon)
-    if not attr_geo: attr_geo = resolve_geo_cached(item.name, ref_lat, ref_lon)
+    attr_geo = resolve_geo_cached(query, ref_lat, ref_lon, country_hint=detected_country or p_country)
+    if not attr_geo:
+        attr_geo = resolve_geo_cached(item.name, ref_lat, ref_lon, country_hint=detected_country or p_country)
 
-    lat, lon, dist = (0.0, 0.0, 0.0)
-    city, state, country = (search_city, None, p_country)
+    lat, lon, dist = (None, None, None)
+    city, state, country = (search_city, None, detected_country or p_country)
 
     if attr_geo:
         lat, lon, dist = attr_geo['lat'], attr_geo['lon'], attr_geo['dist']
@@ -222,7 +263,7 @@ def save_attraction(item, place_id, source_id, article, s3_key, ref_lat, ref_lon
              lat, lon, dist = (ref_lat, ref_lon, 0)
         else:
             if attr_geo['city']: city = attr_geo['city']
-            state = attr_geo['state']
+            state = attr_geo.get('state') or attr_geo.get('region') or attr_geo.get('state_district')
             if attr_geo['country']: country = attr_geo['country']
 
     # Calculations
@@ -290,10 +331,10 @@ def save_attraction(item, place_id, source_id, article, s3_key, ref_lat, ref_lon
     except Exception as e:
         with PRINT_LOCK: print(f"      ⚠️ Link Error: {e}")
 
-def process_single_article(line, place_id, s3_key, p_lat, p_lon, main_place_name, p_country):
-    if not line.strip(): return
+def process_single_article(article, place_id, s3_key, p_lat, p_lon, main_place_name, p_country, idx=None, total=None):
+    if not article:
+        return
     try:
-        article = json.loads(line)
         content = article.get('content_body', article.get('content', ''))
         if not content: return
 
@@ -310,7 +351,7 @@ def process_single_article(line, place_id, s3_key, p_lat, p_lon, main_place_name
         src_res = supabase.table('source').upsert(src_data, on_conflict='source_name').execute()
         source_id = src_res.data[0]['source_id']
         
-        attractions = analyze_chunk(content, article.get('title'), article.get('source'))
+        attractions = analyze_chunk(content, article.get('title'), article.get('source'), idx, total)
         
         for item in attractions:
             save_attraction(item, place_id, source_id, article, s3_key, p_lat, p_lon, main_place_name, p_country)
@@ -320,36 +361,73 @@ def process_single_article(line, place_id, s3_key, p_lat, p_lon, main_place_name
 
 def process_file_content(local_path, s3_key, main_place_name):
     print(f"   🌍 resolving main place: {main_place_name}")
-    main_geo = resolve_geo_cached(main_place_name)
-    p_lat, p_lon = (0.0, 0.0)
-    p_country, p_state = ("Unknown", None)
-    
-    if main_geo:
-        p_lat, p_lon = main_geo['lat'], main_geo['lon']
-        p_country, p_state = main_geo['country'], main_geo['state']
 
-    place_data = {
-        'place_city': main_place_name,
-        'place_countryregion': p_country,
-        'place_stateprovince': p_state,
-        'place_latitude': p_lat,
-        'place_longitude': p_lon,
-        'place_type': ['city']
-    }
-    place_res = supabase.table('place').upsert(place_data, on_conflict='place_city').execute()
-    place_id = place_res.data[0]['place_id']
+    def resolve_place_cached(place_name, cache):
+        if place_name in cache:
+            return cache[place_name]
+
+        place_city_name, country_hint = parse_place_parts(place_name)
+        place_city_name = place_city_name or place_name
+
+        query = f"{place_city_name}, {country_hint}" if country_hint else place_city_name
+        main_geo = resolve_geo_cached(query, country_hint=country_hint)
+        p_lat, p_lon = (None, None)
+        p_country, p_state = (country_hint or "Unknown", None)
+
+        if main_geo:
+            if not country_hint or main_geo.get('country') == country_hint:
+                p_lat, p_lon = main_geo['lat'], main_geo['lon']
+            p_state = main_geo.get('state')
+            if main_geo.get('country') and not country_hint:
+                p_country = main_geo['country']
+
+        place_data = {
+            'place_city': place_city_name,
+            'place_countryregion': p_country,
+            'place_stateprovince': p_state,
+            'place_latitude': p_lat,
+            'place_longitude': p_lon,
+            'place_type': ['city']
+        }
+        place_res = supabase.table('place').upsert(place_data, on_conflict='place_city').execute()
+        place_id = place_res.data[0]['place_id']
+        cache[place_name] = (place_id, p_lat, p_lon, p_country, p_state, place_city_name)
+        return cache[place_name]
 
     with open(local_path, 'r', encoding='utf-8') as f:
         lines = f.readlines()
 
-    print(f"   🚀 Starting parallel processing for {len(lines)} articles...")
+    total = len(lines)
+    print(f"   🚀 Starting parallel processing for {total} articles...")
     
     # Reduced max_workers to 3 to prevent Socket errors
     with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
         futures = []
-        for line in lines:
+        place_cache = {}
+        for idx, line in enumerate(lines, start=1):
+            if not line.strip():
+                continue
+            try:
+                article = json.loads(line)
+            except Exception as e:
+                with PRINT_LOCK: print(f"❌ Error parsing article: {e}")
+                continue
+
+            place_name = article.get("seed_place") or main_place_name
+            place_id, p_lat, p_lon, p_country, _, place_city_name = resolve_place_cached(place_name, place_cache)
             futures.append(
-                executor.submit(process_single_article, line, place_id, s3_key, p_lat, p_lon, main_place_name, p_country)
+                executor.submit(
+                    process_single_article,
+                    article,
+                    place_id,
+                    s3_key,
+                    p_lat,
+                    p_lon,
+                    place_city_name,
+                    p_country,
+                    idx,
+                    total
+                )
             )
         concurrent.futures.wait(futures)
 
