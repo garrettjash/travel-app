@@ -52,9 +52,16 @@ BOUNDING_BOXES = [
 ]
 
 # Optional seed places if USE_BOUNDING_BOXES = False
-SEED_PLACES = [
-    # Add your nightly seed places here, e.g. "Paris, France"
-]
+SEED_PLACES = []
+SEED_PLACES_PATH = DATA_DIR / "seed_places.json"
+if SEED_PLACES_PATH.exists():
+    try:
+        raw_seeds = json.loads(SEED_PLACES_PATH.read_text("utf-8"))
+        if isinstance(raw_seeds, list):
+            SEED_PLACES = [str(p).strip() for p in raw_seeds if str(p).strip()]
+    except json.JSONDecodeError:
+        print(f"⚠️ Invalid JSON in {SEED_PLACES_PATH}")
+
 SEED_PLACES_ENV = os.getenv("TA_SEED_PLACES")
 if SEED_PLACES_ENV:
     SEED_PLACES = [p.strip() for p in SEED_PLACES_ENV.split(",") if p.strip()]
