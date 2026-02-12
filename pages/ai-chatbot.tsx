@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/router";
 
 type ChatMessage = {
   id: string;
@@ -6,6 +7,42 @@ type ChatMessage = {
   content: string;
   createdAt: string;
 };
+
+type DestinationCard = {
+  id: string;
+  title: string;
+  pros: string;
+  cons: string;
+  totalPrice: string;
+  pricePerPerson: string;
+};
+
+const destinationCards: DestinationCard[] = [
+  {
+    id: "1",
+    title: "Barcelona, Spain",
+    pros: "Beach, architecture, food",
+    cons: "Busy in peak season",
+    totalPrice: "$4,200",
+    pricePerPerson: "$1,050"
+  },
+  {
+    id: "2",
+    title: "Kyoto, Japan",
+    pros: "Culture, gardens, cuisine",
+    cons: "Long flight",
+    totalPrice: "$5,680",
+    pricePerPerson: "$1,420"
+  },
+  {
+    id: "3",
+    title: "Banff, Canada",
+    pros: "Mountains, lakes, hiking",
+    cons: "Cooler evenings",
+    totalPrice: "$3,760",
+    pricePerPerson: "$940"
+  }
+];
 
 function formatTimestamp(value: string) {
   const date = new Date(value);
@@ -33,7 +70,9 @@ function extractAssistantText(rawResponse: string) {
 }
 
 export default function AiChatbotPage() {
+  const router = useRouter();
   const sessionId = "57076c76-ad4c-4124-8a80-f4c151366844";
+  const isChatView = router.query.view === "chat";
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState("");
@@ -54,10 +93,10 @@ export default function AiChatbotPage() {
 
       // Map DB fields to ChatMessage using message_id
       const mapped: ChatMessage[] = (data.data ?? []).map((msg: any) => ({
-        id: msg.message_id.toString(), // <-- changed here
+        id: msg.message_id.toString(),
         role: msg.sender === "assistant" ? "assistant" : "user",
         content: msg.content,
-        createdAt: msg.created_at ?? new Date().toISOString(),
+        createdAt: msg.created_at ?? new Date().toISOString()
       }));
 
       setMessages(mapped);
@@ -67,8 +106,9 @@ export default function AiChatbotPage() {
   };
 
   useEffect(() => {
+    if (!isChatView) return;
     fetchMessages();
-  }, []);
+  }, [isChatView]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -84,7 +124,7 @@ export default function AiChatbotPage() {
       const agentResponse = await fetch("/api/agent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: content, session_id: sessionId }),
+        body: JSON.stringify({ prompt: content, session_id: sessionId })
       });
 
       const agentRawResponse = await agentResponse.text();
@@ -103,8 +143,8 @@ export default function AiChatbotPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           content: extractAssistantText(agentRawResponse),
-          sender: "assistant",
-        }),
+          sender: "assistant"
+        })
       });
 
       // Refresh messages from DB
@@ -116,10 +156,83 @@ export default function AiChatbotPage() {
     }
   };
 
+  if (!isChatView) {
+    return (
+      <main className="destinations-page">
+        <header className="destinations-topbar">
+          <span className="destinations-brand">TravelApp</span>
+          <button type="button" className="destinations-login">Login</button>
+        </header>
+
+        <section className="destinations-layout">
+          <nav className="destinations-sidebar" aria-label="Main navigation">
+            <button type="button" className="destinations-tab">
+              <span aria-hidden="true">🛏️</span>
+              <span>Stays</span>
+            </button>
+            <button type="button" className="destinations-tab">
+              <span aria-hidden="true">✈️</span>
+              <span>Flights</span>
+            </button>
+            <button type="button" className="destinations-tab destinations-tab-active">
+              <span aria-hidden="true">🗺️</span>
+              <span>Destinations</span>
+            </button>
+            <button type="button" className="destinations-tab">
+              <span aria-hidden="true">💾</span>
+              <span>Saved Trips</span>
+            </button>
+            <button
+              type="button"
+              className="destinations-tab"
+              onClick={() => router.push("/ai-chatbot?view=chat")}
+            >
+              <span aria-hidden="true">✨</span>
+              <span>AI Chatbot</span>
+            </button>
+          </nav>
+
+          <div className="destinations-content">
+            <h1 className="destinations-title">Top Choices For Your Selections</h1>
+
+            <div className="destinations-grid">
+              {destinationCards.map((card) => (
+                <article key={card.id} className="destination-card">
+                  <div className="destination-image" aria-hidden="true" />
+                  <h2>{card.title}</h2>
+                  <div className="destination-pros-cons">
+                    <p>
+                      <strong>Pros:</strong> {card.pros}
+                    </p>
+                    <p>
+                      <strong>Cons:</strong> {card.cons}
+                    </p>
+                  </div>
+                  <div className="destination-price">
+                    <p>Total Price</p>
+                    <p>{card.totalPrice}</p>
+                  </div>
+                  <p className="destination-per-person">{card.pricePerPerson} Per Person</p>
+                </article>
+              ))}
+            </div>
+
+            <button type="button" className="destinations-view-more">
+              View More
+            </button>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <main className="chat-page">
       <section className="chat-shell">
         <header className="chat-header">
+          <button type="button" className="chat-back-button" onClick={() => router.back()}>
+            ← Back
+          </button>
           <h1>AI Travel Chatbot</h1>
           <p>Ask travel questions and view the conversation from your database.</p>
         </header>
