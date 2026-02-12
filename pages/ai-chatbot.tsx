@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
+import AttractionsExplorer from "../components/AttractionsExplorer";
 
 type ChatMessage = {
   id: string;
@@ -7,42 +8,6 @@ type ChatMessage = {
   content: string;
   createdAt: string;
 };
-
-type DestinationCard = {
-  id: string;
-  title: string;
-  pros: string;
-  cons: string;
-  totalPrice: string;
-  pricePerPerson: string;
-};
-
-const destinationCards: DestinationCard[] = [
-  {
-    id: "1",
-    title: "Barcelona, Spain",
-    pros: "Beach, architecture, food",
-    cons: "Busy in peak season",
-    totalPrice: "$4,200",
-    pricePerPerson: "$1,050"
-  },
-  {
-    id: "2",
-    title: "Kyoto, Japan",
-    pros: "Culture, gardens, cuisine",
-    cons: "Long flight",
-    totalPrice: "$5,680",
-    pricePerPerson: "$1,420"
-  },
-  {
-    id: "3",
-    title: "Banff, Canada",
-    pros: "Mountains, lakes, hiking",
-    cons: "Cooler evenings",
-    totalPrice: "$3,760",
-    pricePerPerson: "$940"
-  }
-];
 
 function formatTimestamp(value: string) {
   const date = new Date(value);
@@ -84,14 +49,12 @@ export default function AiChatbotPage() {
     [draft, isSending]
   );
 
-  // Fetch all messages from the DB
   const fetchMessages = async () => {
     try {
       const res = await fetch("/api/chat-messages");
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to fetch messages");
 
-      // Map DB fields to ChatMessage using message_id
       const mapped: ChatMessage[] = (data.data ?? []).map((msg: any) => ({
         id: msg.message_id.toString(),
         role: msg.sender === "assistant" ? "assistant" : "user",
@@ -120,7 +83,6 @@ export default function AiChatbotPage() {
     setError(null);
 
     try {
-      // Send user message to the agent
       const agentResponse = await fetch("/api/agent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -137,7 +99,6 @@ export default function AiChatbotPage() {
         throw new Error(errorMessage);
       }
 
-      // Optionally, store the assistant message in DB server-side
       await fetch("/api/chat-messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -147,7 +108,6 @@ export default function AiChatbotPage() {
         })
       });
 
-      // Refresh messages from DB
       await fetchMessages();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to send message");
@@ -193,33 +153,10 @@ export default function AiChatbotPage() {
           </nav>
 
           <div className="destinations-content">
-            <h1 className="destinations-title">Top Choices For Your Selections</h1>
-
-            <div className="destinations-grid">
-              {destinationCards.map((card) => (
-                <article key={card.id} className="destination-card">
-                  <div className="destination-image" aria-hidden="true" />
-                  <h2>{card.title}</h2>
-                  <div className="destination-pros-cons">
-                    <p>
-                      <strong>Pros:</strong> {card.pros}
-                    </p>
-                    <p>
-                      <strong>Cons:</strong> {card.cons}
-                    </p>
-                  </div>
-                  <div className="destination-price">
-                    <p>Total Price</p>
-                    <p>{card.totalPrice}</p>
-                  </div>
-                  <p className="destination-per-person">{card.pricePerPerson} Per Person</p>
-                </article>
-              ))}
-            </div>
-
-            <button type="button" className="destinations-view-more">
-              View More
-            </button>
+            <AttractionsExplorer
+              title="Top Choices For Your Selections"
+              subtitle="Explore attractions based on your filters."
+            />
           </div>
         </section>
       </main>
