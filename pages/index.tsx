@@ -1,97 +1,83 @@
-import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useState } from "react";
+import { useRouter } from "next/router";
 
-type HealthState = {
-  status: "loading" | "ok" | "error";
-  message: string;
-};
+const heroImage =
+  "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&q=80";
 
-export default function Home() {
-  const [health, setHealth] = useState<HealthState>({
-    status: "loading",
-    message: ""
-  });
-  const [supabaseStatus, setSupabaseStatus] = useState<
-    "loading" | "ok" | "error"
-  >("loading");
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadHealth() {
-      try {
-        const response = await fetch("/api/health");
-        const data = await response.json();
-        if (isMounted) {
-          setHealth({ status: "ok", message: data.message || "ok" });
-        }
-      } catch (error) {
-        if (!isMounted) {
-          return;
-        }
-
-        const message =
-          error instanceof Error ? error.message : "Unknown error";
-        setHealth({ status: "error", message });
-      }
-    }
-
-    loadHealth();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-  useEffect(() => {
-    let isMounted = true;
-
-    async function checkSupabase() {
-      try {
-        const response = await fetch("/api/attractions?limit=1");
-        if (!isMounted) {
-          return;
-        }
-        setSupabaseStatus(response.ok ? "ok" : "error");
-      } catch {
-        if (isMounted) {
-          setSupabaseStatus("error");
-        }
-      }
-    }
-
-    checkSupabase();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+export default function LandingPage() {
+  const router = useRouter();
+  const [guests, setGuests] = useState(67);
 
   return (
-    <main className="page">
-      <header className="hero">
-        <h1>Travel App</h1>
-        <p>Next.js app with frontend and API routes.</p>
-      </header>
-      <section className="card">
-        <h2>API status</h2>
-        <p className={`status status-${health.status}`}>
-          {health.status === "loading" ? "Checking..." : health.message}
-        </p>
-        <p className="note">Health check is served from /api/health.</p>
-      </section>
-      <section className="card">
-        <h2>Supabase status</h2>
-        <p className={`status status-${supabaseStatus}`}>
-          {supabaseStatus === "loading" && "Checking..."}
-          {supabaseStatus === "ok" && "Supabase API route ok"}
-          {supabaseStatus === "error" && "Supabase check failed"}
-        </p>
-        <p className="note">
-          Update <code>.env.local</code> with your Supabase URL and anon key.
-        </p>
-        <p className="note">
-          Test data page: <Link href="/attractions">/attractions</Link>
-        </p>
+    <main className="landing-shell">
+      <section className="landing-hero" style={{ backgroundImage: `url(${heroImage})` }}>
+        <div className="landing-overlay" />
+        <div className="landing-content">
+          <h1 className="landing-title">Enter Details About Your Travel</h1>
+          <div className="landing-card">
+            <div className="landing-input-block">
+              <div className="landing-label-row">
+                <span className="landing-icon" aria-hidden="true">
+                  📍
+                </span>
+                <span className="landing-label">Destination</span>
+              </div>
+              <input
+                className="landing-input"
+                placeholder="Where To?"
+                aria-label="Destination"
+              />
+            </div>
+            <div className="landing-input-block">
+              <div className="landing-label-row">
+                <span className="landing-icon" aria-hidden="true">
+                  📅
+                </span>
+                <span className="landing-label">Dates</span>
+              </div>
+              <input
+                className="landing-input"
+                placeholder="Departure & Return"
+                aria-label="Dates"
+              />
+            </div>
+            <div className="landing-input-block">
+              <div className="landing-label-row">
+                <span className="landing-icon" aria-hidden="true">
+                  👤
+                </span>
+                <span className="landing-label">Guests</span>
+              </div>
+              <div className="landing-guest-row">
+                <button
+                  type="button"
+                  className="landing-guest-button"
+                  onClick={() => setGuests((value) => Math.max(1, value - 1))}
+                  aria-label="Decrease guests"
+                >
+                  -
+                </button>
+                <span className="landing-guest-count">{guests}</span>
+                <button
+                  type="button"
+                  className="landing-guest-button"
+                  onClick={() => setGuests((value) => value + 1)}
+                  aria-label="Increase guests"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="landing-go-button"
+            onClick={() => router.push("/ai-chatbot")}
+          >
+            <span>Go</span>
+            <span aria-hidden="true">→</span>
+          </button>
+        </div>
       </section>
     </main>
   );
