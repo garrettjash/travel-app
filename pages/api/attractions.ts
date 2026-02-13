@@ -28,6 +28,7 @@ type AttractionItem = {
 
 type FilterOptionsResponse = {
   places: string[];
+  countries: string[];
   categories: string[];
   vibes: string[];
   priceLevels: string[];
@@ -71,6 +72,12 @@ function asOffset(value: string | string[] | undefined) {
   const raw = Number(asString(value) || 0);
   if (!Number.isFinite(raw)) return 0;
   return Math.max(Math.floor(raw), 0);
+}
+
+function asNumber(value: string | string[] | undefined) {
+  const raw = Number(asString(value));
+  if (!Number.isFinite(raw)) return null;
+  return raw;
 }
 
 function normalizeText(value: unknown) {
@@ -132,6 +139,10 @@ export default async function handler(
         })
       );
 
+      const countries = uniqueSorted(
+        (attractionFilterResult.data ?? []).map((row) => row.attraction_countryregion)
+      );
+
       const vibes = uniqueSorted(
         (attractionFilterResult.data ?? []).map((row) => row.attraction_vibe)
       );
@@ -147,6 +158,7 @@ export default async function handler(
       res.status(200).json({
         options: {
           places,
+          countries,
           categories,
           vibes,
           priceLevels
@@ -162,6 +174,9 @@ export default async function handler(
     const vibe = asString(req.query.vibe);
     const priceLevel = asString(req.query.priceLevel);
     const search = asString(req.query.search);
+    const country = asString(req.query.country);
+    const minRating = asNumber(req.query.minRating);
+    const minPopularity = asNumber(req.query.minPopularity);
 
     let categoryFilteredIds: number[] | null = null;
 
@@ -231,8 +246,20 @@ export default async function handler(
       query = query.ilike("attraction_vibe", vibe);
     }
 
+    if (country) {
+      query = query.ilike("attraction_countryregion", country);
+    }
+
     if (priceLevel) {
       query = query.eq("attraction_pricelevel", priceLevel);
+    }
+
+    if (minRating !== null) {
+      query = query.gte("attraction_normalizedrating", minRating);
+    }
+
+    if (minPopularity !== null) {
+      query = query.gte("attraction_popularityscore", minPopularity);
     }
 
     if (search) {

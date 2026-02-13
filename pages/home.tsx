@@ -3,6 +3,8 @@ import AttractionsExplorer from "../components/AttractionsExplorer";
 
 export default function HomePage() {
   const router = useRouter();
+  const placeQuery = router.query.place;
+  const initialPlace = Array.isArray(placeQuery) ? placeQuery[0] : placeQuery;
 
   return (
     <main className="destinations-page">
@@ -49,6 +51,7 @@ export default function HomePage() {
           <AttractionsExplorer
             title="Top Choices For Your Selections"
             subtitle="Explore attractions based on your filters."
+            initialPlace={initialPlace}
           />
         </div>
       </section>

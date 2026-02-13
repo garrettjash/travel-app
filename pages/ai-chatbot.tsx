@@ -153,7 +153,7 @@ export default function AiChatbotPage() {
           </button>
         </nav>
 
-        <div className="destinations-content">
+        <div className="destinations-content destinations-content-chat">
           <section className="chat-shell">
             <header className="chat-header">
               <h1>AI Travel Chatbot</h1>
