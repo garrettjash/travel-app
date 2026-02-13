@@ -5,6 +5,7 @@ type ChatMessage = {
   message_id: number | string;
   content: string;
   role: string | null;
+  session_id: string | null;
   created_at: string | null;
 };
 
@@ -35,12 +36,20 @@ export default async function handler(
   try {
     if (request.method === "GET") {
       const limit = getLimit(request.query.limit);
+      const sessionIdParam = request.query.session_id;
+      const sessionId = Array.isArray(sessionIdParam) ? sessionIdParam[0] : sessionIdParam;
 
-      const { data, error } = await supabase
+      let query = supabase
         .from("messages")
-        .select("message_id, content, role, created_at")
+        .select("message_id, content, role, session_id, created_at")
         .order("created_at", { ascending: true })
         .limit(limit);
+
+      if (sessionId?.trim()) {
+        query = query.eq("session_id", sessionId.trim());
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
@@ -50,6 +59,7 @@ export default async function handler(
     if (request.method === "POST") {
       const content = request.body?.content?.trim() ?? "";
       const sender = request.body?.sender?.trim() ?? "user";
+      const sessionId = request.body?.session_id?.trim() ?? "";
 
       if (!content) {
         response.status(400).json({ error: "Message content is required." });
@@ -61,10 +71,15 @@ export default async function handler(
         return;
       }
 
+      if (!sessionId) {
+        response.status(400).json({ error: "Session ID is required." });
+        return;
+      }
+
       const { data, error } = await supabase
         .from("messages")
-        .insert({ content, sender })
-        .select("message_id, content, role, created_at")
+        .insert({ content, sender, session_id: sessionId })
+        .select("message_id, content, role, session_id, created_at")
         .single();
 
       if (error) throw error;

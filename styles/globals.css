@@ -383,6 +383,14 @@ body {
   font-weight: 500;
 }
 
+.destinations-brand-button {
+  border: none;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  cursor: pointer;
+}
+
 .destinations-login {
   border: none;
   background: transparent;
