@@ -12,7 +12,27 @@ type ChatMessage = {
 function formatTimestamp(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "Unknown time";
-  return date.toLocaleString();
+
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const messageDayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const dayDifference = Math.round(
+    (todayStart.getTime() - messageDayStart.getTime()) / (1000 * 60 * 60 * 24)
+  );
+
+  const dayLabel =
+    dayDifference === 0
+      ? "Today"
+      : dayDifference === 1
+        ? "Yesterday"
+        : date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+
+  const timeLabel = date.toLocaleTimeString(undefined, {
+    hour: "numeric",
+    minute: "2-digit"
+  });
+
+  return `${dayLabel}, ${timeLabel}`;
 }
 
 export default function AiChatbotPage() {
@@ -23,7 +43,7 @@ export default function AiChatbotPage() {
   const [draft, setDraft] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const messagesRef = useRef<HTMLDivElement | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const canSend = useMemo(
     () => draft.trim().length > 0 && !isSending,
@@ -67,8 +87,7 @@ export default function AiChatbotPage() {
   }, [sessionId]);
 
   useEffect(() => {
-    if (!messagesRef.current) return;
-    messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
+    messagesEndRef.current?.scrollIntoView({ block: "end" });
   }, [messages, isSending]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -160,7 +179,7 @@ export default function AiChatbotPage() {
               <p>Ask travel questions and view the conversation from your database.</p>
             </header>
 
-            <div ref={messagesRef} className="chat-messages" role="log" aria-live="polite">
+            <div className="chat-messages" role="log" aria-live="polite">
               {messages.length === 0 && <p className="chat-state">No messages yet.</p>}
               {messages.map((msg) => (
                 <article
@@ -170,12 +189,26 @@ export default function AiChatbotPage() {
                   key={msg.message_id}
                 >
                   <div className="chat-message-meta">
-                    <strong>{msg.role}</strong>
+                    <strong>{msg.role === "user" ? "Me" : "Assistant"}</strong>
                     <span>{formatTimestamp(msg.createdAt)}</span>
                   </div>
                   <p>{msg.content}</p>
                 </article>
               ))}
+
+              {isSending && (
+                <article className="chat-message chat-message-assistant chat-message-typing">
+                  <div className="chat-message-meta">
+                    <strong>Assistant</strong>
+                  </div>
+                  <div className="chat-typing-dots" aria-label="Assistant is typing">
+                    <span />
+                    <span />
+                    <span />
+                  </div>
+                </article>
+              )}
+              <div ref={messagesEndRef} />
             </div>
 
             <form className="chat-form" onSubmit={handleSubmit}>
@@ -193,7 +226,7 @@ export default function AiChatbotPage() {
                   maxLength={2000}
                 />
                 <button type="submit" disabled={!canSend} className="chat-send-button">
-                  {isSending ? "Sending..." : "Send"}
+                  {isSending ? <span className="chat-send-spinner" aria-label="Sending message" /> : "Send"}
                 </button>
               </div>
               {error && <p className="chat-error">{error}</p>}
