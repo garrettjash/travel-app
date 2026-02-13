@@ -251,6 +251,25 @@ body {
   border-radius: 12px;
   background: #ffffff;
   border: 1px solid #e7ecf3;
+  max-width: 80%;
+}
+
+.chat-message-assistant {
+  align-self: flex-start;
+  background: #eceff3;
+  border-color: #d6dde7;
+}
+
+.chat-message-user {
+  align-self: flex-end;
+  background: #4c6fff;
+  border-color: #3b59d4;
+}
+
+.chat-message-user .chat-message-meta strong,
+.chat-message-user .chat-message-meta span,
+.chat-message-user p {
+  color: #ffffff;
 }
 
 .chat-message-meta {

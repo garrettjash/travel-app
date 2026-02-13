@@ -146,7 +146,12 @@ export default function AiChatbotPage() {
         <div className="chat-messages" role="log" aria-live="polite">
           {messages.length === 0 && <p className="chat-state">No messages yet.</p>}
           {messages.map((msg) => (
-            <article className="chat-message" key={msg.message_id}>
+            <article
+              className={`chat-message ${
+                msg.role === "assistant" ? "chat-message-assistant" : "chat-message-user"
+              }`}
+              key={msg.message_id}
+            >
               <div className="chat-message-meta">
                 <strong>{msg.role}</strong>
                 <span>{formatTimestamp(msg.createdAt)}</span>
