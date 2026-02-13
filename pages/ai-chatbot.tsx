@@ -17,7 +17,7 @@ function formatTimestamp(value: string) {
 
 export default function AiChatbotPage() {
   const router = useRouter();
-  const sessionId = crypto.randomUUID(); // "57076c76-ad4c-4124-8a80-f4c151366844";
+  const sessionId = "57076c76-ad4c-4124-8a80-f4c151366844";
   const isChatView = router.query.view === "chat";
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -80,6 +80,7 @@ export default function AiChatbotPage() {
       });
 
       const agentData = await agentResponse.json();
+      console.log("Agent response:", agentData);
 
       if (!agentResponse.ok) {
         throw new Error(agentData.error || "Failed to send message");
@@ -88,7 +89,7 @@ export default function AiChatbotPage() {
       const agentMessage: ChatMessage = {
         message_id: String(agentData.message_id ?? crypto.randomUUID()),
         role: "assistant",
-        content: agentData.content,
+        content: agentData.output,
         createdAt: agentData.createdAt ?? new Date().toISOString()
       };
       setMessages((prev) => [...prev, agentMessage]);
