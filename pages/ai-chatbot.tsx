@@ -1,38 +1,62 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
-import AttractionsExplorer from "../components/AttractionsExplorer";
 
 type ChatMessage = {
   message_id: string;
   role: "user" | "assistant";
   content: string;
+  session_id?: string;
   createdAt: string;
 };
 
 function formatTimestamp(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "Unknown time";
-  return date.toLocaleString();
+
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const messageDayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const dayDifference = Math.round(
+    (todayStart.getTime() - messageDayStart.getTime()) / (1000 * 60 * 60 * 24)
+  );
+
+  const dayLabel =
+    dayDifference === 0
+      ? "Today"
+      : dayDifference === 1
+        ? "Yesterday"
+        : date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+
+  const timeLabel = date.toLocaleTimeString(undefined, {
+    hour: "numeric",
+    minute: "2-digit"
+  });
+
+  return `${dayLabel}, ${timeLabel}`;
 }
 
 export default function AiChatbotPage() {
   const router = useRouter();
-  const sessionId = "57076c76-ad4c-4124-8a80-f4c151366844";
-  const isChatView = router.query.view === "chat";
 
+  const [sessionId, setSessionId] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const canSend = useMemo(
     () => draft.trim().length > 0 && !isSending,
     [draft, isSending]
   );
 
-  const fetchMessages = async () => {
+  const fetchMessages = async (activeSessionId: string) => {
     try {
-      const res = await fetch("/api/chat-messages");
+      const params = new URLSearchParams({
+        session_id: activeSessionId,
+        limit: "100"
+      });
+      const res = await fetch(`/api/chat-messages?${params.toString()}`);
       const data = await res.json();
 
       if (!res.ok) throw new Error(data.error || "Failed to fetch messages");
@@ -41,6 +65,7 @@ export default function AiChatbotPage() {
         message_id: String(msg.message_id),
         role: msg.role === "assistant" ? "assistant" : "user",
         content: msg.content,
+        session_id: msg.session_id ? String(msg.session_id) : undefined,
         createdAt: msg.created_at ?? new Date().toISOString()
       }));
 
@@ -51,18 +76,36 @@ export default function AiChatbotPage() {
   };
 
   useEffect(() => {
-    if (!isChatView) return;
-    fetchMessages();
-  }, [isChatView]);
+    setMessages([]);
+    setError(null);
+    setSessionId(crypto.randomUUID());
+  }, []);
+
+  useEffect(() => {
+    if (!sessionId) return;
+    fetchMessages(sessionId);
+  }, [sessionId]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ block: "end" });
+  }, [messages, isSending]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const content = draft.trim();
-    if (!content || isSending) return;
+    if (!content || isSending || !sessionId) return;
 
     setIsSending(true);
     setDraft("");
     setError(null);
+
+    const userMessage: ChatMessage = {
+      message_id: crypto.randomUUID(),
+      role: "user",
+      content: content,
+      createdAt: new Date().toISOString()
+    };
+    setMessages((prev) => [...prev, userMessage]);
 
     try {
       const agentResponse = await fetch("/api/agent", {
@@ -72,12 +115,19 @@ export default function AiChatbotPage() {
       });
 
       const agentData = await agentResponse.json();
+      console.log("Agent response:", agentData);
 
       if (!agentResponse.ok) {
         throw new Error(agentData.error || "Failed to send message");
       }
 
-      await fetchMessages();
+      const agentMessage: ChatMessage = {
+        message_id: String(agentData.message_id ?? crypto.randomUUID()),
+        role: "assistant",
+        content: agentData.output,
+        createdAt: agentData.createdAt ?? new Date().toISOString()
+      };
+      setMessages((prev) => [...prev, agentMessage]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to send message");
     } finally {
@@ -85,97 +135,104 @@ export default function AiChatbotPage() {
     }
   };
 
-  if (!isChatView) {
-    return (
-      <main className="destinations-page">
-        <header className="destinations-topbar">
-          <span className="destinations-brand">TravelApp</span>
-          <button type="button" className="destinations-login">Login</button>
-        </header>
-
-        <section className="destinations-layout">
-          <nav className="destinations-sidebar" aria-label="Main navigation">
-            <button type="button" className="destinations-tab">
-              <span aria-hidden="true">🛏️</span>
-              <span>Stays</span>
-            </button>
-            <button type="button" className="destinations-tab">
-              <span aria-hidden="true">✈️</span>
-              <span>Flights</span>
-            </button>
-            <button type="button" className="destinations-tab destinations-tab-active">
-              <span aria-hidden="true">🗺️</span>
-              <span>Destinations</span>
-            </button>
-            <button type="button" className="destinations-tab">
-              <span aria-hidden="true">💾</span>
-              <span>Saved Trips</span>
-            </button>
-            <button
-              type="button"
-              className="destinations-tab"
-              onClick={() => router.push("/ai-chatbot?view=chat")}
-            >
-              <span aria-hidden="true">✨</span>
-              <span>AI Chatbot</span>
-            </button>
-          </nav>
-
-          <div className="destinations-content">
-            <AttractionsExplorer
-              title="Top Choices For Your Selections"
-              subtitle="Explore attractions based on your filters."
-            />
-          </div>
-        </section>
-      </main>
-    );
-  }
-
   return (
-    <main className="chat-page">
-      <section className="chat-shell">
-        <header className="chat-header">
-          <button type="button" className="chat-back-button" onClick={() => router.back()}>
-            ← Back
+    <main className="destinations-page">
+      <header className="destinations-topbar">
+        <button
+          type="button"
+          className="destinations-brand destinations-brand-button"
+          onClick={() => router.push("/")}
+        >
+          TravelApp
+        </button>
+        <button type="button" className="destinations-login">Login</button>
+      </header>
+
+      <section className="destinations-layout">
+        <nav className="destinations-sidebar" aria-label="Main navigation">
+          <button type="button" className="destinations-tab">
+            <span aria-hidden="true">🛏️</span>
+            <span>Stays</span>
           </button>
-          <h1>AI Travel Chatbot</h1>
-          <p>Ask travel questions and view the conversation from your database.</p>
-        </header>
+          <button type="button" className="destinations-tab">
+            <span aria-hidden="true">✈️</span>
+            <span>Flights</span>
+          </button>
+          <button type="button" className="destinations-tab" onClick={() => router.push("/home")}>
+            <span aria-hidden="true">🗺️</span>
+            <span>Destinations</span>
+          </button>
+          <button type="button" className="destinations-tab">
+            <span aria-hidden="true">💾</span>
+            <span>Saved Trips</span>
+          </button>
+          <button type="button" className="destinations-tab destinations-tab-active">
+            <span aria-hidden="true">✨</span>
+            <span>AI Chatbot</span>
+          </button>
+        </nav>
 
-        <div className="chat-messages" role="log" aria-live="polite">
-          {messages.length === 0 && <p className="chat-state">No messages yet.</p>}
-          {messages.map((msg) => (
-            <article className="chat-message" key={msg.message_id}>
-              <div className="chat-message-meta">
-                <strong>{msg.role}</strong>
-                <span>{formatTimestamp(msg.createdAt)}</span>
+        <div className="destinations-content destinations-content-chat">
+          <section className="chat-shell">
+            <header className="chat-header">
+              <h1>AI Travel Chatbot</h1>
+              <p>Ask travel questions and view the conversation from your database.</p>
+            </header>
+
+            <div className="chat-messages" role="log" aria-live="polite">
+              {messages.length === 0 && <p className="chat-state">No messages yet.</p>}
+              {messages.map((msg) => (
+                <article
+                  className={`chat-message ${
+                    msg.role === "assistant" ? "chat-message-assistant" : "chat-message-user"
+                  }`}
+                  key={msg.message_id}
+                >
+                  <div className="chat-message-meta">
+                    <strong>{msg.role === "user" ? "Me" : "Assistant"}</strong>
+                    <span>{formatTimestamp(msg.createdAt)}</span>
+                  </div>
+                  <p>{msg.content}</p>
+                </article>
+              ))}
+
+              {isSending && (
+                <article className="chat-message chat-message-assistant chat-message-typing">
+                  <div className="chat-message-meta">
+                    <strong>Assistant</strong>
+                  </div>
+                  <div className="chat-typing-dots" aria-label="Assistant is typing">
+                    <span />
+                    <span />
+                    <span />
+                  </div>
+                </article>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            <form className="chat-form" onSubmit={handleSubmit}>
+              <label htmlFor="chat-input" className="chat-form-label">
+                Message
+              </label>
+              <div className="chat-form-row">
+                <input
+                  id="chat-input"
+                  className="chat-input"
+                  type="text"
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  placeholder="Type your message..."
+                  maxLength={2000}
+                />
+                <button type="submit" disabled={!canSend} className="chat-send-button">
+                  {isSending ? <span className="chat-send-spinner" aria-label="Sending message" /> : "Send"}
+                </button>
               </div>
-              <p>{msg.content}</p>
-            </article>
-          ))}
+              {error && <p className="chat-error">{error}</p>}
+            </form>
+          </section>
         </div>
-
-        <form className="chat-form" onSubmit={handleSubmit}>
-          <label htmlFor="chat-input" className="chat-form-label">
-            Message
-          </label>
-          <div className="chat-form-row">
-            <input
-              id="chat-input"
-              className="chat-input"
-              type="text"
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              placeholder="Type your message..."
-              maxLength={2000}
-            />
-            <button type="submit" disabled={!canSend} className="chat-send-button">
-              {isSending ? "Sending..." : "Send"}
-            </button>
-          </div>
-          {error && <p className="chat-error">{error}</p>}
-        </form>
       </section>
     </main>
   );

@@ -6,7 +6,7 @@ const heroImage =
 
 export default function LandingPage() {
   const router = useRouter();
-  const [guests, setGuests] = useState(67);
+  const [destination, setDestination] = useState("");
 
   return (
     <main className="landing-shell">
@@ -26,53 +26,22 @@ export default function LandingPage() {
                 className="landing-input"
                 placeholder="Where To?"
                 aria-label="Destination"
+                value={destination}
+                onChange={(event) => setDestination(event.target.value)}
               />
-            </div>
-            <div className="landing-input-block">
-              <div className="landing-label-row">
-                <span className="landing-icon" aria-hidden="true">
-                  📅
-                </span>
-                <span className="landing-label">Dates</span>
-              </div>
-              <input
-                className="landing-input"
-                placeholder="Departure & Return"
-                aria-label="Dates"
-              />
-            </div>
-            <div className="landing-input-block">
-              <div className="landing-label-row">
-                <span className="landing-icon" aria-hidden="true">
-                  👤
-                </span>
-                <span className="landing-label">Guests</span>
-              </div>
-              <div className="landing-guest-row">
-                <button
-                  type="button"
-                  className="landing-guest-button"
-                  onClick={() => setGuests((value) => Math.max(1, value - 1))}
-                  aria-label="Decrease guests"
-                >
-                  -
-                </button>
-                <span className="landing-guest-count">{guests}</span>
-                <button
-                  type="button"
-                  className="landing-guest-button"
-                  onClick={() => setGuests((value) => value + 1)}
-                  aria-label="Increase guests"
-                >
-                  +
-                </button>
-              </div>
             </div>
           </div>
           <button
             type="button"
             className="landing-go-button"
-            onClick={() => router.push("/ai-chatbot")}
+            onClick={() => {
+              const place = destination.trim();
+              if (!place) {
+                router.push("/home");
+                return;
+              }
+              router.push({ pathname: "/home", query: { place } });
+            }}
           >
             <span>Go</span>
             <span aria-hidden="true">→</span>
