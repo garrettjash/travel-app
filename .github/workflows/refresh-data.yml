@@ -1,0 +1,67 @@
+name: Refresh Travel Data
+
+# This workflow automatically refreshes stale travel data by:
+# 1. Detecting locations with data older than 3 months
+# 2. Triggering web scraping for those locations
+# 3. Processing the fresh content and updating the database
+
+on:
+  # Run monthly on the 1st at 2 AM UTC
+  schedule:
+    - cron: '0 2 1 * *'
+  
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      force_refresh:
+        description: 'Force refresh all data (scrape and reprocess everything - may take hours)'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  refresh-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r ai_database/requirements.txt
+          pip install geopy
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      
+      - name: Run data refresh
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+        run: |
+          if [ "${{ inputs.force_refresh }}" = "true" ]; then
+            echo "Running with force refresh..."
+            python ai_database/ai_processor.py --force-refresh
+          else
+            echo "Running with staleness check (3 months)..."
+            python ai_database/ai_processor.py --refresh-stale
+          fi
+      
+      - name: Notify on failure
+        if: failure()
+        run: echo "Data refresh failed. Check the logs for details."

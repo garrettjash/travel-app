@@ -7,8 +7,12 @@ import re
 import time
 import concurrent.futures
 import threading
+import argparse
+import subprocess
+import sys
 from urllib.parse import urlparse
 from typing import List, Optional, Literal
+from datetime import timedelta
 from pydantic import BaseModel, Field, ConfigDict
 from openai import OpenAI
 from supabase import create_client, Client
@@ -102,10 +106,65 @@ class ArticleExtraction(BaseModel):
 # --- HELPERS ---
 
 def get_place_name_from_key(s3_key):
+    """
+    Extract location name from S3 key.
+    Examples:
+      - raw_scrapes/budapest_20231113.jsonl -> budapest
+      - raw_scrapes/paris_2024_01_15.jsonl -> paris
+    """
     filename = os.path.basename(s3_key)
-    match = re.match(r"([a-zA-Z]+)", filename)
-    if match: return match.group(1).title()
+    # Remove extension and timestamp patterns
+    name = filename.replace('.jsonl', '')
+    # Extract location name (everything before first underscore or number)
+    match = re.match(r"([a-zA-Z\s]+)", name)
+    if match:
+        location = match.group(1).strip()
+        return location if location else "Unknown Destination"
     return "Unknown Destination"
+
+def trigger_main_scraper(location):
+    """
+    Triggers main_scraper.py to fetch fresh data for a location.
+    Returns True if successful, False otherwise.
+    """
+    scraper_path = repo_root / "web_scraper" / "code" / "1. main_scraper.py"
+    
+    if not scraper_path.exists():
+        with PRINT_LOCK:
+            print(f"⚠️ main_scraper.py not found at: {scraper_path}")
+        return False
+    
+    with PRINT_LOCK:
+        print(f"\n🔄 Triggering fresh scrape for: {location}")
+        print(f"   This may take 5-15 minutes...")
+    
+    try:
+        # Run main_scraper with the location as input
+        result = subprocess.run(
+            [sys.executable, str(scraper_path)],
+            input=location,
+            text=True,
+            capture_output=False,  # Show output in real-time
+            timeout=1800  # 30 minute timeout
+        )
+        
+        if result.returncode == 0:
+            with PRINT_LOCK:
+                print(f"✅ Scraping completed for {location}")
+            return True
+        else:
+            with PRINT_LOCK:
+                print(f"⚠️ Scraping failed with return code: {result.returncode}")
+            return False
+            
+    except subprocess.TimeoutExpired:
+        with PRINT_LOCK:
+            print(f"⚠️ Scraping timeout for {location}")
+        return False
+    except Exception as e:
+        with PRINT_LOCK:
+            print(f"⚠️ Error triggering scraper: {e}")
+        return False
 
 def log_status(s3_key, status, msg=None):
     try:
@@ -116,12 +175,61 @@ def log_status(s3_key, status, msg=None):
         }).execute()
     except Exception as e: print(f"⚠️ Log Error: {e}")
 
-def should_process(s3_key):
+def should_process(s3_key, force_refresh=False, check_staleness=True):
+    """
+    Determines if an S3 file should be processed.
+    
+    Args:
+        s3_key: The S3 key to check
+        force_refresh: If True, always process regardless of status
+        check_staleness: If True, check if data is older than 3 months
+    
+    Returns:
+        Tuple (should_process: bool, is_stale: bool)
+    """
+    if force_refresh:
+        return (True, False)
+    
     try:
-        res = supabase.table("processed_scraped_data").select("status").eq("s3_key", s3_key).execute()
-        if res.data and res.data[0]['status'] == 'success': return False
-        return True
-    except: return True
+        res = supabase.table("processed_scraped_data").select("status, processed_at").eq("s3_key", s3_key).execute()
+        
+        if not res.data:
+            return (True, False)
+        
+        record = res.data[0]
+        status = record.get('status')
+        processed_at = record.get('processed_at')
+        
+        # If processing failed before, retry
+        if status == 'failed':
+            return (True, False)
+        
+        # If successful, check staleness
+        if status == 'success' and check_staleness and processed_at:
+            try:
+                processed_date = datetime.datetime.fromisoformat(processed_at.replace('Z', '+00:00'))
+                now = datetime.datetime.now(datetime.timezone.utc)
+                age = now - processed_date
+                
+                # If data is older than 3 months (90 days), needs refresh
+                if age > timedelta(days=90):
+                    with PRINT_LOCK:
+                        print(f"⏰ Data is {age.days} days old (>90 days). Needs refresh...")
+                    return (True, True)  # Process AND it's stale
+            except Exception as e:
+                with PRINT_LOCK:
+                    print(f"⚠️ Error parsing date: {e}. Will reprocess.")
+                return (True, False)
+        
+        # If recent and successful, skip
+        if status == 'success':
+            return (False, False)
+            
+        return (True, False)
+    except Exception as e:
+        with PRINT_LOCK:
+            print(f"⚠️ Error checking process status: {e}")
+        return (True, False)
 
 def generate_embedding(text):
     try:
@@ -228,6 +336,47 @@ def download_s3(s3_key):
     with tempfile.NamedTemporaryFile(delete=False) as tmp:
         s3.download_fileobj(S3_BUCKET, s3_key, tmp)
         return tmp.name
+
+def delete_old_s3_files(location, current_s3_key):
+    """
+    Deletes old S3 files for a location, keeping only the current one.
+    
+    Args:
+        location: The location name (e.g., 'budapest')
+        current_s3_key: The S3 key to keep (newly processed file)
+    """
+    try:
+        location_lower = location.lower().replace(' ', '_')
+        with PRINT_LOCK:
+            print(f"🗑️  Cleaning up old files for {location}...")
+        
+        # List all files for this location
+        paginator = s3.get_paginator('list_objects_v2')
+        pages = paginator.paginate(Bucket=S3_BUCKET, Prefix=f'raw_scrapes/{location_lower}')
+        
+        files_to_delete = []
+        for page in pages:
+            if 'Contents' in page:
+                for obj in page['Contents']:
+                    key = obj['Key']
+                    # Delete if it's a .jsonl file for this location and NOT the current file
+                    if key.endswith('.jsonl') and key != current_s3_key:
+                        files_to_delete.append(key)
+        
+        if files_to_delete:
+            for old_key in files_to_delete:
+                s3.delete_object(Bucket=S3_BUCKET, Key=old_key)
+                with PRINT_LOCK:
+                    print(f"   ✓ Deleted: {old_key}")
+            with PRINT_LOCK:
+                print(f"   Removed {len(files_to_delete)} old file(s)")
+        else:
+            with PRINT_LOCK:
+                print(f"   No old files to delete")
+                
+    except Exception as e:
+        with PRINT_LOCK:
+            print(f"⚠️ Error deleting old files: {e}")
 
 def save_attraction(item, place_id, source_id, article, s3_key, ref_lat, ref_lon, main_place_name, p_country):
     price_map = {'Free': 0, 'Cheap': 1, 'Moderate': 2, 'Expensive': 3, 'Luxury': 4, 'Unknown': None}
@@ -390,7 +539,8 @@ def process_file_content(local_path, s3_key, main_place_name):
             'place_stateprovince': p_state,
             'place_latitude': p_lat,
             'place_longitude': p_lon,
-            'place_type': ['city']
+            'place_type': ['city'],
+            'place_lastrefreshed': datetime.datetime.now().isoformat()
         }
         place_res = supabase.table('place').upsert(place_data, on_conflict='place_city').execute()
         place_id = place_res.data[0]['place_id']
@@ -434,14 +584,81 @@ def process_file_content(local_path, s3_key, main_place_name):
             )
         concurrent.futures.wait(futures)
 
-def process_pipeline(s3_key):
-    if not should_process(s3_key): return
+def process_pipeline(s3_key, force_refresh=False, check_staleness=True, trigger_scraper=True):
+    """
+    Main processing pipeline for an S3 file.
+    
+    Args:
+        s3_key: The S3 key to process
+        force_refresh: If True, process even if recently processed
+        check_staleness: If True, refresh data older than 3 months
+        trigger_scraper: If True, trigger main_scraper for stale data
+    """
+    should_proc, is_stale = should_process(s3_key, force_refresh, check_staleness)
+    
+    if not should_proc:
+        with PRINT_LOCK:
+            print(f"⏭️  SKIPPING (already processed): {s3_key}")
+        return
+    
+    location = get_place_name_from_key(s3_key)
+    original_s3_key = s3_key
+    scraped_fresh_data = False
+    
+    # If data is stale and scraper trigger is enabled, fetch fresh data first
+    if is_stale and trigger_scraper:
+        with PRINT_LOCK:
+            print(f"\n🔄 Data is stale for {location}. Fetching fresh data...")
+        
+        scrape_success = trigger_main_scraper(location)
+        
+        if scrape_success:
+            # Wait a moment for S3 to finalize the upload
+            time.sleep(2)
+            
+            # Find the newly created file in S3 for this location
+            with PRINT_LOCK:
+                print(f"🔍 Looking for newly scraped file for {location}...")
+            
+            try:
+                # List files for this location, sorted by last modified
+                location_lower = location.lower().replace(' ', '_')
+                paginator = s3.get_paginator('list_objects_v2')
+                pages = paginator.paginate(Bucket=S3_BUCKET, Prefix=f'raw_scrapes/{location_lower}')
+                
+                files = []
+                for page in pages:
+                    if 'Contents' in page:
+                        files.extend([obj for obj in page['Contents'] if obj['Key'].endswith('.jsonl')])
+                
+                if files:
+                    # Get the most recent file
+                    newest_file = max(files, key=lambda x: x['LastModified'])
+                    s3_key = newest_file['Key']
+                    scraped_fresh_data = True
+                    with PRINT_LOCK:
+                        print(f"✅ Found new file: {s3_key}")
+                else:
+                    with PRINT_LOCK:
+                        print(f"⚠️ No new file found. Processing existing file.")
+            except Exception as e:
+                with PRINT_LOCK:
+                    print(f"⚠️ Error finding new file: {e}. Processing existing file.")
+        else:
+            with PRINT_LOCK:
+                print(f"⚠️ Scraping failed. Will process existing old file.")
+    
     print(f"\n▶️  STARTING: {s3_key}")
     try:
         local_path = download_s3(s3_key)
         place_name = get_place_name_from_key(s3_key)
         process_file_content(local_path, s3_key, place_name)
         log_status(s3_key, 'success')
+        
+        # After successful processing, delete old S3 files if we scraped fresh data
+        if scraped_fresh_data:
+            delete_old_s3_files(location, s3_key)
+        
         print(f"🎉 COMPLETED: {s3_key}")
     except Exception as e:
         print(f"❌ CRITICAL ERROR: {e}")
@@ -450,12 +667,79 @@ def process_pipeline(s3_key):
         if 'local_path' in locals() and os.path.exists(local_path):
             os.remove(local_path)
 
+def main():
+    """
+    Main function to process S3 files with optional refresh control.
+    """
+    parser = argparse.ArgumentParser(
+        description='Process travel data from S3 and populate Supabase database.'
+    )
+    parser.add_argument(
+        '--force-refresh',
+        action='store_true',
+        help='Force reprocessing of all files regardless of when they were last processed'
+    )
+    parser.add_argument(
+        '--refresh-stale',
+        action='store_true',
+        help='Refresh data that is older than 3 months (default behavior)'
+    )
+    parser.add_argument(
+        '--no-staleness-check',
+        action='store_true',
+        help='Skip the 3-month staleness check (only process new or failed files)'
+    )
+    parser.add_argument(
+        '--s3-key',
+        type=str,
+        help='Process a specific S3 key instead of scanning the entire bucket'
+    )
+    parser.add_argument(
+        '--no-scraper',
+        action='store_true',
+        help='Do not trigger main_scraper for stale data (only reprocess existing files)'
+    )
+    
+    args = parser.parse_args()
+    
+    # Determine processing mode
+    force_refresh = args.force_refresh
+    check_staleness = not args.no_staleness_check or args.refresh_stale
+    trigger_scraper = not args.no_scraper
+    
+    if force_refresh:
+        print("🔄 FORCE REFRESH MODE: Will reprocess all files")
+    elif check_staleness:
+        print("⏰ STALENESS CHECK ENABLED: Will refresh data older than 3 months")
+    else:
+        print("📋 NORMAL MODE: Only processing new or failed files")
+    
+    if not trigger_scraper:
+        print("⚠️ Scraper disabled: Will only reprocess existing files")
+    
+    # Process specific file or scan bucket
+    if args.s3_key:
+        print(f"🎯 Processing specific file: {args.s3_key}")
+        process_pipeline(args.s3_key, force_refresh, check_staleness, trigger_scraper)
+    else:
+        print(f"🔎 Scanning S3 bucket '{S3_BUCKET}'...")
+        paginator = s3.get_paginator('list_objects_v2')
+        pages = paginator.paginate(Bucket=S3_BUCKET, Prefix='raw_scrapes/')
+        
+        files_to_process = []
+        for page in pages:
+            if 'Contents' not in page:
+                continue
+            for obj in page['Contents']:
+                if obj['Key'].endswith('.jsonl'):
+                    files_to_process.append(obj['Key'])
+        
+        print(f"📊 Found {len(files_to_process)} .jsonl files")
+        
+        for s3_key in files_to_process:
+            process_pipeline(s3_key, force_refresh, check_staleness, trigger_scraper)
+    
+    print("\n✅ Processing complete!")
+
 if __name__ == "__main__":
-    print(f"🔎 Scanning S3 bucket '{S3_BUCKET}'...")
-    paginator = s3.get_paginator('list_objects_v2')
-    pages = paginator.paginate(Bucket=S3_BUCKET, Prefix='raw_scrapes/')
-    for page in pages:
-        if 'Contents' not in page: continue
-        for obj in page['Contents']:
-            if obj['Key'].endswith('.jsonl'):
-                process_pipeline(obj['Key'])
+    main()
