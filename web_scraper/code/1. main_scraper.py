@@ -55,27 +55,6 @@ def upload_to_s3(local_filepath, destination_name):
     except Exception as e:
         print(f"❌ Failed: {e}")
 
-def upload_entries_to_s3(entries, destination_name):
-    if not entries:
-        print("ℹ️ No entries to upload.")
-        return
-    s3 = get_s3_client()
-    bucket_name = os.getenv('S3_BUCKET_NAME')
-    if not s3 or not bucket_name:
-        print("❌ Skipping S3 Upload: Missing credentials or bucket name.")
-        return
-    stamp = time.strftime('%Y%m%d_%H%M%S')
-    file_slug = destination_name.replace(' ', '_').lower()
-    s3_key = f"raw_scrapes/{file_slug}_{stamp}.jsonl"
-    payload = "\n".join(json.dumps(entry, ensure_ascii=False) for entry in entries) + "\n"
-    print(f"\n☁️  Uploading to S3 ({bucket_name})...", end=" ")
-    try:
-        s3.put_object(Bucket=bucket_name, Key=s3_key, Body=payload.encode("utf-8"))
-        print("✅ Success!")
-        print(f"   └── Stored as: s3://{bucket_name}/{s3_key}")
-    except Exception as e:
-        print(f"❌ Failed: {e}")
-
 # --- NEW CLEANING & PROCESSING LOGIC ---
 
 def process_html_content(raw_html):
@@ -262,7 +241,6 @@ def scrape_and_crawl(destination):
         print("❌ Critical: Could not initialize Selenium Driver.")
         return
 
-    entries = []
     for i, item in enumerate(all_results, 1):
         url = item['Link']
         print(f"   Processing: {item['Title'][:30]}...", end=" ")
@@ -284,17 +262,6 @@ def scrape_and_crawl(destination):
             final_body = refine_text_content(body_text, item['Title'], destination)
             
             if final_body:
-                entry = {
-                    "source": item['Site'],
-                    "title": item['Title'],
-                    "url": url,
-                    "type": "web_article",
-                    "scraped_at": time.strftime('%Y-%m-%d'),
-                    "content_body": final_body,
-                    "user_reviews": reviews_text,
-                    "has_reviews": bool(reviews_text.strip())
-                }
-                entries.append(entry)
                 print(f"✅ Processed")
             else:
                 print(f"🗑️ Skipped")
@@ -304,7 +271,6 @@ def scrape_and_crawl(destination):
 
     driver.quit()
     print(f"\n✅ PROCESSING COMPLETE")
-    upload_entries_to_s3(entries, destination)
 
 def run_tripadvisor_scraper(destination):
     repo_root = Path(__file__).resolve().parents[2]
