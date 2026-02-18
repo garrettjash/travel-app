@@ -14,7 +14,7 @@ import hashlib
 import mimetypes
 import requests
 from urllib.parse import urlparse
-from typing import List, Optional, Literal
+from typing import List, Optional, Literal, Any, Dict
 from datetime import timedelta
 from pydantic import BaseModel, Field, ConfigDict
 from openai import OpenAI
@@ -577,6 +577,83 @@ def analyze_chunk(text, title, source, idx=None, total=None):
         with PRINT_LOCK: print(f"   ⚠️ AI Error: {e}")
         return []
 
+# --- PRE-EXTRACTED SUPPORT ---
+
+def build_extracted_from_pre(raw: Dict[str, Any], fallback_city: Optional[str] = None) -> ExtractedAttraction:
+    name = raw.get("name") or raw.get("attraction_name") or "Unknown"
+    detected_city = raw.get("detected_city") or raw.get("city") or fallback_city or "Unknown"
+    category = raw.get("category") or "Attraction"
+    vibes = raw.get("vibes") or []
+    popularity_keywords = raw.get("popularity_keywords") or []
+    price_level = raw.get("price_level") or "Unknown"
+    rating_score = raw.get("rating_score") or raw.get("rating")
+    rating_max = raw.get("rating_max") or (5.0 if rating_score is not None else None)
+    review_count_mentioned = raw.get("review_count_mentioned") or raw.get("num_reviews") or 0
+    logistics_raw = raw.get("logistics") or {}
+    logistics = Logistics(
+        price_text=logistics_raw.get("price_text") or raw.get("price_text"),
+        hours=logistics_raw.get("hours") or raw.get("hours"),
+        address=logistics_raw.get("address") or raw.get("address"),
+        transport=logistics_raw.get("transport") or raw.get("transport"),
+    )
+    description_summary = raw.get("description_summary") or raw.get("summary") or f"TripAdvisor listing for {name}."
+    source_quote_or_summary = raw.get("source_quote_or_summary") or raw.get("source_summary") or description_summary
+
+    return ExtractedAttraction(
+        name=name,
+        detected_city=detected_city,
+        category=category,
+        vibes=vibes,
+        price_level=price_level,
+        popularity_keywords=popularity_keywords,
+        rating_score=rating_score,
+        rating_max=rating_max,
+        review_count_mentioned=review_count_mentioned,
+        logistics=logistics,
+        description_summary=description_summary,
+        source_quote_or_summary=source_quote_or_summary,
+    )
+
+
+def is_missing_value(value):
+    if value is None:
+        return True
+    if isinstance(value, str) and not value.strip():
+        return True
+    if isinstance(value, list) and len(value) == 0:
+        return True
+    return False
+
+
+def merge_extracted(pre: ExtractedAttraction, ai: ExtractedAttraction) -> ExtractedAttraction:
+    pre_dict = pre.model_dump()
+    ai_dict = ai.model_dump()
+
+    merged = dict(pre_dict)
+    for key, ai_val in ai_dict.items():
+        if key == "logistics":
+            pre_log = pre_dict.get("logistics") or {}
+            ai_log = ai_dict.get("logistics") or {}
+            merged_log = dict(pre_log)
+            for lkey, lval in ai_log.items():
+                if is_missing_value(merged_log.get(lkey)):
+                    merged_log[lkey] = lval
+            merged["logistics"] = merged_log
+            continue
+
+        if is_missing_value(merged.get(key)):
+            merged[key] = ai_val
+
+    return ExtractedAttraction(**merged)
+
+
+def find_ai_match(pre_item: ExtractedAttraction, ai_items: List[ExtractedAttraction]) -> Optional[ExtractedAttraction]:
+    pre_name = (pre_item.name or "").strip().lower()
+    for ai_item in ai_items:
+        if (ai_item.name or "").strip().lower() == pre_name:
+            return ai_item
+    return ai_items[0] if ai_items else None
+
 # --- CORE LOGIC ---
 
 def download_s3(s3_key):
@@ -776,7 +853,26 @@ def process_single_article(article, place_id, s3_key, p_lat, p_lon, main_place_n
         src_res = supabase.table('source').upsert(src_data, on_conflict='source_name').execute()
         source_id = src_res.data[0]['source_id']
         
-        attractions = analyze_chunk(content, article.get('title'), article.get('source'), idx, total)
+        pre_extracted = article.get("pre_extracted_attractions") or article.get("extracted_attractions")
+        if isinstance(pre_extracted, list) and pre_extracted:
+            with PRINT_LOCK: print("   ✅ Pre-extracted found; filling missing fields with AI.")
+            pre_items = []
+            for raw in pre_extracted:
+                try:
+                    pre_items.append(build_extracted_from_pre(raw, article.get("seed_place") or main_place_name))
+                except Exception as e:
+                    with PRINT_LOCK: print(f"   ⚠️ Pre-extracted item error: {e}")
+
+            ai_items = analyze_chunk(content, article.get('title'), article.get('source'), idx, total)
+            if not ai_items:
+                attractions = pre_items
+            else:
+                attractions = []
+                for pre_item in pre_items:
+                    ai_match = find_ai_match(pre_item, ai_items)
+                    attractions.append(merge_extracted(pre_item, ai_match) if ai_match else pre_item)
+        else:
+            attractions = analyze_chunk(content, article.get('title'), article.get('source'), idx, total)
         
         for item in attractions:
             save_attraction(item, place_id, source_id, article, s3_key, p_lat, p_lon, main_place_name, p_country)

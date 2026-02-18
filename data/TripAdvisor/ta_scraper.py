@@ -1,6 +1,7 @@
 import os
 import time
 import json
+import re
 import boto3
 import requests
 import importlib.util
@@ -32,6 +33,8 @@ OLD_STATE_S3_KEY = os.getenv("TA_OLD_STATE_S3_KEY", f"{S3_PREFIX}ta_state.json")
 ATTRACTIONS_S3_KEY = os.getenv("TA_ATTRACTIONS_S3_KEY", f"{S3_PREFIX}attractions.json")
 PERSIST_ATTRACTIONS = os.getenv("TA_PERSIST_ATTRACTIONS", "").lower() in ("1", "true", "yes")
 MAX_NEW_ATTRACTIONS = int(os.getenv("TA_DAILY_LIMIT", "25"))
+EXPORT_JSONL = os.getenv("TA_EXPORT_JSONL", "1").lower() not in ("0", "false", "no")
+JSONL_PREFIX = os.getenv("TA_JSONL_PREFIX", S3_PREFIX)
 
 if not API_KEY:
     raise RuntimeError("Set TA_API_KEY in your environment.")
@@ -92,11 +95,6 @@ def s3_download_if_exists(s3, bucket, key, dest_path):
 
 def s3_upload_file(s3, bucket, key, source_path):
     s3.upload_file(str(source_path), bucket, key)
-    print(f"⬆️ Uploaded {key} to S3")
-
-def s3_upload_jsonl(s3, bucket, key, lines):
-    payload = "\n".join(json.dumps(line, ensure_ascii=False) for line in lines) + "\n"
-    s3.put_object(Bucket=bucket, Key=key, Body=payload.encode("utf-8"))
     print(f"⬆️ Uploaded {key} to S3")
 
 def load_web_scraper():
@@ -311,6 +309,93 @@ def flatten_details(d):
     }
 
 
+def map_price_level(raw):
+    if not raw:
+        return "Unknown"
+    s = str(raw).strip()
+    if "free" in s.lower():
+        return "Free"
+    currency_count = len(re.findall(r"[$€£¥]", s))
+    if currency_count <= 0:
+        return "Unknown"
+    if currency_count == 1:
+        return "Cheap"
+    if currency_count == 2:
+        return "Moderate"
+    if currency_count == 3:
+        return "Expensive"
+    return "Luxury"
+
+
+def build_pre_extracted_attraction(row):
+    name = row.get("name") or "Unknown Attraction"
+    city = row.get("city") or ""
+    country = row.get("country") or ""
+    detected_city = ", ".join([p for p in [city, country] if p]).strip()
+    price_level = map_price_level(row.get("price_level"))
+    ranking = row.get("ranking_string")
+    description = f"TripAdvisor listing for {name}"
+    if detected_city:
+        description = f"{description} in {detected_city}"
+    if ranking:
+        description = f"{description}. {ranking}"
+    else:
+        description = f"{description}."
+
+    return {
+        "name": name,
+        "detected_city": detected_city or row.get("seed_place") or "Unknown",
+        "category": "Attraction",
+        "vibes": [],
+        "price_level": price_level,
+        "popularity_keywords": [],
+        "rating_score": row.get("rating"),
+        "rating_max": 5.0 if row.get("rating") is not None else None,
+        "review_count_mentioned": row.get("num_reviews") or 0,
+        "logistics": {
+            "price_text": row.get("price_level"),
+            "hours": None,
+            "address": row.get("address"),
+            "transport": None,
+        },
+        "description_summary": description,
+        "source_quote_or_summary": description,
+    }
+
+
+def build_jsonl_line(row):
+    title = row.get("name") or "Unknown Attraction"
+    city = row.get("city") or ""
+    country = row.get("country") or ""
+    address = row.get("address") or ""
+    rating = row.get("rating") or ""
+    reviews = row.get("num_reviews") or ""
+    price = row.get("price_level") or ""
+    website = row.get("website") or ""
+    seed_place = row.get("seed_place") or city or ""
+
+    content_body = (
+        f"Attraction: {title}\n"
+        f"Location: {city}, {country}\n"
+        f"Address: {address}\n"
+        f"Rating: {rating} (reviews: {reviews})\n"
+        f"Price level: {price}\n"
+        f"Website: {website}\n"
+        f"Seed place: {seed_place}\n"
+    ).strip()
+
+    return {
+        "source": "TripAdvisor",
+        "title": title,
+        "url": row.get("web_url") or website or "",
+        "content_body": content_body,
+        "location_id": row.get("location_id"),
+        "seed_place": seed_place,
+        "seed_geo_id": row.get("seed_geo_id"),
+        "pre_extracted_attractions": [build_pre_extracted_attraction(row)],
+    }
+
+
 # --- STATE + EXISTING DATA ---
 STATE_PATH = DATA_DIR / "ta_state.json"
 ATTRACTIONS_PATH = DATA_DIR / "attractions.json"
@@ -503,66 +588,17 @@ if s3_client:
     if PERSIST_ATTRACTIONS:
         s3_upload_file(s3_client, S3_BUCKET, ATTRACTIONS_S3_KEY, ATTRACTIONS_PATH)
 
-if s3_client and new_rows:
-    def place_key(row):
-        city = (row.get("city") or "").strip()
-        country = (row.get("country") or "").strip()
-        if city and country:
-            return f"{city}, {country}"
-        if city:
-            return city
-        seed = (row.get("seed_place") or "").strip()
-        return seed or "Unknown"
-
-    def slugify(text):
-        cleaned = "".join(ch if ch.isalnum() else "_" for ch in text)
-        while "__" in cleaned:
-            cleaned = cleaned.replace("__", "_")
-        return cleaned.strip("_") or "unknown"
-
-    grouped = {}
-    for a in new_rows:
-        key = place_key(a)
-        grouped.setdefault(key, []).append(a)
-
-    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    for key, rows_for_place in grouped.items():
-        lines = []
-        for a in rows_for_place:
-            title = a.get("name") or "Unknown Attraction"
-            city = a.get("city") or ""
-            country = a.get("country") or ""
-            address = a.get("address") or ""
-            rating = a.get("rating") or ""
-            reviews = a.get("num_reviews") or ""
-            price = a.get("price_level") or ""
-            website = a.get("website") or ""
-            seed_place = key
-
-            content_body = (
-                f"Attraction: {title}\n"
-                f"Location: {city}, {country}\n"
-                f"Detected city: {city}, {country}\n"
-                f"Address: {address}\n"
-                f"Rating: {rating} (reviews: {reviews})\n"
-                f"Price level: {price}\n"
-                f"Website: {website}\n"
-                f"Seed place: {seed_place}\n"
-            ).strip()
-
-            lines.append({
-                "source": "TripAdvisor",
-                "title": title,
-                "url": a.get("web_url") or website or "",
-                "content_body": content_body,
-                "location_id": a.get("location_id"),
-                "seed_place": seed_place,
-                "seed_geo_id": a.get("seed_geo_id"),
-            })
-
-        file_slug = slugify(key)
-        s3_key = f"{S3_PREFIX}ta_{file_slug}_{stamp}.jsonl"
-        s3_upload_jsonl(s3_client, S3_BUCKET, s3_key, lines)
+if EXPORT_JSONL and new_rows:
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    jsonl_path = DATA_DIR / f"ta_attractions_{stamp}.jsonl"
+    with open(jsonl_path, "w", encoding="utf-8") as f:
+        for row in new_rows:
+            f.write(json.dumps(build_jsonl_line(row), ensure_ascii=False) + "\n")
+    if s3_client:
+        prefix = JSONL_PREFIX if JSONL_PREFIX.endswith("/") else f"{JSONL_PREFIX}/"
+        s3_key = f"{prefix}ta_attractions_{stamp}.jsonl"
+        s3_upload_file(s3_client, S3_BUCKET, s3_key, jsonl_path)
+    print(f"Saved JSONL: {jsonl_path.name}")
 
     run_web_scraper_for_new_rows(new_rows)
 
