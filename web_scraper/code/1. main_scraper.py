@@ -2,7 +2,7 @@
 
 import requests
 from bs4 import BeautifulSoup
-from urllib.parse import quote_plus
+from urllib.parse import quote_plus, urljoin
 import os
 import time
 import re
@@ -13,12 +13,129 @@ import selenium_scraper # Uses your existing driver factory
 import subprocess
 import sys
 from pathlib import Path
+from difflib import SequenceMatcher
+from supabase import create_client
+from datetime import datetime, timezone, timedelta
 
 # Load environment variables
+repo_root = Path(__file__).resolve().parents[2]
+load_dotenv(repo_root / ".env")
+load_dotenv(repo_root / ".env.local")
 load_dotenv()
 
 # Global set to catch repetitive footers/bios across different pages
 SEEN_PARAGRAPHS = set()
+
+def get_supabase_client():
+    supabase_url = os.getenv("SUPABASE_URL") or os.getenv("NEXT_PUBLIC_SUPABASE_URL")
+    supabase_key = (
+        os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+        or os.getenv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY")
+        or os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY")
+    )
+    if not supabase_url or not supabase_key:
+        return None
+    return create_client(supabase_url, supabase_key)
+
+def normalize_place_name(name):
+    if not name:
+        return ""
+    cleaned = re.sub(r"[^a-z0-9]+", " ", name.lower()).strip()
+    cleaned = re.sub(r"^(the|a|an)\s+", "", cleaned)
+    cleaned = re.sub(r"^(st|saint)\s+", "", cleaned)
+    return cleaned
+
+def find_existing_place(destination):
+    supabase = get_supabase_client()
+    if not supabase:
+        print("ℹ️ Supabase env vars missing; skipping place lookup.")
+        return None
+
+    dest_clean = normalize_place_name(destination)
+    if not dest_clean:
+        return None
+
+    dest_city = destination.split(",")[0].strip()
+    city_query = normalize_place_name(dest_city)
+    if not city_query:
+        city_query = dest_clean
+
+    try:
+        res = supabase.table("place").select(
+            "place_id, place_city, place_countryregion, place_stateprovince"
+        ).ilike("place_city", f"%{city_query}%").limit(50).execute()
+    except Exception as e:
+        print(f"⚠️ Supabase lookup failed: {e}")
+        return None
+
+    best = None
+    best_score = 0.0
+    for row in res.data or []:
+        row_city = row.get("place_city") or ""
+        row_norm = normalize_place_name(row_city)
+        if not row_norm:
+            continue
+        score = SequenceMatcher(None, dest_clean, row_norm).ratio()
+        if row_norm in dest_clean or dest_clean in row_norm:
+            score = max(score, 0.95)
+        if score > best_score:
+            best = row
+            best_score = score
+
+    if best and best_score >= 0.88:
+        best["_match_score"] = round(best_score, 2)
+        return best
+
+    return None
+
+def parse_timestamp(value):
+    if not value:
+        return None
+    if isinstance(value, datetime):
+        return value
+    try:
+        cleaned = str(value).strip()
+        if cleaned.endswith("Z"):
+            cleaned = cleaned[:-1] + "+00:00"
+        return datetime.fromisoformat(cleaned)
+    except Exception:
+        return None
+
+def should_refresh_destination(destination):
+    existing = find_existing_place(destination)
+    if not existing:
+        return True
+
+    supabase = get_supabase_client()
+    if not supabase:
+        return True
+
+    place_id = existing.get("place_id")
+    if not place_id:
+        return True
+
+    try:
+        res = supabase.table("attraction").select(
+            "attraction_lastrefreshed"
+        ).eq("place_id", place_id).order(
+            "attraction_lastrefreshed", desc=True
+        ).limit(1).execute()
+    except Exception as e:
+        print(f"⚠️ Supabase lookup failed: {e}")
+        return True
+
+    latest = None
+    if res.data:
+        latest = parse_timestamp(res.data[0].get("attraction_lastrefreshed"))
+
+    if not latest:
+        return True
+
+    now = datetime.now(timezone.utc)
+    if latest.tzinfo is None:
+        latest = latest.replace(tzinfo=timezone.utc)
+
+    return (now - latest) > timedelta(days=90)
 
 # --- AWS SETUP ---
 def get_s3_client():
@@ -187,6 +304,49 @@ def refine_text_content(text, title, destination):
 
     return clean_text
 
+def extract_image_candidates(raw_html, base_url, max_images=8):
+    soup = BeautifulSoup(raw_html, 'html.parser')
+    candidates = []
+    seen = set()
+
+    def add_candidate(url, alt_text):
+        if not url:
+            return
+        url = str(url).strip()
+        if not url or url.startswith("data:"):
+            return
+        if url.startswith("//"):
+            url = "https:" + url
+        if not url.startswith("http"):
+            url = urljoin(base_url, url)
+        url_key = url.split("?")[0].strip()
+        if not url_key or url_key in seen:
+            return
+        lower = url_key.lower()
+        if any(token in lower for token in ("sprite", "icon", "logo", "avatar", "placeholder", "blank")):
+            return
+        if lower.endswith(".svg"):
+            return
+        seen.add(url_key)
+        candidates.append({
+            "url": url,
+            "alt": (alt_text or "").strip()[:200]
+        })
+
+    for meta_key in ("og:image", "twitter:image"):
+        tag = soup.find("meta", attrs={"property": meta_key}) or soup.find("meta", attrs={"name": meta_key})
+        if tag and tag.get("content"):
+            add_candidate(tag.get("content"), "")
+
+    for img in soup.find_all("img"):
+        src = img.get("src") or img.get("data-src") or img.get("data-lazy-src") or img.get("data-original")
+        alt = img.get("alt") or img.get("title") or ""
+        add_candidate(src, alt)
+        if len(candidates) >= max_images:
+            break
+
+    return candidates
+
 def scrape_and_crawl(destination):
     print(f"\n🔎 STARTING SCRAPE FOR: {destination.upper()}\n" + "="*40)
     
@@ -279,6 +439,8 @@ def scrape_and_crawl(destination):
             
             # A. SPLIT Body & Reviews
             body_text, reviews_text = process_html_content(page_source)
+
+            image_candidates = extract_image_candidates(page_source, url)
             
             # B. CLEAN Body Text
             final_body = refine_text_content(body_text, item['Title'], destination)
@@ -292,7 +454,8 @@ def scrape_and_crawl(destination):
                     "scraped_at": time.strftime('%Y-%m-%d'),
                     "content_body": final_body,
                     "user_reviews": reviews_text,
-                    "has_reviews": bool(reviews_text.strip())
+                    "has_reviews": bool(reviews_text.strip()),
+                    "image_candidates": image_candidates
                 }
                 entries.append(entry)
                 print(f"✅ Processed")
@@ -329,6 +492,9 @@ def run_ai_processor():
 
 if __name__ == "__main__":
     dest = input("Enter destination: ")
+    if not should_refresh_destination(dest):
+        print("Data already exists")
+        sys.exit(0)
     scrape_and_crawl(dest)
     run_tripadvisor_scraper(dest)
     run_ai_processor()

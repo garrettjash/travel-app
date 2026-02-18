@@ -5,6 +5,7 @@ import boto3
 import requests
 import importlib.util
 import sys
+import random
 from pathlib import Path
 from datetime import datetime, timezone
 from botocore.exceptions import ClientError
@@ -70,6 +71,7 @@ if SEED_PLACES_ENV:
 # --- OPTIONAL USER SEED + WEB SCRAPER BRIDGE ---
 USE_INTERACTIVE_SEED = os.getenv("TA_NON_INTERACTIVE", "").lower() not in ("1", "true", "yes")
 WEB_SCRAPER_PATH = repo_root / "web_scraper" / "code" / "1. main_scraper.py"
+WEB_SCRAPER_LIMIT = int(os.getenv("TA_WEB_SCRAPER_LIMIT", "0"))
 
 def get_s3_client():
     if not S3_BUCKET:
@@ -139,6 +141,67 @@ def maybe_run_web_scraper(place_name):
         return
     print(f"🌐 Running web scraper for: {place_name}")
     scraper_fn(place_name)
+
+def collect_web_scraper_destinations(rows, limit):
+    if limit <= 0:
+        return []
+    candidates = []
+    seen = set()
+    for row in rows:
+        city = (row.get("city") or "").strip()
+        country = (row.get("country") or "").strip()
+        seed_place = (row.get("seed_place") or "").strip()
+        if seed_place.lower().startswith("bbox:"):
+            seed_place = ""
+
+        if city and country:
+            dest = f"{city}, {country}"
+        elif seed_place:
+            dest = seed_place
+        else:
+            dest = city
+
+        if not dest:
+            continue
+        key = dest.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        candidates.append(dest)
+
+    if not candidates and SEED_PLACES:
+        for place in SEED_PLACES:
+            key = place.lower()
+            if key not in seen:
+                seen.add(key)
+                candidates.append(place)
+
+    if len(candidates) <= limit:
+        return candidates
+
+    random.shuffle(candidates)
+    return candidates[:limit]
+
+def run_web_scraper_for_new_rows(rows):
+    if os.getenv("TA_SKIP_WEB_SCRAPER"):
+        return
+    if WEB_SCRAPER_LIMIT <= 0:
+        return
+    destinations = collect_web_scraper_destinations(rows, WEB_SCRAPER_LIMIT)
+    if not destinations:
+        print("ℹ️ No destinations selected for web scraper.")
+        return
+    module = load_web_scraper()
+    if not module:
+        return
+    scraper_fn = getattr(module, "scrape_and_crawl", None)
+    if not scraper_fn:
+        print("⚠️ Web scraper missing scrape_and_crawl()")
+        return
+    print(f"🌐 Running web scraper for {len(destinations)} destinations...")
+    for dest in destinations:
+        print(f"🌐 Web scraper destination: {dest}")
+        scraper_fn(dest)
 
 # --- API HELPERS ---
 BASE = "https://api.content.tripadvisor.com/api/v1"
@@ -500,6 +563,8 @@ if s3_client and new_rows:
         file_slug = slugify(key)
         s3_key = f"{S3_PREFIX}ta_{file_slug}_{stamp}.jsonl"
         s3_upload_jsonl(s3_client, S3_BUCKET, s3_key, lines)
+
+    run_web_scraper_for_new_rows(new_rows)
 
 print("Saved attractions.json")
 print("New rows:", len(new_rows), "Errors:", len(detail_errors), "Total:", len(merged_rows))

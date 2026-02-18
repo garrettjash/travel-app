@@ -10,6 +10,9 @@ import threading
 import argparse
 import subprocess
 import sys
+import hashlib
+import mimetypes
+import requests
 from urllib.parse import urlparse
 from typing import List, Optional, Literal
 from datetime import timedelta
@@ -29,6 +32,7 @@ load_dotenv(repo_root / ".env")
 CACHE_LOCK = threading.Lock() # Prevents cache file corruption
 PRINT_LOCK = threading.Lock() # Prevents messy console output
 GEO_API_LOCK = threading.Lock() # STRICTLY forces Geocoding to be sequential
+IMAGE_CACHE_LOCK = threading.Lock()
 
 # --- CONFIGURATION ---
 # From the .ENV file
@@ -37,6 +41,9 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 AWS_REGION = os.getenv("AWS_DEFAULT_REGION") or os.getenv("AWS_REGION") or "us-east-1"
+IMAGE_S3_PREFIX = os.getenv("IMAGE_S3_PREFIX", "images/")
+IMAGE_MAX_PER_ATTRACTION = int(os.getenv("IMAGE_MAX_PER_ATTRACTION", "3"))
+IMAGE_ALLOW_FALLBACK = os.getenv("IMAGE_ALLOW_FALLBACK", "1").lower() in ("1", "true", "yes")
 
 # --- CLIENTS ---
 s3 = boto3.client(
@@ -52,6 +59,9 @@ geolocator = Nominatim(user_agent="travel_app_etl_v6_stable")
 # --- CACHING SYSTEM ---
 CACHE_FILE = "geo_cache.json"
 GEO_CACHE = {}
+CANONICAL_CACHE = {}
+NEXT_CANONICAL_ID = None
+IMAGE_CACHE = {}
 
 def load_cache():
     global GEO_CACHE
@@ -68,6 +78,244 @@ def save_cache():
         json.dump(GEO_CACHE, f)
 
 load_cache()
+
+def normalize_attraction_name(name):
+    if not name:
+        return ""
+    cleaned = re.sub(r"[^a-z0-9]+", " ", name.lower()).strip()
+    cleaned = re.sub(r"^(the|a|an)\s+", "", cleaned)
+    cleaned = re.sub(r"^(st|saint)\s+", "", cleaned)
+    return cleaned
+
+def normalize_text_for_match(text):
+    if not text:
+        return ""
+    return re.sub(r"[^a-z0-9]+", " ", str(text).lower()).strip()
+
+def slugify(text):
+    cleaned = re.sub(r"[^a-z0-9]+", "_", str(text).lower()).strip("_")
+    return cleaned or "unknown"
+
+def build_s3_url(key):
+    if AWS_REGION == "us-east-1":
+        return f"https://{S3_BUCKET}.s3.amazonaws.com/{key}"
+    return f"https://{S3_BUCKET}.s3.{AWS_REGION}.amazonaws.com/{key}"
+
+def coerce_image_candidates(article):
+    candidates = article.get("image_candidates") or article.get("image_urls") or []
+    normalized = []
+    if isinstance(candidates, list):
+        for item in candidates:
+            if isinstance(item, str):
+                normalized.append({"url": item, "alt": ""})
+            elif isinstance(item, dict):
+                url = item.get("url") or item.get("src") or item.get("image_url")
+                if url:
+                    normalized.append({"url": url, "alt": item.get("alt") or ""})
+    return normalized
+
+def select_relevant_images(item, article, city):
+    if IMAGE_MAX_PER_ATTRACTION <= 0:
+        return []
+    candidates = coerce_image_candidates(article)
+    if not candidates:
+        return []
+
+    name_tokens = [t for t in normalize_text_for_match(item.name).split() if len(t) > 2]
+    city_tokens = [t for t in normalize_text_for_match(city).split() if len(t) > 2]
+
+    scored = []
+    for cand in candidates:
+        url = cand.get("url")
+        if not url:
+            continue
+        alt = cand.get("alt") or ""
+        haystack = normalize_text_for_match(f"{alt} {url}")
+        score = 0
+        for token in name_tokens:
+            if token in haystack:
+                score += 1
+        if city_tokens and any(t in haystack for t in city_tokens):
+            score += 1
+        if score > 0:
+            scored.append((score, url))
+
+    selected = []
+    if scored:
+        scored.sort(key=lambda x: x[0], reverse=True)
+        seen = set()
+        for _, url in scored:
+            if url in seen:
+                continue
+            seen.add(url)
+            selected.append(url)
+            if len(selected) >= IMAGE_MAX_PER_ATTRACTION:
+                break
+    elif IMAGE_ALLOW_FALLBACK:
+        seen = set()
+        for cand in candidates:
+            url = cand.get("url")
+            if not url or url in seen:
+                continue
+            seen.add(url)
+            selected.append(url)
+            if len(selected) >= IMAGE_MAX_PER_ATTRACTION:
+                break
+
+    return selected
+
+def guess_image_extension(url, content_type):
+    ext = None
+    if content_type:
+        ext = mimetypes.guess_extension(content_type.split(";")[0].strip())
+    if not ext:
+        path = urlparse(url).path
+        _, ext = os.path.splitext(path)
+    if not ext or len(ext) > 5:
+        ext = ".jpg"
+    return ext
+
+def download_image(url, timeout=20):
+    try:
+        resp = requests.get(url, stream=True, timeout=timeout)
+        if resp.status_code != 200:
+            return None, None
+        content_type = resp.headers.get("Content-Type", "").lower()
+        if not content_type.startswith("image/"):
+            return None, None
+        content = resp.content
+        if not content:
+            return None, None
+        return content, content_type
+    except Exception:
+        return None, None
+
+def get_existing_image_urls(attraction_id):
+    with IMAGE_CACHE_LOCK:
+        cached = IMAGE_CACHE.get(attraction_id)
+    if cached is not None:
+        return cached
+    try:
+        res = supabase.table("images").select("image_url").eq("attraction_id", attraction_id).execute()
+        urls = {row.get("image_url") for row in (res.data or []) if row.get("image_url")}
+    except Exception:
+        urls = set()
+    with IMAGE_CACHE_LOCK:
+        IMAGE_CACHE[attraction_id] = urls
+    return urls
+
+def add_image_cache(attraction_id, image_url):
+    with IMAGE_CACHE_LOCK:
+        urls = IMAGE_CACHE.get(attraction_id)
+        if urls is None:
+            urls = set()
+            IMAGE_CACHE[attraction_id] = urls
+        urls.add(image_url)
+
+def store_images_for_attraction(attraction_id, item, article, city):
+    if not S3_BUCKET:
+        return
+    image_urls = select_relevant_images(item, article, city)
+    if not image_urls:
+        return
+    prefix = IMAGE_S3_PREFIX if IMAGE_S3_PREFIX.endswith("/") else f"{IMAGE_S3_PREFIX}/"
+    existing = get_existing_image_urls(attraction_id)
+
+    for url in image_urls:
+        digest = hashlib.sha256(url.encode("utf-8")).hexdigest()[:16]
+        content, content_type = download_image(url)
+        if not content or not content_type:
+            continue
+        ext = guess_image_extension(url, content_type)
+        slug = slugify(item.name)
+        s3_key = f"{prefix}{slug}/{digest}{ext}"
+        s3_url = build_s3_url(s3_key)
+        if s3_url in existing:
+            continue
+        try:
+            s3.put_object(
+                Bucket=S3_BUCKET,
+                Key=s3_key,
+                Body=content,
+                ContentType=content_type
+            )
+            supabase.table("images").insert({
+                "attraction_id": attraction_id,
+                "image_url": s3_url
+            }).execute()
+            add_image_cache(attraction_id, s3_url)
+        except Exception as e:
+            with PRINT_LOCK:
+                print(f"      ⚠️ Image upload failed: {e}")
+
+def get_place_attraction_cache(place_id):
+    if place_id in CANONICAL_CACHE:
+        return CANONICAL_CACHE[place_id]
+
+    res = supabase.table('attraction').select(
+        'attraction_id, canonical_id, attraction_name, attraction_city, attraction_latitude, attraction_longitude'
+    ).eq('place_id', place_id).limit(5000).execute()
+
+    rows = res.data or []
+    cached = []
+    for row in rows:
+        cached.append({
+            'attraction_id': row.get('attraction_id'),
+            'canonical_id': row.get('canonical_id'),
+            'name': row.get('attraction_name') or "",
+            'norm_name': normalize_attraction_name(row.get('attraction_name') or ""),
+            'city': row.get('attraction_city') or "",
+            'lat': row.get('attraction_latitude'),
+            'lon': row.get('attraction_longitude')
+        })
+
+    CANONICAL_CACHE[place_id] = cached
+    return cached
+
+def resolve_canonical_id(place_id, name, city=None, lat=None, lon=None):
+    candidates = get_place_attraction_cache(place_id)
+    norm_name = normalize_attraction_name(name)
+
+    for row in candidates:
+        if row['norm_name'] == norm_name and row['canonical_id']:
+            return row['canonical_id']
+
+    for row in candidates:
+        if not row['norm_name'] or not norm_name:
+            continue
+        if row['norm_name'] in norm_name or norm_name in row['norm_name']:
+            if city and row['city'] and row['city'].lower() != city.lower():
+                continue
+            if row['canonical_id']:
+                return row['canonical_id']
+
+    if lat is not None and lon is not None:
+        for row in candidates:
+            if row['lat'] is None or row['lon'] is None:
+                continue
+            try:
+                distance_km = geodesic((lat, lon), (row['lat'], row['lon'])).km
+            except Exception:
+                continue
+            if distance_km <= 1.0 and row['canonical_id']:
+                return row['canonical_id']
+
+    return None
+
+def get_next_canonical_id():
+    global NEXT_CANONICAL_ID
+    if NEXT_CANONICAL_ID is None:
+        res = supabase.table('attraction').select('canonical_id').order('canonical_id', desc=True).limit(1).execute()
+        max_row = res.data[0] if res.data else {}
+        max_id = max_row.get('canonical_id')
+        try:
+            NEXT_CANONICAL_ID = int(max_id) + 1 if max_id is not None else 1
+        except Exception:
+            NEXT_CANONICAL_ID = 1
+
+    next_id = NEXT_CANONICAL_ID
+    NEXT_CANONICAL_ID += 1
+    return next_id
 
 # --- SCHEMA DEFINITIONS ---
 # Prompts for Pydantic models to parse AI output
@@ -428,6 +676,9 @@ def save_attraction(item, place_id, source_id, article, s3_key, ref_lat, ref_lon
         norm_rating = (item.rating_score / scale) * 10.0
 
     # 1. UPSERT PARENT ATTRACTION
+    canonical_id = resolve_canonical_id(place_id, item.name, city=city, lat=lat, lon=lon)
+    if canonical_id is None:
+        canonical_id = get_next_canonical_id()
     attr_data = {
         'place_id': place_id,
         'attraction_name': item.name,
@@ -448,9 +699,31 @@ def save_attraction(item, place_id, source_id, article, s3_key, ref_lat, ref_lon
         'attraction_normalizedrating': norm_rating,
         'attraction_totalcountratings': item.review_count_mentioned
     }
+
+    if canonical_id is not None:
+        attr_data['canonical_id'] = canonical_id
     
     res = supabase.table('attraction').upsert(attr_data, on_conflict='attraction_name,place_id').execute()
-    attr_id = res.data[0]['attraction_id']
+    attr_row = res.data[0] if res.data else {}
+    attr_id = attr_row.get('attraction_id')
+    canonical_id = attr_row.get('canonical_id')
+
+    if attr_id and not canonical_id:
+        canonical_id = attr_id
+        supabase.table('attraction').update({'canonical_id': canonical_id}).eq('attraction_id', attr_id).execute()
+
+    if attr_id:
+        cached = get_place_attraction_cache(place_id)
+        cached.append({
+            'attraction_id': attr_id,
+            'canonical_id': canonical_id,
+            'name': item.name,
+            'norm_name': normalize_attraction_name(item.name),
+            'city': city or "",
+            'lat': lat,
+            'lon': lon
+        })
+        store_images_for_attraction(attr_id, item, article, city)
 
     # 2. LINK CATEGORIES
     cat_res = supabase.table('category').upsert({'category_name': item.category}, on_conflict='category_name').execute()
@@ -539,8 +812,7 @@ def process_file_content(local_path, s3_key, main_place_name):
             'place_stateprovince': p_state,
             'place_latitude': p_lat,
             'place_longitude': p_lon,
-            'place_type': ['city'],
-            'place_lastrefreshed': datetime.datetime.now().isoformat()
+            'place_type': ['city']
         }
         place_res = supabase.table('place').upsert(place_data, on_conflict='place_city').execute()
         place_id = place_res.data[0]['place_id']
