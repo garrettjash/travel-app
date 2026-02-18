@@ -23,7 +23,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install python-dotenv boto3 openai supabase geopy pydantic
+          pip install python-dotenv boto3 openai supabase geopy pydantic requests
 
       - name: Run AI processor
         env:
@@ -35,4 +35,6 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          GEO_PROVIDER: ${{ secrets.GEO_PROVIDER }}
+          GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
         run: python ai_database/ai_processor.py

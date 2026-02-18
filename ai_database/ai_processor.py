@@ -21,7 +21,7 @@ from openai import OpenAI
 from supabase import create_client, Client
 from dotenv import load_dotenv
 from pathlib import Path
-from geopy.geocoders import Nominatim
+from geopy.geocoders import Nominatim, GoogleV3
 from geopy.distance import geodesic
 
 # Load .env.local/.env from repo root (works from any cwd)
@@ -45,6 +45,11 @@ IMAGE_S3_PREFIX = os.getenv("IMAGE_S3_PREFIX", "images/")
 IMAGE_MAX_PER_ATTRACTION = int(os.getenv("IMAGE_MAX_PER_ATTRACTION", "3"))
 IMAGE_ALLOW_FALLBACK = os.getenv("IMAGE_ALLOW_FALLBACK", "1").lower() in ("1", "true", "yes")
 
+# Geocoding configuration
+GEO_PROVIDER = os.getenv("GEO_PROVIDER", "nominatim").lower()  # nominatim, google, mapbox
+GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
+MAPBOX_API_KEY = os.getenv("MAPBOX_API_KEY")
+
 # --- CLIENTS ---
 s3 = boto3.client(
     "s3",
@@ -54,7 +59,24 @@ s3 = boto3.client(
 )
 openai_client = OpenAI(api_key=OPENAI_API_KEY)
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-geolocator = Nominatim(user_agent="travel_app_etl_v6_stable")
+
+# Initialize geocoder based on provider
+def get_geolocator():
+    if GEO_PROVIDER == "google" and GOOGLE_MAPS_API_KEY:
+        return GoogleV3(api_key=GOOGLE_MAPS_API_KEY, timeout=10)
+    elif GEO_PROVIDER == "mapbox" and MAPBOX_API_KEY:
+        try:
+            from geopy.geocoders import MapBox
+            return MapBox(api_key=MAPBOX_API_KEY, timeout=10)
+        except ImportError:
+            print("⚠️ Mapbox selected but geopy doesn't support it. Falling back to Nominatim.")
+            return Nominatim(user_agent="travel_app_etl_v6_stable")
+    else:
+        # Default to Nominatim (free)
+        return Nominatim(user_agent="travel_app_etl_v6_stable")
+
+geolocator = get_geolocator()
+print(f"🗺️ Using geocoding provider: {GEO_PROVIDER}")
 
 # --- CACHING SYSTEM ---
 CACHE_FILE = "geo_cache.json"
@@ -62,6 +84,7 @@ GEO_CACHE = {}
 CANONICAL_CACHE = {}
 NEXT_CANONICAL_ID = None
 IMAGE_CACHE = {}
+PROCESSED_FILES_CACHE = None
 
 def load_cache():
     global GEO_CACHE
@@ -414,6 +437,37 @@ def trigger_main_scraper(location):
             print(f"⚠️ Error triggering scraper: {e}")
         return False
 
+def load_processed_files_cache():
+    """Load all processed_scraped_data records into memory cache."""
+    global PROCESSED_FILES_CACHE
+    if PROCESSED_FILES_CACHE is not None:
+        return PROCESSED_FILES_CACHE
+    
+    try:
+        print("📦 Loading processed files cache...")
+        res = supabase.table("processed_scraped_data").select("s3_key, status, processed_at").execute()
+        cache = {}
+        for row in (res.data or []):
+            s3_key = row.get('s3_key')
+            if s3_key:
+                cache[s3_key] = {
+                    'status': row.get('status'),
+                    'processed_at': row.get('processed_at')
+                }
+        PROCESSED_FILES_CACHE = cache
+        print(f"📦 Loaded {len(cache)} processed file records.")
+        return cache
+    except Exception as e:
+        print(f"⚠️ Error loading cache: {e}")
+        PROCESSED_FILES_CACHE = {}
+        return {}
+
+def invalidate_processed_cache(s3_key):
+    """Invalidate cache entry when file is processed."""
+    global PROCESSED_FILES_CACHE
+    if PROCESSED_FILES_CACHE is not None and s3_key in PROCESSED_FILES_CACHE:
+        del PROCESSED_FILES_CACHE[s3_key]
+
 def log_status(s3_key, status, msg=None):
     try:
         supabase.table("processed_scraped_data").upsert({
@@ -421,9 +475,10 @@ def log_status(s3_key, status, msg=None):
             "processed_at": datetime.datetime.now().isoformat(),
             "status": status,
         }).execute()
+        invalidate_processed_cache(s3_key)
     except Exception as e: print(f"⚠️ Log Error: {e}")
 
-def should_process(s3_key, force_refresh=False, check_staleness=True):
+def should_process(s3_key, force_refresh=False, check_staleness=True, use_cache=True):
     """
     Determines if an S3 file should be processed.
     
@@ -431,6 +486,7 @@ def should_process(s3_key, force_refresh=False, check_staleness=True):
         s3_key: The S3 key to check
         force_refresh: If True, always process regardless of status
         check_staleness: If True, check if data is older than 3 months
+        use_cache: If True, use cached processed_scraped_data records
     
     Returns:
         Tuple (should_process: bool, is_stale: bool)
@@ -438,46 +494,52 @@ def should_process(s3_key, force_refresh=False, check_staleness=True):
     if force_refresh:
         return (True, False)
     
-    try:
-        res = supabase.table("processed_scraped_data").select("status, processed_at").eq("s3_key", s3_key).execute()
-        
-        if not res.data:
+    # Use cache if available
+    if use_cache:
+        cache = load_processed_files_cache()
+        record = cache.get(s3_key)
+    else:
+        # Fallback to direct query
+        try:
+            res = supabase.table("processed_scraped_data").select("status, processed_at").eq("s3_key", s3_key).execute()
+            record = res.data[0] if res.data else None
+        except Exception as e:
+            with PRINT_LOCK:
+                print(f"⚠️ Error checking process status: {e}")
             return (True, False)
-        
-        record = res.data[0]
-        status = record.get('status')
-        processed_at = record.get('processed_at')
-        
-        # If processing failed before, retry
-        if status == 'failed':
-            return (True, False)
-        
-        # If successful, check staleness
-        if status == 'success' and check_staleness and processed_at:
-            try:
-                processed_date = datetime.datetime.fromisoformat(processed_at.replace('Z', '+00:00'))
-                now = datetime.datetime.now(datetime.timezone.utc)
-                age = now - processed_date
-                
-                # If data is older than 3 months (90 days), needs refresh
-                if age > timedelta(days=90):
-                    with PRINT_LOCK:
-                        print(f"⏰ Data is {age.days} days old (>90 days). Needs refresh...")
-                    return (True, True)  # Process AND it's stale
-            except Exception as e:
-                with PRINT_LOCK:
-                    print(f"⚠️ Error parsing date: {e}. Will reprocess.")
-                return (True, False)
-        
-        # If recent and successful, skip
-        if status == 'success':
-            return (False, False)
+    
+    if not record:
+        return (True, False)
+    
+    status = record.get('status')
+    processed_at = record.get('processed_at')
+    
+    # If processing failed before, retry
+    if status == 'failed':
+        return (True, False)
+    
+    # If successful, check staleness
+    if status == 'success' and check_staleness and processed_at:
+        try:
+            processed_date = datetime.datetime.fromisoformat(processed_at.replace('Z', '+00:00'))
+            now = datetime.datetime.now(datetime.timezone.utc)
+            age = now - processed_date
             
-        return (True, False)
-    except Exception as e:
-        with PRINT_LOCK:
-            print(f"⚠️ Error checking process status: {e}")
-        return (True, False)
+            # If data is older than 3 months (90 days), needs refresh
+            if age > timedelta(days=90):
+                with PRINT_LOCK:
+                    print(f"⏰ Data is {age.days} days old (>90 days). Needs refresh...")
+                return (True, True)  # Process AND it's stale
+        except Exception as e:
+            with PRINT_LOCK:
+                print(f"⚠️ Error parsing date: {e}. Will reprocess.")
+            return (True, False)
+    
+    # If recent and successful, skip
+    if status == 'success':
+        return (False, False)
+        
+    return (True, False)
 
 def generate_embedding(text):
     try:
@@ -520,27 +582,59 @@ def resolve_geo_cached(query, ref_lat=None, ref_lon=None, country_hint=None):
             return cached
 
     # 2. API CALL - STRICTLY SERIALIZED
-    # This block ensures only ONE thread hits OpenStreetMap at a time
     with GEO_API_LOCK:
-        time.sleep(1.2) # Sleep inside the lock to force the gap
+        # Rate limiting: Google allows 50 req/sec, Nominatim needs 1 req/sec
+        if GEO_PROVIDER == "nominatim":
+            time.sleep(1.2)  # Nominatim requires 1 second between requests
+        else:
+            time.sleep(0.1)  # Shorter delay for paid APIs
         
         try:
-            loc = geolocator.geocode(query, addressdetails=True, language='en', timeout=10)
+            # Different APIs have different parameters
+            if GEO_PROVIDER == "google":
+                loc = geolocator.geocode(query, language='en')
+            else:
+                # Nominatim and others support addressdetails
+                loc = geolocator.geocode(query, addressdetails=True, language='en')
+            
             result = None
             if loc:
-                addr = loc.raw.get('address', {})
                 lat, lon = loc.latitude, loc.longitude
                 dist = 0.0
                 if ref_lat and ref_lon:
                     dist = geodesic((ref_lat, ref_lon), (lat, lon)).km
                 
-                result = {
-                    "lat": lat, "lon": lon,
-                    "city": addr.get('city', addr.get('town', addr.get('village', 'Unknown'))),
-                    "state": addr.get('state'),
-                    "country": addr.get('country'),
-                    "dist": dist
-                }
+                # Parse address components based on provider
+                if GEO_PROVIDER == "google":
+                    # Google Maps returns components differently
+                    addr_components = {}
+                    for component in loc.raw.get('address_components', []):
+                        types = component.get('types', [])
+                        name = component.get('long_name', '')
+                        if 'locality' in types:
+                            addr_components['city'] = name
+                        elif 'administrative_area_level_1' in types:
+                            addr_components['state'] = name
+                        elif 'country' in types:
+                            addr_components['country'] = name
+                    
+                    result = {
+                        "lat": lat, "lon": lon,
+                        "city": addr_components.get('city', 'Unknown'),
+                        "state": addr_components.get('state'),
+                        "country": addr_components.get('country'),
+                        "dist": dist
+                    }
+                else:
+                    # Nominatim format
+                    addr = loc.raw.get('address', {})
+                    result = {
+                        "lat": lat, "lon": lon,
+                        "city": addr.get('city', addr.get('town', addr.get('village', 'Unknown'))),
+                        "state": addr.get('state'),
+                        "country": addr.get('country'),
+                        "dist": dist
+                    }
             
             # Save to Cache immediately
             with CACHE_LOCK:
@@ -753,16 +847,30 @@ def save_attraction(item, place_id, source_id, article, s3_key, ref_lat, ref_lon
         norm_rating = (item.rating_score / scale) * 10.0
 
     # 1. UPSERT PARENT ATTRACTION
-    canonical_id = resolve_canonical_id(place_id, item.name, city=city, lat=lat, lon=lon)
-    if canonical_id is None:
-        canonical_id = get_next_canonical_id()
+    # Check if attraction already exists to avoid canonical_id conflicts
+    try:
+        existing_res = supabase.table('attraction').select('attraction_id, canonical_id').eq(
+            'attraction_name', item.name
+        ).eq('place_id', place_id).limit(1).execute()
+        existing = existing_res.data[0] if existing_res.data else None
+    except Exception:
+        existing = None
+    
+    # Build embedding with rich context: name + summary + vibes + source text
+    embedding_text = f"{item.name}: {item.description_summary} Vibe: {', '.join(item.vibes)}"
+    if article.get('content_body'):
+        embedding_text += f" Source: {article.get('content_body', '')}"
+    
+    # Populate review summary if the source has user reviews (e.g., Reddit, web scraper comments)
+    review_summary = article.get('user_reviews', '') if article.get('has_reviews') else ''
+    
     attr_data = {
         'place_id': place_id,
         'attraction_name': item.name,
         'attraction_summary': item.description_summary,
         'attraction_vibe': item.vibes,
         'attraction_rawdata': item.logistics.model_dump(exclude_none=True),
-        'attraction_embedding': generate_embedding(f"{item.name}: {item.description_summary} Vibe: {', '.join(item.vibes)}"),
+        'attraction_embedding': generate_embedding(embedding_text),
         'attraction_city': city,
         'attraction_stateprovince': state,
         'attraction_countryregion': country,
@@ -774,19 +882,45 @@ def save_attraction(item, place_id, source_id, article, s3_key, ref_lat, ref_lon
         'attraction_pricelevel': price_int,
         'attraction_popularityscore': pop_score,
         'attraction_normalizedrating': norm_rating,
-        'attraction_totalcountratings': item.review_count_mentioned
+        'attraction_totalcountratings': item.review_count_mentioned,
+        'attraction_reviewssummary': review_summary
     }
 
-    if canonical_id is not None:
-        attr_data['canonical_id'] = canonical_id
+    # Set canonical_id: use existing one for updates, generate new for inserts
+    if existing and existing.get('canonical_id'):
+        # Preserve existing canonical_id when updating
+        attr_data['canonical_id'] = existing['canonical_id']
+    else:
+        # Generate new canonical_id for new attractions  
+        attr_data['canonical_id'] = get_next_canonical_id()
     
-    res = supabase.table('attraction').upsert(attr_data, on_conflict='attraction_name,place_id').execute()
+    # Try upsert, but handle canonical_id conflicts
+    try:
+        res = supabase.table('attraction').upsert(attr_data, on_conflict='attraction_name,place_id,canonical_id').execute()
+    except Exception as e:
+        if 'canonical_id' in str(e):
+            # Canonical_id conflict - try to find and use the existing one
+            try:
+                existing_by_name = supabase.table('attraction').select('attraction_id, canonical_id').eq('attraction_name', item.name).eq('place_id', place_id).execute()
+                if existing_by_name.data:
+                    attr_data['canonical_id'] = existing_by_name.data[0].get('canonical_id')
+                    res = supabase.table('attraction').upsert(attr_data, on_conflict='attraction_name,place_id,canonical_id').execute()
+                else:
+                    raise
+            except Exception as inner_e:
+                with PRINT_LOCK: print(f"      ⚠️ Upsert Error (canonical_id): {inner_e}")
+                return
+        else:
+            with PRINT_LOCK: print(f"      ⚠️ Upsert Error: {e}")
+            return
+    
     attr_row = res.data[0] if res.data else {}
     attr_id = attr_row.get('attraction_id')
     canonical_id = attr_row.get('canonical_id')
 
+    # Set canonical_id if still missing (fallback for old data without canonical_id)
     if attr_id and not canonical_id:
-        canonical_id = attr_id
+        canonical_id = get_next_canonical_id()
         supabase.table('attraction').update({'canonical_id': canonical_id}).eq('attraction_id', attr_id).execute()
 
     if attr_id:
@@ -1091,18 +1225,49 @@ def main():
         process_pipeline(args.s3_key, force_refresh, check_staleness, trigger_scraper)
     else:
         print(f"🔎 Scanning S3 bucket '{S3_BUCKET}'...")
+        
+        # Preload processed files cache for batch mode
+        load_processed_files_cache()
+        
         paginator = s3.get_paginator('list_objects_v2')
         pages = paginator.paginate(Bucket=S3_BUCKET, Prefix='raw_scrapes/')
         
-        files_to_process = []
+        # Collect files with metadata
+        all_files = []
         for page in pages:
             if 'Contents' not in page:
                 continue
             for obj in page['Contents']:
                 if obj['Key'].endswith('.jsonl'):
-                    files_to_process.append(obj['Key'])
+                    all_files.append({
+                        'Key': obj['Key'],
+                        'LastModified': obj['LastModified']
+                    })
         
-        print(f"📊 Found {len(files_to_process)} .jsonl files")
+        print(f"📊 Found {len(all_files)} .jsonl files")
+        
+        # Filter by age if not force refreshing (skip files older than 6 months that are already processed)
+        if not force_refresh:
+            cutoff_date = datetime.datetime.now(datetime.timezone.utc) - timedelta(days=180)
+            cache = load_processed_files_cache()
+            
+            files_to_check = []
+            for file_info in all_files:
+                s3_key = file_info['Key']
+                last_modified = file_info['LastModified']
+                
+                # If file is very old AND already successfully processed, skip checking
+                if last_modified < cutoff_date:
+                    record = cache.get(s3_key)
+                    if record and record.get('status') == 'success':
+                        continue  # Skip old processed files
+                
+                files_to_check.append(s3_key)
+            
+            print(f"📋 After age filter: {len(files_to_check)} files to check")
+            files_to_process = files_to_check
+        else:
+            files_to_process = [f['Key'] for f in all_files]
         
         for s3_key in files_to_process:
             process_pipeline(s3_key, force_refresh, check_staleness, trigger_scraper)

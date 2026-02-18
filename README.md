@@ -23,6 +23,12 @@ npm run dev
 
 The frontend calls the health check at `/api/health`.
 
+## PYTHON
+Activate Python environment:
+    WINDOWS: travelapp-py-env\Scripts\activate
+
+    pip install -r requirements.txt
+
 ## Linting
 
 ```

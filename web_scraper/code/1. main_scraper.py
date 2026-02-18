@@ -401,6 +401,7 @@ def scrape_and_crawl(destination):
         print("❌ Critical: Could not initialize Selenium Driver.")
         return
 
+    entries = []
     for i, item in enumerate(all_results, 1):
         url = item['Link']
         print(f"   Processing: {item['Title'][:30]}...", end=" ")
@@ -445,6 +446,25 @@ def scrape_and_crawl(destination):
 
     driver.quit()
     print(f"\n✅ PROCESSING COMPLETE")
+    
+    # Upload to S3
+    if entries:
+        s3 = get_s3_client()
+        bucket_name = os.getenv('S3_BUCKET_NAME')
+        if s3 and bucket_name:
+            stamp = time.strftime('%Y%m%d_%H%M%S')
+            file_slug = destination.replace(' ', '_').lower()
+            s3_key = f"raw_scrapes/{file_slug}_{stamp}.jsonl"
+            payload = "\n".join(json.dumps(entry, ensure_ascii=False) for entry in entries) + "\n"
+            print(f"\n☁️  Uploading to S3 ({bucket_name})...", end=" ")
+            try:
+                s3.put_object(Bucket=bucket_name, Key=s3_key, Body=payload.encode("utf-8"))
+                print("✅ Success!")
+                print(f"   └── Stored as: s3://{bucket_name}/{s3_key}")
+            except Exception as e:
+                print(f"❌ Failed: {e}")
+        else:
+            print("⚠️ Skipping S3 upload: Missing credentials or bucket name.")
 
 def run_tripadvisor_scraper(destination):
     repo_root = Path(__file__).resolve().parents[2]
