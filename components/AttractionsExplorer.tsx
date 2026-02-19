@@ -94,8 +94,7 @@ const defaultVisibleFilters: FilterKey[] = [
   "city",
   "stateProvince",
   "countryRegion",
-  "category",
-  "search"
+  "category"
 ];
 
 type FilterKey = keyof Filters;
@@ -277,7 +276,7 @@ export default function AttractionsExplorer({ title, subtitle, initialPlace }: A
   }
 
   const availableFiltersToAdd = (Object.keys(filterLabels) as FilterKey[]).filter(
-    (key) => !visibleFilters.includes(key)
+    (key) => key !== "search" && !visibleFilters.includes(key)
   );
 
   const handleRemoveFilter = (key: FilterKey) => {
@@ -285,9 +284,9 @@ export default function AttractionsExplorer({ title, subtitle, initialPlace }: A
     setFilters((current) => ({ ...current, [key]: "" }));
   };
 
-  const handleAddFilter = () => {
-    if (!selectedFilterToAdd) return;
-    setVisibleFilters((current) => [...current, selectedFilterToAdd]);
+  const handleAddFilter = (key: FilterKey | "") => {
+    if (!key) return;
+    setVisibleFilters((current) => (current.includes(key) ? current : [...current, key]));
     setSelectedFilterToAdd("");
   };
 
@@ -463,27 +462,6 @@ export default function AttractionsExplorer({ title, subtitle, initialPlace }: A
       );
     }
 
-    if (key === "search") {
-      return (
-        <label className="attractions-filter-field attractions-filter-search" key={key}>
-          <div className="attractions-filter-head">
-            <span>{filterLabels[key]}</span>
-            {canRemove && (
-              <button type="button" onClick={() => handleRemoveFilter(key)} className="attractions-filter-remove">
-                -
-              </button>
-            )}
-          </div>
-          <input
-            type="text"
-            value={filters.search}
-            onChange={updateFilter("search")}
-            placeholder="Search by attraction name"
-          />
-        </label>
-      );
-    }
-
     if (key === "minRating") {
       return (
         <label className="attractions-filter-field" key={key}>
@@ -532,25 +510,26 @@ export default function AttractionsExplorer({ title, subtitle, initialPlace }: A
 
   return (
     <>
-      <header className="attractions-header">
-        <h1>{title}</h1>
-        {subtitle && <p>{subtitle}</p>}
-      </header>
+      <div className="attractions-header-toolbar">
+        <header className="attractions-header">
+          <h1>{title}</h1>
+          {subtitle && <p>{subtitle}</p>}
+        </header>
 
-      <section className="attractions-filters" aria-label="Attraction filters">
-        {visibleFilters.map(renderFilterField)}
-
-        <div className="attractions-filter-actions">
-          <div className="attractions-filter-add">
-            <span>Add More Filters</span>
+        <div className="attractions-filter-toolbar">
+          <div className="attractions-filter-actions">
             <div className="attractions-filter-add-row">
               <select
                 value={selectedFilterToAdd}
-                onChange={(event) => setSelectedFilterToAdd(event.target.value as FilterKey | "")}
+                onChange={(event) => {
+                  const value = event.target.value as FilterKey | "";
+                  setSelectedFilterToAdd(value);
+                  handleAddFilter(value);
+                }}
                 disabled={availableFiltersToAdd.length === 0}
               >
                 <option value="">
-                  {availableFiltersToAdd.length === 0 ? "All filters already shown" : "Select a filter"}
+                  {availableFiltersToAdd.length === 0 ? "All filters shown" : "Add a filter"}
                 </option>
                 {availableFiltersToAdd.map((key) => (
                   <option key={key} value={key}>
@@ -558,25 +537,33 @@ export default function AttractionsExplorer({ title, subtitle, initialPlace }: A
                   </option>
                 ))}
               </select>
-              <button
-                type="button"
-                className="attractions-filter-add-button"
-                onClick={handleAddFilter}
-                disabled={!selectedFilterToAdd}
-              >
-                Add
-              </button>
             </div>
-          </div>
 
-          <button
-            type="button"
-            className="attractions-filter-clear-button attractions-filter-clear-standalone"
-            onClick={handleClearFilters}
-          >
-            Clear Filters
-          </button>
+            <button
+              type="button"
+              className="attractions-filter-clear-button attractions-filter-clear-standalone"
+              onClick={handleClearFilters}
+            >
+              Clear Filters
+            </button>
+          </div>
         </div>
+      </div>
+
+      <section className="attractions-filters" aria-label="Attraction filters">
+        <label className="attractions-filter-field attractions-filter-search attractions-filter-search-full">
+          <div className="attractions-filter-head">
+            <span>{filterLabels.search}</span>
+          </div>
+          <input
+            type="text"
+            value={filters.search}
+            onChange={updateFilter("search")}
+            placeholder="Search by attraction name"
+          />
+        </label>
+
+        {visibleFilters.map(renderFilterField)}
       </section>
 
       <section className="attractions-results">

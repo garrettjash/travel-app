@@ -638,7 +638,7 @@ body {
 
 .attractions-header {
   max-width: 1280px;
-  margin: 0 auto;
+  margin: 0;
 }
 
 .attractions-header h1 {
@@ -652,9 +652,18 @@ body {
   color: #4f6480;
 }
 
+.attractions-header-toolbar {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+}
+
 .attractions-filters {
   max-width: 1280px;
-  margin: 20px auto 0;
+  margin: 8px auto 0;
   background: rgba(255, 255, 255, 0.88);
   border: 1px solid #d5e3f1;
   border-radius: 16px;
@@ -670,6 +679,10 @@ body {
   display: grid;
   gap: 6px;
   align-content: start;
+}
+
+.attractions-filter-search-full {
+  grid-column: 1 / -1;
 }
 
 .attractions-filter-field span {
@@ -1081,34 +1094,22 @@ body {
 }
 
 .attractions-filter-actions {
-  grid-column: 1 / -1;
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
 }
 
-.attractions-filter-add {
-  border: 1px dashed #c5d9ed;
-  border-radius: 11px;
-  padding: 10px;
-  display: grid;
-  gap: 8px;
-  background: #f9fcff;
-  width: min(420px, 100%);
-}
-
-.attractions-filter-add span {
-  font-size: 0.8rem;
-  color: #3f5770;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+.attractions-filter-toolbar {
+  margin: 0;
 }
 
 .attractions-filter-add-row {
   display: flex;
   gap: 8px;
+  width: 210px;
+  flex: 0 0 210px;
 }
 
 .attractions-filter-add-row select {
@@ -1117,47 +1118,35 @@ body {
   border: 1px solid #c6d8ec;
   border-radius: 11px;
   background: #fff;
-  height: 38px;
+  height: 34px;
   padding: 0 11px;
-  font-size: 0.95rem;
-  color: #18212b;
-}
-
-.attractions-filter-add-button {
-  border: none;
-  border-radius: 10px;
-  min-width: 64px;
-  padding: 0 14px;
   font-size: 0.9rem;
-  font-weight: 600;
-  color: #fff;
-  background: linear-gradient(135deg, #0f6ab6 0%, #25a0de 100%);
-  cursor: pointer;
-}
-
-.attractions-filter-add-button:disabled {
-  opacity: 0.55;
-  cursor: default;
+  color: #18212b;
 }
 
 .attractions-filter-clear-button {
   border: 1px solid #c6d8ec;
   border-radius: 10px;
-  height: 36px;
+  height: 34px;
   background: #ffffff;
   color: #2d4f71;
-  font-size: 0.9rem;
+  font-size: 0.86rem;
   font-weight: 600;
   cursor: pointer;
 }
 
 .attractions-filter-clear-standalone {
-  height: 44px;
-  min-width: 180px;
-  padding: 0 16px;
+  min-width: 130px;
+  padding: 0 12px;
+  flex: 0 0 auto;
 }
 
 @media (max-width: 1100px) {
+  .attractions-header-toolbar {
+    flex-direction: column;
+    gap: 10px;
+  }
+
   .attractions-filters {
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   }
@@ -1182,10 +1171,15 @@ body {
 
   .attractions-filter-actions {
     flex-direction: column;
+    align-items: stretch;
   }
 
   .attractions-filter-clear-standalone {
-    width: min(420px, 100%);
+    width: 100%;
+  }
+
+  .attractions-filter-add-row {
+    width: 100%;
   }
 
   .attractions-grid {
