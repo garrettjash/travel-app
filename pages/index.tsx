@@ -1,5 +1,4 @@
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/router";
 
 const heroImage =
@@ -47,9 +46,6 @@ export default function LandingPage() {
             <span>Go</span>
             <span aria-hidden="true">→</span>
           </button>
-          <Link className="landing-go-button" href="/attractions">
-            Browse attractions
-          </Link>
         </div>
       </section>
     </main>

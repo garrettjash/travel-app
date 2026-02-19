@@ -40,6 +40,14 @@ export default function HomePage() {
           <button
             type="button"
             className="destinations-tab"
+            onClick={() => router.push("/favorites")}
+          >
+            <span aria-hidden="true">❤</span>
+            <span>Favorites</span>
+          </button>
+          <button
+            type="button"
+            className="destinations-tab"
             onClick={() => router.push("/ai-chatbot")}
           >
             <span aria-hidden="true">✨</span>

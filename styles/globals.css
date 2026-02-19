@@ -660,9 +660,10 @@ body {
   border-radius: 16px;
   padding: 16px;
   display: grid;
-  gap: 12px;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 16px 14px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   box-shadow: 0 10px 28px rgba(17, 61, 104, 0.08);
+  align-items: start;
 }
 
 .attractions-filter-field {
@@ -684,6 +685,10 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+}
+
+.attractions-filter-head span {
+  line-height: 1.2;
 }
 
 .attractions-filter-remove {
@@ -755,12 +760,248 @@ body {
   overflow: hidden;
 }
 
+.attraction-card-clickable {
+  cursor: pointer;
+}
+
+.attraction-card-image,
+.attraction-card-image-fallback {
+  width: 100%;
+  height: 180px;
+  border-radius: 12px;
+}
+
+.attraction-card-image {
+  object-fit: cover;
+  display: block;
+}
+
+.attraction-card-image-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #d7e7f6 0%, #b9d5ee 100%);
+  color: #2f577f;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
 .attraction-card-top h2 {
   margin: 0;
   font-size: 1.45rem;
   line-height: 1.2;
   color: #132e49;
   overflow-wrap: anywhere;
+}
+
+.attraction-card-title-row {
+  margin-top: 12px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.attraction-favorite-button {
+  border: 1px solid #d4dfec;
+  border-radius: 999px;
+  width: 34px;
+  height: 34px;
+  line-height: 1;
+  background: #ffffff;
+  color: #7188a2;
+  font-size: 1.05rem;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.attraction-favorite-button-active {
+  border-color: #e8a8b3;
+  background: #fff3f5;
+  color: #d22d4b;
+}
+
+.attraction-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+
+.attraction-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(14, 24, 36, 0.52);
+}
+
+.attraction-modal-content {
+  position: relative;
+  width: min(900px, 100%);
+  max-height: calc(100vh - 36px);
+  overflow: auto;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #d3e0ee;
+  padding: 16px;
+  box-shadow: 0 20px 44px rgba(15, 34, 57, 0.3);
+}
+
+.attraction-modal-close {
+  border: 1px solid #c7d8ea;
+  border-radius: 10px;
+  background: #f9fcff;
+  color: #2d4f71;
+  font-weight: 600;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.attraction-modal-actions {
+  position: sticky;
+  top: 0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  background: #ffffff;
+  padding-bottom: 4px;
+  z-index: 2;
+}
+
+.attraction-modal-favorite {
+  border: 1px solid #d4dfec;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #526b84;
+  font-weight: 600;
+  width: 36px;
+  height: 36px;
+  line-height: 1;
+  font-size: 1.05rem;
+  padding: 0;
+  cursor: pointer;
+}
+
+.attraction-modal-favorite-active {
+  border-color: #e8a8b3;
+  background: #fff3f5;
+  color: #d22d4b;
+}
+
+.attraction-modal-favorite-row {
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.attraction-modal-image,
+.attraction-modal-image-fallback {
+  width: 100%;
+  height: 260px;
+  border-radius: 12px;
+  margin-top: 12px;
+}
+
+.attraction-modal-image {
+  object-fit: cover;
+  display: block;
+}
+
+.attraction-modal-image-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #d7e7f6 0%, #b9d5ee 100%);
+  color: #2f577f;
+  font-weight: 600;
+}
+
+.attraction-modal-content h2 {
+  margin: 14px 0 0;
+  font-size: 1.9rem;
+  color: #132e49;
+}
+
+.attraction-modal-location {
+  margin: 6px 0 0;
+  color: #566c86;
+  font-size: 1.1rem;
+}
+
+.attraction-modal-categories {
+  margin: 12px 0 0;
+  color: #215f95;
+  font-weight: 600;
+}
+
+.attraction-modal-summary {
+  margin: 14px 0 0;
+  line-height: 1.5;
+  color: #273748;
+  white-space: pre-wrap;
+}
+
+.attraction-modal-subtitle {
+  margin: 16px 0 0;
+  color: #132e49;
+  font-size: 1.1rem;
+}
+
+.attraction-modal-grid {
+  margin: 14px 0 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.attraction-modal-grid div {
+  border: 1px solid #e0eaf4;
+  border-radius: 10px;
+  padding: 10px;
+  min-width: 0;
+}
+
+.attraction-modal-grid dt {
+  color: #4f6480;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin-bottom: 4px;
+}
+
+.attraction-modal-grid dd {
+  margin: 0;
+  color: #1f3348;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.attraction-modal-map-wrap {
+  margin-top: 10px;
+  border: 1px solid #dce8f4;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.attraction-modal-map {
+  display: block;
+  width: 100%;
+  height: 260px;
+  border: 0;
+}
+
+.attraction-modal-map-link {
+  display: inline-flex;
+  margin-top: 10px;
+  border: 1px solid #c7d8ea;
+  border-radius: 10px;
+  padding: 7px 11px;
+  background: #f9fcff;
+  color: #2d4f71;
+  text-decoration: none;
+  font-weight: 600;
 }
 
 .attraction-card-top p {
@@ -839,6 +1080,14 @@ body {
   cursor: default;
 }
 
+.attractions-filter-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .attractions-filter-add {
   border: 1px dashed #c5d9ed;
   border-radius: 11px;
@@ -846,6 +1095,7 @@ body {
   display: grid;
   gap: 8px;
   background: #f9fcff;
+  width: min(420px, 100%);
 }
 
 .attractions-filter-add span {
@@ -890,9 +1140,26 @@ body {
   cursor: default;
 }
 
+.attractions-filter-clear-button {
+  border: 1px solid #c6d8ec;
+  border-radius: 10px;
+  height: 36px;
+  background: #ffffff;
+  color: #2d4f71;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.attractions-filter-clear-standalone {
+  height: 44px;
+  min-width: 180px;
+  padding: 0 16px;
+}
+
 @media (max-width: 1100px) {
   .attractions-filters {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   }
 
   .attractions-grid {
@@ -913,7 +1180,19 @@ body {
     flex-direction: column;
   }
 
+  .attractions-filter-actions {
+    flex-direction: column;
+  }
+
+  .attractions-filter-clear-standalone {
+    width: min(420px, 100%);
+  }
+
   .attractions-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .attraction-modal-grid {
     grid-template-columns: 1fr;
   }
 }

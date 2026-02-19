@@ -166,6 +166,10 @@ export default function AiChatbotPage() {
             <span aria-hidden="true">💾</span>
             <span>Saved Trips</span>
           </button>
+          <button type="button" className="destinations-tab" onClick={() => router.push("/favorites")}>
+            <span aria-hidden="true">❤</span>
+            <span>Favorites</span>
+          </button>
           <button type="button" className="destinations-tab destinations-tab-active">
             <span aria-hidden="true">✨</span>
             <span>AI Chatbot</span>
