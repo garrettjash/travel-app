@@ -313,6 +313,7 @@ export default async function handler(
       .from("attraction")
       .select(ATTRACTION_SELECT, { count: "exact" })
       .order("attraction_popularityscore", { ascending: false, nullsFirst: false })
+      .order("attraction_id", { ascending: true })
       .range(offset, offset + limit - 1);
 
     if (categoryFilteredIds) {

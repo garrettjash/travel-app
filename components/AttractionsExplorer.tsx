@@ -124,6 +124,17 @@ function formatCommaList(value: string) {
     .join(", ");
 }
 
+function dedupeAttractionsById(list: Attraction[]) {
+  const seen = new Set<number>();
+  const deduped: Attraction[] = [];
+  for (const item of list) {
+    if (seen.has(item.id)) continue;
+    seen.add(item.id);
+    deduped.push(item);
+  }
+  return deduped;
+}
+
 export default function AttractionsExplorer({ title, subtitle, initialPlace }: AttractionsExplorerProps) {
   const { toggleFavorite, isFavorite } = useFavorites();
   const [filters, setFilters] = useState<Filters>(defaultFilters);
@@ -213,7 +224,7 @@ export default function AttractionsExplorer({ title, subtitle, initialPlace }: A
           throw new Error("error" in payload ? payload.error : "Failed to load attractions");
         }
 
-        setAttractions(payload.data ?? []);
+        setAttractions(dedupeAttractionsById(payload.data ?? []));
         setTotalCount(payload.totalCount ?? 0);
         setImageIndexByAttraction({});
       } catch (err) {
@@ -266,7 +277,7 @@ export default function AttractionsExplorer({ title, subtitle, initialPlace }: A
         throw new Error("error" in payload ? payload.error : "Failed to load more attractions");
       }
 
-      setAttractions((current) => [...current, ...(payload.data ?? [])]);
+      setAttractions((current) => dedupeAttractionsById([...current, ...(payload.data ?? [])]));
       setTotalCount(payload.totalCount ?? 0);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error loading more attractions");
