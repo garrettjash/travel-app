@@ -1,10 +1,13 @@
+import { useState } from "react";
 import { useRouter } from "next/router";
 import AttractionsExplorer from "../components/AttractionsExplorer";
+import LoginNoticeModal from "../components/LoginNoticeModal";
 
 export default function HomePage() {
   const router = useRouter();
   const placeQuery = router.query.place;
   const initialPlace = Array.isArray(placeQuery) ? placeQuery[0] : placeQuery;
+  const [isLoginNoticeOpen, setIsLoginNoticeOpen] = useState(false);
 
   return (
     <main className="destinations-page">
@@ -16,7 +19,9 @@ export default function HomePage() {
         >
           TravelApp
         </button>
-        <button type="button" className="destinations-login">Login</button>
+        <button type="button" className="destinations-login" onClick={() => setIsLoginNoticeOpen(true)}>
+          Login
+        </button>
       </header>
 
       <section className="destinations-layout">
@@ -41,7 +46,11 @@ export default function HomePage() {
             <span aria-hidden="true">🗺️</span>
             <span>Destinations</span>
           </button>
-          <button type="button" className="destinations-tab">
+          <button
+            type="button"
+            className="destinations-tab"
+            onClick={() => router.push("/saved-trips")}
+          >
             <span aria-hidden="true">💾</span>
             <span>Saved Trips</span>
           </button>
@@ -71,6 +80,7 @@ export default function HomePage() {
           />
         </div>
       </section>
+      <LoginNoticeModal isOpen={isLoginNoticeOpen} onClose={() => setIsLoginNoticeOpen(false)} />
     </main>
   );
 }

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
 import AttractionDetailsModal from "../components/AttractionDetailsModal";
+import LoginNoticeModal from "../components/LoginNoticeModal";
 import { useFavorites } from "../lib/favorites-context";
 
 function formatLocation(city: string, stateProvince: string, country: string) {
@@ -20,6 +21,7 @@ export default function FavoritesPage() {
   const { favorites, toggleFavorite, isFavorite } = useFavorites();
   const [imageIndexByAttraction, setImageIndexByAttraction] = useState<Record<number, number>>({});
   const [selectedAttraction, setSelectedAttraction] = useState<(typeof favorites)[number] | null>(null);
+  const [isLoginNoticeOpen, setIsLoginNoticeOpen] = useState(false);
 
   return (
     <main className="destinations-page">
@@ -31,7 +33,9 @@ export default function FavoritesPage() {
         >
           TravelApp
         </button>
-        <button type="button" className="destinations-login">Login</button>
+        <button type="button" className="destinations-login" onClick={() => setIsLoginNoticeOpen(true)}>
+          Login
+        </button>
       </header>
 
       <section className="destinations-layout">
@@ -56,7 +60,7 @@ export default function FavoritesPage() {
             <span aria-hidden="true">🗺️</span>
             <span>Destinations</span>
           </button>
-          <button type="button" className="destinations-tab">
+          <button type="button" className="destinations-tab" onClick={() => router.push("/saved-trips")}>
             <span aria-hidden="true">💾</span>
             <span>Saved Trips</span>
           </button>
@@ -178,6 +182,7 @@ export default function FavoritesPage() {
         onToggleFavorite={toggleFavorite}
         onClose={() => setSelectedAttraction(null)}
       />
+      <LoginNoticeModal isOpen={isLoginNoticeOpen} onClose={() => setIsLoginNoticeOpen(false)} />
     </main>
   );
 }

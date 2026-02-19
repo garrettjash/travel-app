@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { useRouter } from "next/router";
+import LoginNoticeModal from "../components/LoginNoticeModal";
 
 const funnyTravelDogImage =
   "https://images.unsplash.com/photo-1544568100-847a948585b9?auto=format&fit=crop&w=1400&q=80";
@@ -14,6 +16,7 @@ export default function ComingSoonPage() {
   const featureLabel = getFeatureLabel(router.query.feature);
   const isStays = featureLabel === "Stays";
   const isFlights = featureLabel === "Flights";
+  const [isLoginNoticeOpen, setIsLoginNoticeOpen] = useState(false);
 
   return (
     <main className="destinations-page">
@@ -25,7 +28,9 @@ export default function ComingSoonPage() {
         >
           TravelApp
         </button>
-        <button type="button" className="destinations-login">Login</button>
+        <button type="button" className="destinations-login" onClick={() => setIsLoginNoticeOpen(true)}>
+          Login
+        </button>
       </header>
 
       <section className="destinations-layout">
@@ -50,7 +55,7 @@ export default function ComingSoonPage() {
             <span aria-hidden="true">🗺️</span>
             <span>Destinations</span>
           </button>
-          <button type="button" className="destinations-tab">
+          <button type="button" className="destinations-tab" onClick={() => router.push("/saved-trips")}>
             <span aria-hidden="true">💾</span>
             <span>Saved Trips</span>
           </button>
@@ -75,6 +80,7 @@ export default function ComingSoonPage() {
           </section>
         </div>
       </section>
+      <LoginNoticeModal isOpen={isLoginNoticeOpen} onClose={() => setIsLoginNoticeOpen(false)} />
     </main>
   );
 }
