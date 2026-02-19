@@ -10,6 +10,16 @@ export default function LandingPage() {
 
   return (
     <main className="landing-shell">
+      <header className="landing-topbar">
+        <button
+          type="button"
+          className="destinations-brand destinations-brand-button"
+          onClick={() => router.push("/")}
+        >
+          TravelApp
+        </button>
+        <button type="button" className="destinations-login">Login</button>
+      </header>
       <section className="landing-hero" style={{ backgroundImage: `url(${heroImage})` }}>
         <div className="landing-overlay" />
         <div className="landing-content">
@@ -45,6 +55,13 @@ export default function LandingPage() {
           >
             <span>Go</span>
             <span aria-hidden="true">→</span>
+          </button>
+          <button
+            type="button"
+            className="landing-secondary-button"
+            onClick={() => router.push("/home")}
+          >
+            View all attractions
           </button>
         </div>
       </section>
