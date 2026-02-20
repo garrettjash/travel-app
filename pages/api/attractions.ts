@@ -5,7 +5,16 @@ type AttractionRow = {
   attraction_id: number;
   attraction_name: string | null;
   attraction_city: string | null;
+  attraction_stateprovince: string | null;
   attraction_countryregion: string | null;
+  attraction_latitude: number | null;
+  attraction_longitude: number | null;
+  attraction_distancefromplace: number | null;
+  attraction_totalcountratings: number | null;
+  attraction_credibilitytier: number | null;
+  attraction_reviewssummary: string | null;
+  attraction_rawdata: string | null;
+  attraction_lastrefreshed: string | null;
   attraction_summary: string | null;
   attraction_vibe: string | null;
   attraction_normalizedrating: number | null;
@@ -17,18 +26,35 @@ type AttractionItem = {
   id: number;
   name: string;
   city: string;
+  stateProvince: string;
   country: string;
   summary: string;
   vibe: string;
   rating: number | null;
+  totalCountRatings: number | null;
+  credibilityTier: number | null;
+  reviewsSummary: string;
   priceLevel: string;
   popularityScore: number | null;
+  latitude: number | null;
+  longitude: number | null;
+  distanceFromPlace: number | null;
+  rawData: string;
+  lastRefreshed: string;
   categories: string[];
+  imageUrl: string | null;
+  imageUrls: string[];
+};
+
+type AttractionImageRow = {
+  attraction_id: number;
+  image_url: string | null;
 };
 
 type FilterOptionsResponse = {
-  places: string[];
-  countries: string[];
+  cities: string[];
+  stateProvinces: string[];
+  countryRegions: string[];
   categories: string[];
   vibes: string[];
   priceLevels: string[];
@@ -38,6 +64,7 @@ type AttractionsResponse =
   | {
       data: AttractionItem[];
       totalCount: number;
+      totalDatabaseCount: number;
       hasMore: boolean;
       limit: number;
       offset: number;
@@ -54,8 +81,9 @@ const supabaseKey =
 
 const DEFAULT_PAGE_SIZE = 6;
 const MAX_PAGE_SIZE = 24;
+const SUPABASE_PAGE_BATCH = 1000;
 const ATTRACTION_SELECT =
-  "attraction_id, attraction_name, attraction_city, attraction_countryregion, attraction_summary, attraction_vibe, attraction_normalizedrating, attraction_pricelevel, attraction_popularityscore";
+  "attraction_id, attraction_name, attraction_city, attraction_stateprovince, attraction_countryregion, attraction_latitude, attraction_longitude, attraction_distancefromplace, attraction_totalcountratings, attraction_credibilitytier, attraction_reviewssummary, attraction_rawdata, attraction_lastrefreshed, attraction_summary, attraction_vibe, attraction_normalizedrating, attraction_pricelevel, attraction_popularityscore";
 
 function asString(value: string | string[] | undefined) {
   const raw = Array.isArray(value) ? value[0] : value;
@@ -75,7 +103,9 @@ function asOffset(value: string | string[] | undefined) {
 }
 
 function asNumber(value: string | string[] | undefined) {
-  const raw = Number(asString(value));
+  const parsed = asString(value);
+  if (!parsed) return null;
+  const raw = Number(parsed);
   if (!Number.isFinite(raw)) return null;
   return raw;
 }
@@ -90,6 +120,33 @@ function uniqueSorted(values: Array<string | null | undefined>) {
   return Array.from(
     new Set(values.map((value) => normalizeText(value)).filter(Boolean))
   ).sort((a, b) => a.localeCompare(b));
+}
+
+function escapeForIlike(value: string) {
+  return value.replace(/[%_]/g, "\\$&");
+}
+
+function normalizeImageUrl(rawValue: string | null | undefined) {
+  const value = normalizeText(rawValue);
+  if (!value) return null;
+
+  if (value.startsWith("http://") || value.startsWith("https://")) return value;
+  if (value.startsWith("//")) return `https:${value}`;
+
+  if (value.startsWith("s3://")) {
+    const withoutScheme = value.slice(5);
+    const firstSlashIndex = withoutScheme.indexOf("/");
+    if (firstSlashIndex <= 0) return null;
+    const bucket = withoutScheme.slice(0, firstSlashIndex);
+    const key = withoutScheme.slice(firstSlashIndex + 1);
+    return `https://${bucket}.s3.amazonaws.com/${key}`;
+  }
+
+  if (value.includes(".s3.amazonaws.com/") || value.includes(".s3.")) {
+    return `https://${value}`;
+  }
+
+  return null;
 }
 
 export default async function handler(
@@ -112,43 +169,56 @@ export default async function handler(
   try {
     const mode = asString(req.query.mode);
     if (mode === "filters") {
-      const [attractionFilterResult, categoryResult] = await Promise.all([
-        supabase
-          .from("attraction")
-          .select("attraction_city, attraction_countryregion, attraction_vibe, attraction_pricelevel")
-          .limit(2000),
-        supabase.from("category").select("category_name").limit(500)
-      ]);
+      const attractionFilterRows: Array<{
+        attraction_city: string | null;
+        attraction_stateprovince: string | null;
+        attraction_countryregion: string | null;
+        attraction_vibe: string | null;
+        attraction_pricelevel: string | null;
+      }> = [];
 
-      if (attractionFilterResult.error) {
-        res.status(500).json({ error: attractionFilterResult.error.message });
-        return;
+      for (let from = 0; ; from += SUPABASE_PAGE_BATCH) {
+        const to = from + SUPABASE_PAGE_BATCH - 1;
+        const { data, error } = await supabase
+          .from("attraction")
+          .select("attraction_city, attraction_stateprovince, attraction_countryregion, attraction_vibe, attraction_pricelevel")
+          .range(from, to);
+
+        if (error) {
+          res.status(500).json({ error: error.message });
+          return;
+        }
+
+        const page = data ?? [];
+        attractionFilterRows.push(...page);
+        if (page.length < SUPABASE_PAGE_BATCH) break;
       }
+
+      const categoryResult = await supabase.from("category").select("category_name").limit(5000);
 
       if (categoryResult.error) {
         res.status(500).json({ error: categoryResult.error.message });
         return;
       }
 
-      const places = uniqueSorted(
-        (attractionFilterResult.data ?? []).map((row) => {
-          const city = normalizeText(row.attraction_city);
-          const country = normalizeText(row.attraction_countryregion);
-          if (city && country) return `${city}, ${country}`;
-          return city || country;
-        })
+      const cities = uniqueSorted(
+        attractionFilterRows.map((row) => row.attraction_city)
       );
 
-      const countries = uniqueSorted(
-        (attractionFilterResult.data ?? []).map((row) => row.attraction_countryregion)
+      const stateProvinces = uniqueSorted(
+        attractionFilterRows.map((row) => row.attraction_stateprovince)
+      );
+
+      const countryRegions = uniqueSorted(
+        attractionFilterRows.map((row) => row.attraction_countryregion)
       );
 
       const vibes = uniqueSorted(
-        (attractionFilterResult.data ?? []).map((row) => row.attraction_vibe)
+        attractionFilterRows.map((row) => row.attraction_vibe)
       );
 
       const priceLevels = uniqueSorted(
-        (attractionFilterResult.data ?? []).map((row) => row.attraction_pricelevel)
+        attractionFilterRows.map((row) => row.attraction_pricelevel)
       );
 
       const categories = uniqueSorted(
@@ -157,8 +227,9 @@ export default async function handler(
 
       res.status(200).json({
         options: {
-          places,
-          countries,
+          cities,
+          stateProvinces,
+          countryRegions,
           categories,
           vibes,
           priceLevels
@@ -169,14 +240,25 @@ export default async function handler(
 
     const limit = asLimit(req.query.limit);
     const offset = asOffset(req.query.offset);
-    const place = asString(req.query.place);
+    const city = asString(req.query.city);
+    const stateProvince = asString(req.query.stateProvince);
+    const countryRegion = asString(req.query.countryRegion);
     const category = asString(req.query.category);
     const vibe = asString(req.query.vibe);
     const priceLevel = asString(req.query.priceLevel);
     const search = asString(req.query.search);
-    const country = asString(req.query.country);
     const minRating = asNumber(req.query.minRating);
     const minPopularity = asNumber(req.query.minPopularity);
+    const totalDatabaseResult = await supabase
+      .from("attraction")
+      .select("attraction_id", { count: "exact", head: true });
+
+    if (totalDatabaseResult.error) {
+      res.status(500).json({ error: totalDatabaseResult.error.message });
+      return;
+    }
+
+    const totalDatabaseCount = Number(totalDatabaseResult.count ?? 0);
 
     let categoryFilteredIds: number[] | null = null;
 
@@ -193,27 +275,36 @@ export default async function handler(
       }
 
       if (!categoryMatch.data?.category_id) {
-        res.status(200).json({ data: [], totalCount: 0, hasMore: false, limit, offset });
+        res.status(200).json({ data: [], totalCount: 0, totalDatabaseCount, hasMore: false, limit, offset });
         return;
       }
 
-      const linksResult = await supabase
-        .from("attraction_categories")
-        .select("attraction_id")
-        .eq("category_id", categoryMatch.data.category_id)
-        .limit(5000);
+      const ids = new Set<number>();
+      for (let from = 0; ; from += SUPABASE_PAGE_BATCH) {
+        const to = from + SUPABASE_PAGE_BATCH - 1;
+        const { data: page, error: linksError } = await supabase
+          .from("attraction_categories")
+          .select("attraction_id")
+          .eq("category_id", categoryMatch.data.category_id)
+          .range(from, to);
 
-      if (linksResult.error) {
-        res.status(500).json({ error: linksResult.error.message });
-        return;
+        if (linksError) {
+          res.status(500).json({ error: linksError.message });
+          return;
+        }
+
+        const linkRows = page ?? [];
+        for (const row of linkRows) {
+          const id = Number(row.attraction_id);
+          if (Number.isFinite(id)) ids.add(id);
+        }
+        if (linkRows.length < SUPABASE_PAGE_BATCH) break;
       }
 
-      categoryFilteredIds = Array.from(
-        new Set((linksResult.data ?? []).map((row) => Number(row.attraction_id)).filter(Number.isFinite))
-      );
+      categoryFilteredIds = Array.from(ids);
 
       if (categoryFilteredIds.length === 0) {
-        res.status(200).json({ data: [], totalCount: 0, hasMore: false, limit, offset });
+        res.status(200).json({ data: [], totalCount: 0, totalDatabaseCount, hasMore: false, limit, offset });
         return;
       }
     }
@@ -222,32 +313,27 @@ export default async function handler(
       .from("attraction")
       .select(ATTRACTION_SELECT, { count: "exact" })
       .order("attraction_popularityscore", { ascending: false, nullsFirst: false })
+      .order("attraction_id", { ascending: true })
       .range(offset, offset + limit - 1);
 
     if (categoryFilteredIds) {
       query = query.in("attraction_id", categoryFilteredIds);
     }
 
-    if (place) {
-      if (place.includes(",")) {
-        const [cityPart, ...countryParts] = place.split(",");
-        const city = cityPart.trim();
-        const country = countryParts.join(",").trim();
-        if (city) query = query.ilike("attraction_city", city);
-        if (country) query = query.ilike("attraction_countryregion", country);
-      } else {
-        query = query.or(
-          `attraction_city.ilike.${place},attraction_countryregion.ilike.${place}`
-        );
-      }
+    if (city) {
+      query = query.ilike("attraction_city", `%${city}%`);
+    }
+
+    if (stateProvince) {
+      query = query.ilike("attraction_stateprovince", `%${stateProvince}%`);
     }
 
     if (vibe) {
       query = query.ilike("attraction_vibe", vibe);
     }
 
-    if (country) {
-      query = query.ilike("attraction_countryregion", country);
+    if (countryRegion) {
+      query = query.ilike("attraction_countryregion", `%${countryRegion}%`);
     }
 
     if (priceLevel) {
@@ -263,7 +349,16 @@ export default async function handler(
     }
 
     if (search) {
-      query = query.ilike("attraction_name", `%${search}%`);
+      const searchValue = escapeForIlike(search);
+      query = query.or(
+        [
+          `attraction_name.ilike.%${searchValue}%`,
+          `attraction_city.ilike.%${searchValue}%`,
+          `attraction_stateprovince.ilike.%${searchValue}%`,
+          `attraction_countryregion.ilike.%${searchValue}%`,
+          `attraction_summary.ilike.%${searchValue}%`
+        ].join(",")
+      );
     }
 
     const { data, error, count } = await query;
@@ -277,16 +372,29 @@ export default async function handler(
     const attractionIds = attractionRows.map((row) => row.attraction_id);
 
     let categoriesByAttraction = new Map<number, string[]>();
+    let imageByAttraction = new Map<number, string[]>();
 
     if (attractionIds.length > 0) {
-      const linksResult = await supabase
-        .from("attraction_categories")
-        .select("attraction_id, category_id")
-        .in("attraction_id", attractionIds)
-        .limit(8000);
+      const [linksResult, imagesResult] = await Promise.all([
+        supabase
+          .from("attraction_categories")
+          .select("attraction_id, category_id")
+          .in("attraction_id", attractionIds)
+          .limit(8000),
+        supabase
+          .from("images")
+          .select("attraction_id, image_url")
+          .in("attraction_id", attractionIds)
+          .limit(8000)
+      ]);
 
       if (linksResult.error) {
         res.status(500).json({ error: linksResult.error.message });
+        return;
+      }
+
+      if (imagesResult.error) {
+        res.status(500).json({ error: imagesResult.error.message });
         return;
       }
 
@@ -324,13 +432,49 @@ export default async function handler(
           categoriesByAttraction.set(attractionId, current);
         }
       }
+
+      imageByAttraction = new Map<number, string[]>();
+      for (const image of (imagesResult.data ?? []) as AttractionImageRow[]) {
+        const attractionId = Number(image.attraction_id);
+        const imageUrl = normalizeImageUrl(image.image_url);
+        if (!imageUrl) continue;
+        const current = imageByAttraction.get(attractionId) ?? [];
+        if (!current.includes(imageUrl)) {
+          current.push(imageUrl);
+          imageByAttraction.set(attractionId, current);
+        }
+      }
     }
 
     const items: AttractionItem[] = attractionRows.map((row) => ({
       id: row.attraction_id,
       name: normalizeText(row.attraction_name) || "Unnamed attraction",
       city: normalizeText(row.attraction_city),
+      stateProvince: normalizeText(row.attraction_stateprovince),
       country: normalizeText(row.attraction_countryregion),
+      latitude:
+        row.attraction_latitude !== null && Number.isFinite(Number(row.attraction_latitude))
+          ? Number(row.attraction_latitude)
+          : null,
+      longitude:
+        row.attraction_longitude !== null && Number.isFinite(Number(row.attraction_longitude))
+          ? Number(row.attraction_longitude)
+          : null,
+      distanceFromPlace:
+        row.attraction_distancefromplace !== null && Number.isFinite(Number(row.attraction_distancefromplace))
+          ? Number(row.attraction_distancefromplace)
+          : null,
+      totalCountRatings:
+        row.attraction_totalcountratings !== null && Number.isFinite(Number(row.attraction_totalcountratings))
+          ? Number(row.attraction_totalcountratings)
+          : null,
+      credibilityTier:
+        row.attraction_credibilitytier !== null && Number.isFinite(Number(row.attraction_credibilitytier))
+          ? Number(row.attraction_credibilitytier)
+          : null,
+      reviewsSummary: normalizeText(row.attraction_reviewssummary),
+      rawData: normalizeText(row.attraction_rawdata),
+      lastRefreshed: normalizeText(row.attraction_lastrefreshed),
       summary: normalizeText(row.attraction_summary),
       vibe: normalizeText(row.attraction_vibe),
       rating:
@@ -342,7 +486,9 @@ export default async function handler(
         row.attraction_popularityscore !== null && Number.isFinite(Number(row.attraction_popularityscore))
           ? Number(row.attraction_popularityscore)
           : null,
-      categories: categoriesByAttraction.get(row.attraction_id) ?? []
+      categories: categoriesByAttraction.get(row.attraction_id) ?? [],
+      imageUrl: (imageByAttraction.get(row.attraction_id) ?? [])[0] ?? null,
+      imageUrls: imageByAttraction.get(row.attraction_id) ?? []
     }));
 
     const totalCount = Number(count ?? items.length);
@@ -350,6 +496,7 @@ export default async function handler(
     res.status(200).json({
       data: items,
       totalCount,
+      totalDatabaseCount,
       hasMore: offset + items.length < totalCount,
       limit,
       offset

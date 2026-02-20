@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
+import LoginNoticeModal from "../components/LoginNoticeModal";
 
 type ChatMessage = {
   message_id: string;
@@ -43,6 +44,7 @@ export default function AiChatbotPage() {
   const [draft, setDraft] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isLoginNoticeOpen, setIsLoginNoticeOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const canSend = useMemo(
@@ -145,16 +147,26 @@ export default function AiChatbotPage() {
         >
           TravelApp
         </button>
-        <button type="button" className="destinations-login">Login</button>
+        <button type="button" className="destinations-login" onClick={() => setIsLoginNoticeOpen(true)}>
+          Login
+        </button>
       </header>
 
       <section className="destinations-layout">
         <nav className="destinations-sidebar" aria-label="Main navigation">
-          <button type="button" className="destinations-tab">
+          <button
+            type="button"
+            className="destinations-tab"
+            onClick={() => router.push("/coming-soon?feature=stays")}
+          >
             <span aria-hidden="true">🛏️</span>
             <span>Stays</span>
           </button>
-          <button type="button" className="destinations-tab">
+          <button
+            type="button"
+            className="destinations-tab"
+            onClick={() => router.push("/coming-soon?feature=flights")}
+          >
             <span aria-hidden="true">✈️</span>
             <span>Flights</span>
           </button>
@@ -162,9 +174,13 @@ export default function AiChatbotPage() {
             <span aria-hidden="true">🗺️</span>
             <span>Destinations</span>
           </button>
-          <button type="button" className="destinations-tab">
+          <button type="button" className="destinations-tab" onClick={() => router.push("/saved-trips")}>
             <span aria-hidden="true">💾</span>
             <span>Saved Trips</span>
+          </button>
+          <button type="button" className="destinations-tab" onClick={() => router.push("/favorites")}>
+            <span aria-hidden="true">❤</span>
+            <span>Favorites</span>
           </button>
           <button type="button" className="destinations-tab destinations-tab-active">
             <span aria-hidden="true">✨</span>
@@ -234,6 +250,7 @@ export default function AiChatbotPage() {
           </section>
         </div>
       </section>
+      <LoginNoticeModal isOpen={isLoginNoticeOpen} onClose={() => setIsLoginNoticeOpen(false)} />
     </main>
   );
 }

@@ -1,12 +1,21 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
-import AttractionsExplorer from "../components/AttractionsExplorer";
 import LoginNoticeModal from "../components/LoginNoticeModal";
 
-export default function HomePage() {
+const funnyTravelDogImage =
+  "https://images.unsplash.com/photo-1544568100-847a948585b9?auto=format&fit=crop&w=1400&q=80";
+
+function getFeatureLabel(feature: string | string[] | undefined) {
+  const raw = Array.isArray(feature) ? feature[0] : feature;
+  if (raw === "flights") return "Flights";
+  return "Stays";
+}
+
+export default function ComingSoonPage() {
   const router = useRouter();
-  const placeQuery = router.query.place;
-  const initialPlace = Array.isArray(placeQuery) ? placeQuery[0] : placeQuery;
+  const featureLabel = getFeatureLabel(router.query.feature);
+  const isStays = featureLabel === "Stays";
+  const isFlights = featureLabel === "Flights";
   const [isLoginNoticeOpen, setIsLoginNoticeOpen] = useState(false);
 
   return (
@@ -28,7 +37,7 @@ export default function HomePage() {
         <nav className="destinations-sidebar" aria-label="Main navigation">
           <button
             type="button"
-            className="destinations-tab"
+            className={`destinations-tab ${isStays ? "destinations-tab-active" : ""}`}
             onClick={() => router.push("/coming-soon?feature=stays")}
           >
             <span aria-hidden="true">🛏️</span>
@@ -36,48 +45,39 @@ export default function HomePage() {
           </button>
           <button
             type="button"
-            className="destinations-tab"
+            className={`destinations-tab ${isFlights ? "destinations-tab-active" : ""}`}
             onClick={() => router.push("/coming-soon?feature=flights")}
           >
             <span aria-hidden="true">✈️</span>
             <span>Flights</span>
           </button>
-          <button type="button" className="destinations-tab destinations-tab-active">
+          <button type="button" className="destinations-tab" onClick={() => router.push("/home")}>
             <span aria-hidden="true">🗺️</span>
             <span>Destinations</span>
           </button>
-          <button
-            type="button"
-            className="destinations-tab"
-            onClick={() => router.push("/saved-trips")}
-          >
+          <button type="button" className="destinations-tab" onClick={() => router.push("/saved-trips")}>
             <span aria-hidden="true">💾</span>
             <span>Saved Trips</span>
           </button>
-          <button
-            type="button"
-            className="destinations-tab"
-            onClick={() => router.push("/favorites")}
-          >
+          <button type="button" className="destinations-tab" onClick={() => router.push("/favorites")}>
             <span aria-hidden="true">❤</span>
             <span>Favorites</span>
           </button>
-          <button
-            type="button"
-            className="destinations-tab"
-            onClick={() => router.push("/ai-chatbot")}
-          >
+          <button type="button" className="destinations-tab" onClick={() => router.push("/ai-chatbot")}>
             <span aria-hidden="true">✨</span>
             <span>AI Chatbot</span>
           </button>
         </nav>
 
         <div className="destinations-content">
-          <AttractionsExplorer
-            title="Top Choices For Your Selections"
-            subtitle="Explore attractions based on your filters."
-            initialPlace={initialPlace}
-          />
+          <section className="coming-soon-card">
+            <img src={funnyTravelDogImage} alt="Funny travel companion" className="coming-soon-image" />
+            <h1>{featureLabel} Are Not Here Yet</h1>
+            <p>
+              Right now, we do not have {featureLabel.toLowerCase()} available.
+              We may be adding {featureLabel.toLowerCase()} later.
+            </p>
+          </section>
         </div>
       </section>
       <LoginNoticeModal isOpen={isLoginNoticeOpen} onClose={() => setIsLoginNoticeOpen(false)} />
