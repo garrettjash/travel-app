@@ -65,6 +65,8 @@ def scrape_links_selenium(site_name, destination):
             results = _scrape_nomadic_matt(driver, destination)
         elif site_name == "The Blonde Abroad":
             results = _scrape_blonde_abroad(driver, destination)
+        elif site_name == "This Rare Earth":
+            results = _scrape_this_rare_earth(driver, destination)
         elif site_name == "Reddit":
             results = _scrape_reddit(driver, destination)
         # Add other sites here as needed (elif site_name == "TripAdvisor"...)
@@ -178,6 +180,19 @@ def _scrape_blonde_abroad(driver, destination):
         ".grid-item a",
     ]
     return _collect_ranked_links(driver, selectors, destination, "The Blonde Abroad")
+
+def _scrape_this_rare_earth(driver, destination):
+    url = f"https://www.thisrareearth.com/?s={quote_plus(destination)}"
+    driver.get(url)
+
+    _wait_for_any(driver, ["article", "h2", "a"])
+    selectors = [
+        "article h2 a",
+        ".entry-title a",
+        "h2 a",
+        ".post-title a",
+    ]
+    return _collect_ranked_links(driver, selectors, destination, "This Rare Earth")
 
 def _scrape_reddit(driver, destination):
     """Scrape Reddit search results for travel discussions."""

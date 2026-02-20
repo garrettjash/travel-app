@@ -37,12 +37,12 @@ IMAGE_CACHE_LOCK = threading.Lock()
 # --- CONFIGURATION ---
 # From the .ENV file
 S3_BUCKET = os.getenv("S3_BUCKET_NAME")
+S3_IMG_BUCKET = os.getenv("S3_IMG_BUCKET_NAME")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 AWS_REGION = os.getenv("AWS_DEFAULT_REGION") or os.getenv("AWS_REGION") or "us-east-1"
-IMAGE_S3_PREFIX = os.getenv("IMAGE_S3_PREFIX", "images/")
-IMAGE_MAX_PER_ATTRACTION = int(os.getenv("IMAGE_MAX_PER_ATTRACTION", "3"))
+IMAGE_MAX_PER_ATTRACTION = int(os.getenv("IMAGE_MAX_PER_ATTRACTION", "2"))
 IMAGE_ALLOW_FALLBACK = os.getenv("IMAGE_ALLOW_FALLBACK", "1").lower() in ("1", "true", "yes")
 
 # Geocoding configuration
@@ -115,14 +115,21 @@ def normalize_text_for_match(text):
         return ""
     return re.sub(r"[^a-z0-9]+", " ", str(text).lower()).strip()
 
+def normalize_place_city(name):
+    if not name:
+        return ""
+    parts = [p.capitalize() for p in re.split(r"\s+", str(name).strip()) if p]
+    return " ".join(parts)
+
 def slugify(text):
     cleaned = re.sub(r"[^a-z0-9]+", "_", str(text).lower()).strip("_")
     return cleaned or "unknown"
 
-def build_s3_url(key):
+def build_s3_url(key, bucket=None):
+    bucket_name = bucket or S3_BUCKET
     if AWS_REGION == "us-east-1":
-        return f"https://{S3_BUCKET}.s3.amazonaws.com/{key}"
-    return f"https://{S3_BUCKET}.s3.{AWS_REGION}.amazonaws.com/{key}"
+        return f"https://{bucket_name}.s3.amazonaws.com/{key}"
+    return f"https://{bucket_name}.s3.{AWS_REGION}.amazonaws.com/{key}"
 
 def coerce_image_candidates(article):
     candidates = article.get("image_candidates") or article.get("image_urls") or []
@@ -235,29 +242,36 @@ def add_image_cache(attraction_id, image_url):
             IMAGE_CACHE[attraction_id] = urls
         urls.add(image_url)
 
-def store_images_for_attraction(attraction_id, item, article, city):
-    if not S3_BUCKET:
+def store_images_for_attraction(attraction_id, item, article, place_id):
+    """
+    Download and store images to S3 with structure: /{place_id}/{attraction_id}/image_{n}.ext
+    Uses the public images bucket (S3_IMG_BUCKET).
+    """
+    if not S3_IMG_BUCKET or not place_id:
         return
-    image_urls = select_relevant_images(item, article, city)
+    image_urls = select_relevant_images(item, article, str(place_id))
     if not image_urls:
         return
-    prefix = IMAGE_S3_PREFIX if IMAGE_S3_PREFIX.endswith("/") else f"{IMAGE_S3_PREFIX}/"
     existing = get_existing_image_urls(attraction_id)
 
+    image_count = 0
     for url in image_urls:
-        digest = hashlib.sha256(url.encode("utf-8")).hexdigest()[:16]
+        if image_count >= IMAGE_MAX_PER_ATTRACTION:
+            break
+        
         content, content_type = download_image(url)
         if not content or not content_type:
             continue
         ext = guess_image_extension(url, content_type)
-        slug = slugify(item.name)
-        s3_key = f"{prefix}{slug}/{digest}{ext}"
-        s3_url = build_s3_url(s3_key)
+        
+        s3_key = f"{place_id}/{attraction_id}/image_{image_count}{ext}"
+        s3_url = build_s3_url(s3_key, bucket=S3_IMG_BUCKET)
         if s3_url in existing:
+            image_count += 1
             continue
         try:
             s3.put_object(
-                Bucket=S3_BUCKET,
+                Bucket=S3_IMG_BUCKET,
                 Key=s3_key,
                 Body=content,
                 ContentType=content_type
@@ -270,6 +284,8 @@ def store_images_for_attraction(attraction_id, item, article, city):
         except Exception as e:
             with PRINT_LOCK:
                 print(f"      ⚠️ Image upload failed: {e}")
+        
+        image_count += 1
 
 def get_place_attraction_cache(place_id):
     if place_id in CANONICAL_CACHE:
@@ -894,27 +910,48 @@ def save_attraction(item, place_id, source_id, article, s3_key, ref_lat, ref_lon
         # Generate new canonical_id for new attractions  
         attr_data['canonical_id'] = get_next_canonical_id()
     
-    # Try upsert, but handle canonical_id conflicts
+    # Try to upsert; if it fails due to constraint issues, do explicit insert-or-update
+    attr_row = {}
     try:
-        res = supabase.table('attraction').upsert(attr_data, on_conflict='attraction_name,place_id,canonical_id').execute()
+        res = supabase.table('attraction').upsert(attr_data, on_conflict='attraction_name,place_id').execute()
+        attr_row = res.data[0] if res.data else {}
     except Exception as e:
-        if 'canonical_id' in str(e):
-            # Canonical_id conflict - try to find and use the existing one
+        error_msg = str(e)
+        # If it's a constraint error, try explicit select-then-update/insert
+        if '42P10' in error_msg or 'constraint' in error_msg.lower():
+            with PRINT_LOCK: print(f"      ℹ️  Constraint issue, using fallback insert-or-update...")
             try:
-                existing_by_name = supabase.table('attraction').select('attraction_id, canonical_id').eq('attraction_name', item.name).eq('place_id', place_id).execute()
-                if existing_by_name.data:
-                    attr_data['canonical_id'] = existing_by_name.data[0].get('canonical_id')
-                    res = supabase.table('attraction').upsert(attr_data, on_conflict='attraction_name,place_id,canonical_id').execute()
+                # Check if exists
+                check_res = supabase.table('attraction').select('attraction_id').eq(
+                    'attraction_name', item.name
+                ).eq('place_id', place_id).limit(1).execute()
+                
+                if check_res.data:
+                    # Update existing
+                    update_res = supabase.table('attraction').update(attr_data).eq(
+                        'attraction_name', item.name
+                    ).eq('place_id', place_id).execute()
+                    attr_row = update_res.data[0] if update_res.data else {}
                 else:
-                    raise
+                    # Insert new
+                    insert_res = supabase.table('attraction').insert(attr_data).execute()
+                    attr_row = insert_res.data[0] if insert_res.data else {}
+            except Exception as fallback_e:
+                with PRINT_LOCK: print(f"      ⚠️ Fallback Error: {fallback_e}")
+                return
+        elif 'canonical_id' in error_msg:
+            # Canonical_id conflict - remove and retry
+            attr_data.pop('canonical_id', None)
+            try:
+                res = supabase.table('attraction').upsert(attr_data, on_conflict='attraction_name,place_id').execute()
+                attr_row = res.data[0] if res.data else {}
             except Exception as inner_e:
-                with PRINT_LOCK: print(f"      ⚠️ Upsert Error (canonical_id): {inner_e}")
+                with PRINT_LOCK: print(f"      ⚠️ Upsert Error (retry): {inner_e}")
                 return
         else:
             with PRINT_LOCK: print(f"      ⚠️ Upsert Error: {e}")
             return
     
-    attr_row = res.data[0] if res.data else {}
     attr_id = attr_row.get('attraction_id')
     canonical_id = attr_row.get('canonical_id')
 
@@ -934,7 +971,7 @@ def save_attraction(item, place_id, source_id, article, s3_key, ref_lat, ref_lon
             'lat': lat,
             'lon': lon
         })
-        store_images_for_attraction(attr_id, item, article, city)
+        store_images_for_attraction(attr_id, item, article, place_id)
 
     # 2. LINK CATEGORIES
     cat_res = supabase.table('category').upsert({'category_name': item.category}, on_conflict='category_name').execute()
@@ -1022,7 +1059,7 @@ def process_file_content(local_path, s3_key, main_place_name):
             return cache[place_name]
 
         place_city_name, country_hint = parse_place_parts(place_name)
-        place_city_name = place_city_name or place_name
+        place_city_name = normalize_place_city(place_city_name or place_name)
 
         query = f"{place_city_name}, {country_hint}" if country_hint else place_city_name
         main_geo = resolve_geo_cached(query, country_hint=country_hint)
@@ -1197,12 +1234,20 @@ def main():
         help='Process a specific S3 key instead of scanning the entire bucket'
     )
     parser.add_argument(
+        '--place-name',
+        type=str,
+        help='Process only files for a specific place name (from env var REPROCESS_PLACE or arg)'
+    )
+    parser.add_argument(
         '--no-scraper',
         action='store_true',
         help='Do not trigger main_scraper for stale data (only reprocess existing files)'
     )
     
     args = parser.parse_args()
+    
+    # Check for place name in env variable first, then args
+    place_name = args.place_name or os.getenv("REPROCESS_PLACE")
     
     # Determine processing mode
     force_refresh = args.force_refresh
@@ -1223,6 +1268,55 @@ def main():
     if args.s3_key:
         print(f"🎯 Processing specific file: {args.s3_key}")
         process_pipeline(args.s3_key, force_refresh, check_staleness, trigger_scraper)
+    elif place_name:
+        print(f"🎯 Processing files for place: {place_name}")
+        
+        # Preload processed files cache for batch mode
+        load_processed_files_cache()
+        
+        place_slug = place_name.lower().replace(" ", "_").replace(",", "")
+        paginator = s3.get_paginator('list_objects_v2')
+        pages = paginator.paginate(Bucket=S3_BUCKET, Prefix='raw_scrapes/')
+        
+        # Collect files matching place name
+        matching_files = []
+        for page in pages:
+            if 'Contents' not in page:
+                continue
+            for obj in page['Contents']:
+                if obj['Key'].endswith('.jsonl') and place_slug in obj['Key'].lower():
+                    matching_files.append({
+                        'Key': obj['Key'],
+                        'LastModified': obj['LastModified']
+                    })
+        
+        print(f"📊 Found {len(matching_files)} files matching place: {place_name}")
+        
+        # Filter by age if not force refreshing
+        if not force_refresh:
+            cutoff_date = datetime.datetime.now(datetime.timezone.utc) - timedelta(days=180)
+            cache = load_processed_files_cache()
+            
+            files_to_check = []
+            for file_info in matching_files:
+                s3_key = file_info['Key']
+                last_modified = file_info['LastModified']
+                
+                # If file is very old AND already successfully processed, skip checking
+                if last_modified < cutoff_date:
+                    record = cache.get(s3_key)
+                    if record and record.get('status') == 'success':
+                        continue
+                
+                files_to_check.append(s3_key)
+            
+            print(f"📋 After age filter: {len(files_to_check)} files to process")
+            files_to_process = files_to_check
+        else:
+            files_to_process = [f['Key'] for f in matching_files]
+        
+        for s3_key in files_to_process:
+            process_pipeline(s3_key, force_refresh, check_staleness, trigger_scraper)
     else:
         print(f"🔎 Scanning S3 bucket '{S3_BUCKET}'...")
         
