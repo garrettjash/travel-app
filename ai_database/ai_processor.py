@@ -142,17 +142,22 @@ def coerce_image_candidates(article):
                 url = item.get("url") or item.get("src") or item.get("image_url")
                 if url:
                     normalized.append({"url": url, "alt": item.get("alt") or ""})
+    with PRINT_LOCK: print(f"        🖼️ coerce_image_candidates: {len(candidates)} raw → {len(normalized)} normalized")
     return normalized
 
 def select_relevant_images(item, article, city):
     if IMAGE_MAX_PER_ATTRACTION <= 0:
+        with PRINT_LOCK: print(f"        🖼️ IMAGE_MAX_PER_ATTRACTION=0, skipping images")
         return []
     candidates = coerce_image_candidates(article)
     if not candidates:
+        with PRINT_LOCK: print(f"        🖼️ No image_candidates/image_urls found in article")
         return []
+    with PRINT_LOCK: print(f"        🖼️ Found {len(candidates)} raw image candidates")
 
     name_tokens = [t for t in normalize_text_for_match(item.name).split() if len(t) > 2]
     city_tokens = [t for t in normalize_text_for_match(city).split() if len(t) > 2]
+    with PRINT_LOCK: print(f"        🖼️ Name tokens: {name_tokens}, City tokens: {city_tokens}")
 
     scored = []
     for cand in candidates:
@@ -169,10 +174,14 @@ def select_relevant_images(item, article, city):
             score += 1
         if score > 0:
             scored.append((score, url))
+            with PRINT_LOCK: print(f"        🖼️   Scored URL (score={score}): {url[:60]}...")
+        else:
+            with PRINT_LOCK: print(f"        🖼️   No match for URL: {url[:60]}...")
 
     selected = []
     if scored:
         scored.sort(key=lambda x: x[0], reverse=True)
+        with PRINT_LOCK: print(f"        🖼️ {len(scored)} URLs matched by name/city tokens")
         seen = set()
         for _, url in scored:
             if url in seen:
@@ -181,7 +190,9 @@ def select_relevant_images(item, article, city):
             selected.append(url)
             if len(selected) >= IMAGE_MAX_PER_ATTRACTION:
                 break
+        with PRINT_LOCK: print(f"        🖼️ Selected {len(selected)} URLs from scored candidates")
     elif IMAGE_ALLOW_FALLBACK:
+        with PRINT_LOCK: print(f"        🖼️ No scored matches; using IMAGE_ALLOW_FALLBACK")
         seen = set()
         for cand in candidates:
             url = cand.get("url")
@@ -191,6 +202,9 @@ def select_relevant_images(item, article, city):
             selected.append(url)
             if len(selected) >= IMAGE_MAX_PER_ATTRACTION:
                 break
+        with PRINT_LOCK: print(f"        🖼️ Selected {len(selected)} URLs from fallback")
+    else:
+        with PRINT_LOCK: print(f"        🖼️ No scored matches AND IMAGE_ALLOW_FALLBACK=False; no images selected")
 
     return selected
 
@@ -209,15 +223,19 @@ def download_image(url, timeout=20):
     try:
         resp = requests.get(url, stream=True, timeout=timeout)
         if resp.status_code != 200:
+            with PRINT_LOCK: print(f"          🖼️ HTTP {resp.status_code} for {url[:60]}...")
             return None, None
         content_type = resp.headers.get("Content-Type", "").lower()
         if not content_type.startswith("image/"):
+            with PRINT_LOCK: print(f"          🖼️ Not an image (Content-Type={content_type}): {url[:60]}...")
             return None, None
         content = resp.content
         if not content:
+            with PRINT_LOCK: print(f"          🖼️ Empty response body: {url[:60]}...")
             return None, None
         return content, content_type
-    except Exception:
+    except Exception as e:
+        with PRINT_LOCK: print(f"          🖼️ Download exception: {e}")
         return None, None
 
 def get_existing_image_urls(attraction_id):
@@ -247,45 +265,62 @@ def store_images_for_attraction(attraction_id, item, article, place_id):
     Download and store images to S3 with structure: /{place_id}/{attraction_id}/image_{n}.ext
     Uses the public images bucket (S3_IMG_BUCKET).
     """
-    if not S3_IMG_BUCKET or not place_id:
+    with PRINT_LOCK: print(f"        🖼️ Processing images for attraction: {item.name} (ID={attraction_id}, place_id={place_id})")
+    if not S3_IMG_BUCKET:
+        with PRINT_LOCK: print(f"        🖼️ ⚠️ S3_IMG_BUCKET not set (env var S3_IMG_BUCKET_NAME missing)")
+        return
+    if not place_id:
+        with PRINT_LOCK: print(f"        🖼️ ⚠️ place_id is None/empty")
         return
     image_urls = select_relevant_images(item, article, str(place_id))
     if not image_urls:
+        with PRINT_LOCK: print(f"        🖼️ No image URLs selected after filtering")
         return
     existing = get_existing_image_urls(attraction_id)
+    with PRINT_LOCK: print(f"        🖼️ {len(existing)} images already in DB for this attraction")
 
     image_count = 0
-    for url in image_urls:
+    for idx, url in enumerate(image_urls):
         if image_count >= IMAGE_MAX_PER_ATTRACTION:
+            with PRINT_LOCK: print(f"        🖼️ Reached max images limit ({IMAGE_MAX_PER_ATTRACTION})")
             break
         
+        with PRINT_LOCK: print(f"        🖼️ [Image {idx+1}] Downloading: {url[:70]}...")
         content, content_type = download_image(url)
         if not content or not content_type:
+            with PRINT_LOCK: print(f"        🖼️ [Image {idx+1}] ⚠️ Download failed or invalid content-type")
             continue
+        with PRINT_LOCK: print(f"        🖼️ [Image {idx+1}] ✅ Downloaded ({len(content)} bytes, type={content_type})")
         ext = guess_image_extension(url, content_type)
         
         s3_key = f"{place_id}/{attraction_id}/image_{image_count}{ext}"
         s3_url = build_s3_url(s3_key, bucket=S3_IMG_BUCKET)
         if s3_url in existing:
+            with PRINT_LOCK: print(f"        🖼️ [Image {idx+1}] Already in DB: {s3_url}")
             image_count += 1
             continue
         try:
+            with PRINT_LOCK: print(f"        🖼️ [Image {idx+1}] Uploading to S3: {s3_key}")
             s3.put_object(
                 Bucket=S3_IMG_BUCKET,
                 Key=s3_key,
                 Body=content,
                 ContentType=content_type
             )
+            with PRINT_LOCK: print(f"        🖼️ [Image {idx+1}] ✅ S3 upload OK")
             supabase.table("images").insert({
                 "attraction_id": attraction_id,
                 "image_url": s3_url
             }).execute()
+            with PRINT_LOCK: print(f"        🖼️ [Image {idx+1}] ✅ DB insert OK")
             add_image_cache(attraction_id, s3_url)
         except Exception as e:
             with PRINT_LOCK:
-                print(f"      ⚠️ Image upload failed: {e}")
+                print(f"        🖼️ [Image {idx+1}] ⚠️ Upload failed: {e}")
         
         image_count += 1
+    
+    with PRINT_LOCK: print(f"        🖼️ Finished: uploaded {image_count} image(s) for attraction")
 
 def get_place_attraction_cache(place_id):
     if place_id in CANONICAL_CACHE:
