@@ -65,16 +65,16 @@ jobs:
           if not places:
               raise ValueError("seed_places.json contains no valid places")
 
-            nightly_limit = int(os.getenv("MAIN_SCRAPER_NIGHTLY_LIMIT", "10"))
-            if nightly_limit > 0:
-                if len(places) > nightly_limit:
-                  day_index = datetime.datetime.now(datetime.timezone.utc).toordinal()
-                  chunk_index = day_index % len(places)
-                  start = (chunk_index * nightly_limit) % len(places)
-                  rotated = places[start:] + places[:start]
-                  places = rotated[:nightly_limit]
-            else:
-              raise ValueError("MAIN_SCRAPER_NIGHTLY_LIMIT must be greater than 0")
+          nightly_limit = int(os.getenv("MAIN_SCRAPER_NIGHTLY_LIMIT", "10"))
+          if nightly_limit > 0:
+              if len(places) > nightly_limit:
+                day_index = datetime.datetime.now(datetime.timezone.utc).toordinal()
+                chunk_index = day_index % len(places)
+                start = (chunk_index * nightly_limit) % len(places)
+                rotated = places[start:] + places[:start]
+                places = rotated[:nightly_limit]
+          else:
+            raise ValueError("MAIN_SCRAPER_NIGHTLY_LIMIT must be greater than 0")
 
           failures = []
               print(f"Running main_scraper for {len(places)} places (limit={nightly_limit})")
