@@ -77,7 +77,7 @@ jobs:
             raise ValueError("MAIN_SCRAPER_NIGHTLY_LIMIT must be greater than 0")
 
           failures = []
-            print(f"Running main_scraper for {len(places)} places (limit={nightly_limit})")
+          print(f"Running main_scraper for {len(places)} places (limit={nightly_limit})")
 
           for index, place in enumerate(places, start=1):
             print(f"\n[{index}/{len(places)}] Starting: {place}")
