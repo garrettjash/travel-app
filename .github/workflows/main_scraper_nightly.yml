@@ -53,51 +53,51 @@ jobs:
           script_path = Path("web_scraper/code/1. main_scraper.py")
 
           if not seed_path.exists():
-              raise FileNotFoundError(f"Missing seed list: {seed_path}")
+            raise FileNotFoundError(f"Missing seed list: {seed_path}")
           if not script_path.exists():
-              raise FileNotFoundError(f"Missing script: {script_path}")
+            raise FileNotFoundError(f"Missing script: {script_path}")
 
           places = json.loads(seed_path.read_text("utf-8"))
           if not isinstance(places, list):
-              raise ValueError("seed_places.json must be a JSON array of place names")
+            raise ValueError("seed_places.json must be a JSON array of place names")
 
           places = [str(p).strip() for p in places if str(p).strip()]
           if not places:
-              raise ValueError("seed_places.json contains no valid places")
+            raise ValueError("seed_places.json contains no valid places")
 
           nightly_limit = int(os.getenv("MAIN_SCRAPER_NIGHTLY_LIMIT", "10"))
           if nightly_limit > 0:
-              if len(places) > nightly_limit:
-                day_index = datetime.datetime.now(datetime.timezone.utc).toordinal()
-                chunk_index = day_index % len(places)
-                start = (chunk_index * nightly_limit) % len(places)
-                rotated = places[start:] + places[:start]
-                places = rotated[:nightly_limit]
+            if len(places) > nightly_limit:
+              day_index = datetime.datetime.now(datetime.timezone.utc).toordinal()
+              chunk_index = day_index % len(places)
+              start = (chunk_index * nightly_limit) % len(places)
+              rotated = places[start:] + places[:start]
+              places = rotated[:nightly_limit]
           else:
             raise ValueError("MAIN_SCRAPER_NIGHTLY_LIMIT must be greater than 0")
 
           failures = []
-              print(f"Running main_scraper for {len(places)} places (limit={nightly_limit})")
+            print(f"Running main_scraper for {len(places)} places (limit={nightly_limit})")
 
           for index, place in enumerate(places, start=1):
-              print(f"\n[{index}/{len(places)}] Starting: {place}")
-              result = subprocess.run(
-                  [sys.executable, str(script_path)],
-                  input=f"{place}\n",
-                  text=True,
-                  check=False,
-              )
-              if result.returncode != 0:
-                  failures.append((place, result.returncode))
-                  print(f"❌ Failed: {place} (exit code {result.returncode})")
-              else:
-                  print(f"✅ Finished: {place}")
+            print(f"\n[{index}/{len(places)}] Starting: {place}")
+            result = subprocess.run(
+              [sys.executable, str(script_path)],
+              input=f"{place}\n",
+              text=True,
+              check=False,
+            )
+            if result.returncode != 0:
+              failures.append((place, result.returncode))
+              print(f"❌ Failed: {place} (exit code {result.returncode})")
+            else:
+              print(f"✅ Finished: {place}")
 
           if failures:
-              print("\nRun completed with failures:")
-              for place, code in failures:
-                  print(f" - {place}: exit {code}")
-              raise SystemExit(1)
+            print("\nRun completed with failures:")
+            for place, code in failures:
+              print(f" - {place}: exit {code}")
+            raise SystemExit(1)
 
           print("\nAll places completed successfully.")
           PY
