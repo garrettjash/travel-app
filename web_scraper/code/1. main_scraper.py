@@ -483,9 +483,40 @@ def run_ai_processor():
     ai_path = repo_root / "ai_database" / "ai_processor.py"
     if not ai_path.exists():
         print(f"⚠️ AI processor not found at: {ai_path}")
-        return
+        return None
     print(f"\n🤖 Running AI processor...")
-    subprocess.run([sys.executable, str(ai_path)], check=False)
+    return subprocess.Popen([sys.executable, str(ai_path)])
+
+def run_google_reviews_enrichment():
+    repo_root = Path(__file__).resolve().parents[2]
+    google_path = repo_root / "data" / "TripAdvisor" / "google_reviews_api.py"
+    if not google_path.exists():
+        print(f"⚠️ Google reviews script not found at: {google_path}")
+        return None
+    print(f"\n🧾 Running Google reviews enrichment...")
+    return subprocess.Popen([sys.executable, str(google_path)])
+
+def run_post_tripadvisor_processors():
+    procs = []
+
+    ai_proc = run_ai_processor()
+    if ai_proc is not None:
+        procs.append(("AI processor", ai_proc))
+
+    google_proc = run_google_reviews_enrichment()
+    if google_proc is not None:
+        procs.append(("Google reviews", google_proc))
+
+    if not procs:
+        print("⚠️ No post-TripAdvisor processors were started.")
+        return
+
+    for label, proc in procs:
+        code = proc.wait()
+        if code == 0:
+            print(f"✅ {label} finished successfully.")
+        else:
+            print(f"⚠️ {label} exited with code {code}.")
 
 if __name__ == "__main__":
     dest = input("Enter destination: ")
@@ -494,4 +525,4 @@ if __name__ == "__main__":
         sys.exit(0)
     scrape_and_crawl(dest)
     run_tripadvisor_scraper(dest)
-    run_ai_processor()
+    run_post_tripadvisor_processors()

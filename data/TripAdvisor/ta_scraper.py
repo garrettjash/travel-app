@@ -267,6 +267,49 @@ def location_details(location_id, language="en", currency="USD"):
     return j
 
 
+def location_photos(location_id, language="en", limit=5):
+    """Fetch photos for a location. Returns list of photo URLs."""
+    cache_path = CACHE_DIR / f"photos_{location_id}.json"
+    if cache_path.exists():
+        cached = json.loads(cache_path.read_text("utf-8"))
+        urls = extract_photo_urls(cached, limit)
+        print(f"   📸 Loaded {len(urls)} cached photos for location {location_id}")
+        return urls
+    
+    try:
+        print(f"   📸 Fetching photos for location {location_id}...")
+        j = ta_get(f"/location/{location_id}/photos", params={"language": language, "limit": limit})
+        cache_path.write_text(json.dumps(j, ensure_ascii=False, indent=2), encoding="utf-8")
+        urls = extract_photo_urls(j, limit)
+        print(f"   📸 Found {len(urls)} photos for location {location_id}")
+        return urls
+    except Exception as e:
+        print(f"   ⚠️ Failed to fetch photos for location {location_id}: {e}")
+        return []
+
+
+def extract_photo_urls(photos_response, limit=5):
+    """Extract image URLs from TripAdvisor photos API response."""
+    urls = []
+    data = photos_response.get("data", []) if isinstance(photos_response, dict) else []
+    
+    for photo in data[:limit]:
+        if not isinstance(photo, dict):
+            continue
+        
+        # Try to get the largest available image
+        images = photo.get("images", {})
+        if isinstance(images, dict):
+            # TripAdvisor typically provides: thumbnail, small, medium, large, original
+            for size in ["original", "large", "medium", "small"]:
+                size_data = images.get(size, {})
+                if isinstance(size_data, dict) and size_data.get("url"):
+                    urls.append(size_data["url"])
+                    break
+    
+    return urls
+
+
 def nearby_search(lat, lon, category="attractions", radius=10, radius_unit="mi", language="en"):
     j = ta_get("/location/nearby_search", params={
         "latLong": f"{lat},{lon}",
@@ -288,9 +331,9 @@ def iter_bbox_points(min_lat, max_lat, min_lon, max_lon, step_deg):
         lat += step_deg
 
 
-def flatten_details(d):
+def flatten_details(d, include_photos=True):
     addr = d.get("address_obj") or {}
-    return {
+    flattened = {
         "location_id": d.get("location_id"),
         "name": d.get("name"),
         "web_url": d.get("web_url"),
@@ -307,6 +350,20 @@ def flatten_details(d):
         "website": d.get("website"),
         "price_level": d.get("price_level"),
     }
+    
+    # Fetch photos if requested
+    if include_photos:
+        location_id = d.get("location_id")
+        photo_count = d.get("photo_count")
+        attraction_name = d.get("name", "Unknown")
+        if location_id and photo_count and int(photo_count or 0) > 0:
+            flattened["image_urls"] = location_photos(location_id, limit=5)
+        else:
+            if not photo_count or int(photo_count or 0) == 0:
+                print(f"   📸 No photos available for {attraction_name} (photo_count={photo_count})")
+            flattened["image_urls"] = []
+    
+    return flattened
 
 
 def map_price_level(raw):
@@ -373,6 +430,7 @@ def build_jsonl_line(row):
     price = row.get("price_level") or ""
     website = row.get("website") or ""
     seed_place = row.get("seed_place") or city or ""
+    image_urls = row.get("image_urls") or []
 
     content_body = (
         f"Attraction: {title}\n"
@@ -384,7 +442,7 @@ def build_jsonl_line(row):
         f"Seed place: {seed_place}\n"
     ).strip()
 
-    return {
+    jsonl = {
         "source": "TripAdvisor",
         "title": title,
         "url": row.get("web_url") or website or "",
@@ -394,6 +452,15 @@ def build_jsonl_line(row):
         "seed_geo_id": row.get("seed_geo_id"),
         "pre_extracted_attractions": [build_pre_extracted_attraction(row)],
     }
+    
+    # Add image_candidates if any images were found
+    if image_urls:
+        jsonl["image_candidates"] = image_urls
+        print(f"   ✅ Added {len(image_urls)} image_candidates to JSONL for {title}")
+    else:
+        print(f"   ℹ️  No image_candidates for {title}")
+    
+    return jsonl
 
 
 # --- STATE + EXISTING DATA ---

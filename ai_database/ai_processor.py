@@ -10,6 +10,7 @@ import threading
 import argparse
 import subprocess
 import sys
+import importlib.util
 import hashlib
 import mimetypes
 import requests
@@ -33,6 +34,7 @@ CACHE_LOCK = threading.Lock() # Prevents cache file corruption
 PRINT_LOCK = threading.Lock() # Prevents messy console output
 GEO_API_LOCK = threading.Lock() # STRICTLY forces Geocoding to be sequential
 IMAGE_CACHE_LOCK = threading.Lock()
+GOOGLE_MODULE_LOCK = threading.Lock()
 
 # --- CONFIGURATION ---
 # From the .ENV file
@@ -42,13 +44,16 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 AWS_REGION = os.getenv("AWS_DEFAULT_REGION") or os.getenv("AWS_REGION") or "us-east-1"
-IMAGE_MAX_PER_ATTRACTION = int(os.getenv("IMAGE_MAX_PER_ATTRACTION", "2"))
+IMAGE_MAX_PER_ATTRACTION = int(os.getenv("IMAGE_MAX_PER_ATTRACTION", "1"))
 IMAGE_ALLOW_FALLBACK = os.getenv("IMAGE_ALLOW_FALLBACK", "1").lower() in ("1", "true", "yes")
 
 # Geocoding configuration
 GEO_PROVIDER = os.getenv("GEO_PROVIDER", "nominatim").lower()  # nominatim, google, mapbox
 GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
 MAPBOX_API_KEY = os.getenv("MAPBOX_API_KEY")
+GOOGLE_REVIEWS_IN_AI = os.getenv("GOOGLE_REVIEWS_IN_AI", "1").lower() in ("1", "true", "yes")
+GOOGLE_REVIEWS_FORCE_REFRESH_IN_AI = os.getenv("GOOGLE_REVIEWS_FORCE_REFRESH_IN_AI", "0").lower() in ("1", "true", "yes")
+GOOGLE_REVIEWS_TRUST_SCORE = int(os.getenv("GOOGLE_REVIEWS_TRUST_SCORE", "85"))
 
 # --- CLIENTS ---
 s3 = boto3.client(
@@ -85,6 +90,8 @@ CANONICAL_CACHE = {}
 NEXT_CANONICAL_ID = None
 IMAGE_CACHE = {}
 PROCESSED_FILES_CACHE = None
+GOOGLE_REVIEWS_MODULE = None
+GOOGLE_REVIEWS_MODULE_LOADED = False
 
 def load_cache():
     global GEO_CACHE
@@ -115,11 +122,100 @@ def normalize_text_for_match(text):
         return ""
     return re.sub(r"[^a-z0-9]+", " ", str(text).lower()).strip()
 
+def sanitize_review_text(text):
+    if not text:
+        return ""
+
+    cleaned = str(text)
+
+    boilerplate_patterns = [
+        r"leave\s+a\s+comment",
+        r"cancel\s+reply",
+        r"save\s+my\s+name,\s*email,\s*and\s*website\s*in\s*this\s*browser\s*for\s*the\s*next\s*time\s*i\s*comment",
+        r"notify\s+me\s+of\s+new\s+posts\s+by\s+email",
+    ]
+    cleaned = re.sub(r"\s+", " ", cleaned)
+    for pattern in boilerplate_patterns:
+        cleaned = re.sub(pattern, "", cleaned, flags=re.IGNORECASE)
+
+    # Remove reviewer names while preserving rating + review text.
+    # Example: "Laura Harris (5/5): Great tour" -> "(5/5): Great tour"
+    cleaned = re.sub(
+        r"(^|\|\s*)([A-Za-z][A-Za-z .,'\-]{0,80})\s*\((\d+(?:\.\d+)?/5)\)\s*:",
+        r"\1(\3):",
+        cleaned,
+    )
+
+    cleaned = re.sub(r"\s*\|\s*", " | ", cleaned)
+    cleaned = re.sub(r"(?:\s*\|\s*){2,}", " | ", cleaned)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip(" |\n\t")
+    return cleaned
+
 def normalize_place_city(name):
     if not name:
         return ""
     parts = [p.capitalize() for p in re.split(r"\s+", str(name).strip()) if p]
     return " ".join(parts)
+
+def load_google_reviews_module():
+    global GOOGLE_REVIEWS_MODULE
+    global GOOGLE_REVIEWS_MODULE_LOADED
+
+    with GOOGLE_MODULE_LOCK:
+        if GOOGLE_REVIEWS_MODULE_LOADED:
+            return GOOGLE_REVIEWS_MODULE
+
+        module_path = repo_root / "data" / "TripAdvisor" / "google_reviews_api.py"
+        GOOGLE_REVIEWS_MODULE_LOADED = True
+
+        if not module_path.exists():
+            with PRINT_LOCK:
+                print(f"⚠️ Google reviews module not found at: {module_path}")
+            return None
+
+        try:
+            spec = importlib.util.spec_from_file_location("google_reviews_api", str(module_path))
+            if spec is None or spec.loader is None:
+                return None
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            GOOGLE_REVIEWS_MODULE = module
+            with PRINT_LOCK:
+                print("📝 Google reviews enrichment is enabled in ai_processor.")
+        except Exception as e:
+            with PRINT_LOCK:
+                print(f"⚠️ Failed to load google_reviews_api.py: {e}")
+            GOOGLE_REVIEWS_MODULE = None
+
+        return GOOGLE_REVIEWS_MODULE
+
+def get_google_reviews_for_item(item, article, p_country):
+    if not GOOGLE_REVIEWS_IN_AI:
+        return None
+
+    module = load_google_reviews_module()
+    if module is None:
+        return None
+
+    attraction_name = (getattr(item, "name", None) or article.get("title") or "").strip()
+    if not attraction_name:
+        return None
+
+    place_hint = article.get("seed_place") or getattr(item, "detected_city", None)
+    city = getattr(item, "detected_city", None)
+
+    try:
+        return module.fetch_google_reviews_for_attraction(
+            attraction_name=attraction_name,
+            place_hint=place_hint,
+            city=city,
+            country=p_country,
+            force_refresh=GOOGLE_REVIEWS_FORCE_REFRESH_IN_AI,
+        )
+    except Exception as e:
+        with PRINT_LOCK:
+            print(f"      ⚠️ Google review lookup failed for {attraction_name}: {e}")
+        return None
 
 def slugify(text):
     cleaned = re.sub(r"[^a-z0-9]+", "_", str(text).lower()).strip("_")
@@ -848,7 +944,7 @@ def delete_old_s3_files(location, current_s3_key):
         with PRINT_LOCK:
             print(f"⚠️ Error deleting old files: {e}")
 
-def save_attraction(item, place_id, source_id, article, s3_key, ref_lat, ref_lon, main_place_name, p_country):
+def save_attraction(item, place_id, source_id, article, s3_key, ref_lat, ref_lon, main_place_name, p_country, trust_score=None):
     price_map = {'Free': 0, 'Cheap': 1, 'Moderate': 2, 'Expensive': 3, 'Luxury': 4, 'Unknown': None}
     price_int = price_map.get(item.price_level, None)
 
@@ -888,14 +984,41 @@ def save_attraction(item, place_id, source_id, article, s3_key, ref_lat, ref_lon
             state = attr_geo.get('state') or attr_geo.get('region') or attr_geo.get('state_district')
             if attr_geo['country']: country = attr_geo['country']
 
+    # Google reviews enrichment (cached; live fallback)
+    google_payload = get_google_reviews_for_item(item, article, p_country)
+
+    effective_rating_score = item.rating_score
+    effective_rating_max = item.rating_max or (5.0 if item.rating_score is not None else None)
+    effective_review_count = item.review_count_mentioned or 0
+    google_rating = None
+    google_rating_count = None
+    google_maps_url = None
+    google_review_summary = ""
+
+    if google_payload:
+        google_rating = google_payload.get('google_rating')
+        google_rating_count = google_payload.get('google_user_ratings_total')
+        google_maps_url = google_payload.get('google_maps_url')
+        google_review_summary = (google_payload.get('google_reviews_summary') or '').strip()
+
+        if google_rating is not None:
+            effective_rating_score = google_rating
+            effective_rating_max = 5.0
+        if google_rating_count is not None:
+            effective_review_count = google_rating_count
+
     # Calculations
-    pop_score = infer_popularity(item)
-    cred_tier = 3 if article.get('trust_score', 50) > 80 else 2
+    if effective_review_count and effective_review_count > 0:
+        pop_score = min(100, int(effective_review_count / 10))
+    else:
+        pop_score = infer_popularity(item)
+    effective_trust_score = trust_score if trust_score is not None else article.get('trust_score', 50)
+    cred_tier = 3 if effective_trust_score > 80 else 2
     
     norm_rating = None
-    if item.rating_score:
-        scale = item.rating_max or 5.0
-        norm_rating = (item.rating_score / scale) * 10.0
+    if effective_rating_score:
+        scale = effective_rating_max or 5.0
+        norm_rating = (effective_rating_score / scale) * 10.0
 
     # 1. UPSERT PARENT ATTRACTION
     # Check if attraction already exists to avoid canonical_id conflicts
@@ -912,8 +1035,12 @@ def save_attraction(item, place_id, source_id, article, s3_key, ref_lat, ref_lon
     if article.get('content_body'):
         embedding_text += f" Source: {article.get('content_body', '')}"
     
-    # Populate review summary if the source has user reviews (e.g., Reddit, web scraper comments)
-    review_summary = article.get('user_reviews', '') if article.get('has_reviews') else ''
+    # Populate review summary from source text and Google reviews when available
+    source_review_summary = article.get('user_reviews', '') if article.get('has_reviews') else ''
+    source_review_summary = sanitize_review_text(source_review_summary)
+    google_review_summary = sanitize_review_text(google_review_summary)
+    review_parts = [part for part in [source_review_summary, google_review_summary] if part]
+    review_summary = " | ".join(review_parts)
     
     attr_data = {
         'place_id': place_id,
@@ -933,7 +1060,7 @@ def save_attraction(item, place_id, source_id, article, s3_key, ref_lat, ref_lon
         'attraction_pricelevel': price_int,
         'attraction_popularityscore': pop_score,
         'attraction_normalizedrating': norm_rating,
-        'attraction_totalcountratings': item.review_count_mentioned,
+        'attraction_totalcountratings': effective_review_count,
         'attraction_reviewssummary': review_summary
     }
 
@@ -1039,6 +1166,42 @@ def save_attraction(item, place_id, source_id, article, s3_key, ref_lat, ref_lon
     except Exception as e:
         with PRINT_LOCK: print(f"      ⚠️ Link Error: {e}")
 
+    # 4. LINK GOOGLE REVIEW SOURCE (optional)
+    if google_payload:
+        try:
+            google_source_res = supabase.table('source').upsert(
+                {
+                    'source_name': 'Google Reviews',
+                    'source_domain': 'google.com',
+                    'trust_score': GOOGLE_REVIEWS_TRUST_SCORE,
+                },
+                on_conflict='source_name'
+            ).execute()
+            google_source_id = google_source_res.data[0]['source_id'] if google_source_res.data else None
+
+            if google_source_id:
+                google_summary = sanitize_review_text((google_payload.get('google_reviews_summary') or '').strip())
+                google_short = f"{google_summary[:50]}..." if google_summary else ""
+                google_link_data = {
+                    'attraction_id': attr_id,
+                    'source_id': google_source_id,
+                    'attraction_sources_url': google_maps_url or article['url'],
+                    'attraction_sources_filename': os.path.basename(s3_key),
+                    'attraction_sources_rawtext': google_summary,
+                    'attraction_sources_sourcesummary': google_summary,
+                    'attraction_sources_rating': google_rating,
+                    'attraction_sources_maxrating': 5.0 if google_rating is not None else None,
+                    'attraction_sources_countratings': google_rating_count,
+                    'attraction_sources_shortreview': google_short,
+                }
+                supabase.table('attraction_sources').upsert(
+                    google_link_data,
+                    on_conflict='attraction_id,source_id'
+                ).execute()
+        except Exception as e:
+            with PRINT_LOCK:
+                print(f"      ⚠️ Google source link error: {e}")
+
 def process_single_article(article, place_id, s3_key, p_lat, p_lon, main_place_name, p_country, idx=None, total=None):
     if not article:
         return
@@ -1081,7 +1244,18 @@ def process_single_article(article, place_id, s3_key, p_lat, p_lon, main_place_n
             attractions = analyze_chunk(content, article.get('title'), article.get('source'), idx, total)
         
         for item in attractions:
-            save_attraction(item, place_id, source_id, article, s3_key, p_lat, p_lon, main_place_name, p_country)
+            save_attraction(
+                item,
+                place_id,
+                source_id,
+                article,
+                s3_key,
+                p_lat,
+                p_lon,
+                main_place_name,
+                p_country,
+                trust_score=trust
+            )
             
     except Exception as e:
         with PRINT_LOCK: print(f"❌ Error processing article: {e}")
