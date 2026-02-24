@@ -2,7 +2,7 @@ name: Nightly Main Scraper
 
 on:
   schedule:
-    - cron: "0 2 * * *"
+    - cron: "0 8 * * *"
   workflow_dispatch:
 
 jobs:
@@ -39,11 +39,14 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
           TA_NON_INTERACTIVE: "1"
+          MAIN_SCRAPER_NIGHTLY_LIMIT: "10"
         run: |
           python - <<'PY'
           import json
+          import os
           import subprocess
           import sys
+          import datetime
           from pathlib import Path
 
           seed_path = Path("data/TripAdvisor/seed_places.json")
@@ -62,8 +65,19 @@ jobs:
           if not places:
               raise ValueError("seed_places.json contains no valid places")
 
+            nightly_limit = int(os.getenv("MAIN_SCRAPER_NIGHTLY_LIMIT", "10"))
+            if nightly_limit > 0:
+                if len(places) > nightly_limit:
+                  day_index = datetime.datetime.now(datetime.timezone.utc).toordinal()
+                  chunk_index = day_index % len(places)
+                  start = (chunk_index * nightly_limit) % len(places)
+                  rotated = places[start:] + places[:start]
+                  places = rotated[:nightly_limit]
+            else:
+              raise ValueError("MAIN_SCRAPER_NIGHTLY_LIMIT must be greater than 0")
+
           failures = []
-          print(f"Running main_scraper for {len(places)} places")
+              print(f"Running main_scraper for {len(places)} places (limit={nightly_limit})")
 
           for index, place in enumerate(places, start=1):
               print(f"\n[{index}/{len(places)}] Starting: {place}")
