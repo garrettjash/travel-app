@@ -1,0 +1,89 @@
+name: Nightly Main Scraper
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+jobs:
+  main_scraper:
+    environment: production
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Set up Chrome
+        uses: browser-actions/setup-chrome@v1
+
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip && pip install -r requirements.txt
+
+      - name: Run main scraper for each seed place
+        env:
+          TA_API_KEY: ${{ secrets.TA_API_KEY }}
+          S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
+          S3_IMG_BUCKET_NAME: ${{ secrets.S3_IMG_BUCKET_NAME }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+          TA_NON_INTERACTIVE: "1"
+        run: |
+          python - <<'PY'
+          import json
+          import subprocess
+          import sys
+          from pathlib import Path
+
+          seed_path = Path("data/TripAdvisor/seed_places.json")
+          script_path = Path("web_scraper/code/1. main_scraper.py")
+
+          if not seed_path.exists():
+              raise FileNotFoundError(f"Missing seed list: {seed_path}")
+          if not script_path.exists():
+              raise FileNotFoundError(f"Missing script: {script_path}")
+
+          places = json.loads(seed_path.read_text("utf-8"))
+          if not isinstance(places, list):
+              raise ValueError("seed_places.json must be a JSON array of place names")
+
+          places = [str(p).strip() for p in places if str(p).strip()]
+          if not places:
+              raise ValueError("seed_places.json contains no valid places")
+
+          failures = []
+          print(f"Running main_scraper for {len(places)} places")
+
+          for index, place in enumerate(places, start=1):
+              print(f"\n[{index}/{len(places)}] Starting: {place}")
+              result = subprocess.run(
+                  [sys.executable, str(script_path)],
+                  input=f"{place}\n",
+                  text=True,
+                  check=False,
+              )
+              if result.returncode != 0:
+                  failures.append((place, result.returncode))
+                  print(f"❌ Failed: {place} (exit code {result.returncode})")
+              else:
+                  print(f"✅ Finished: {place}")
+
+          if failures:
+              print("\nRun completed with failures:")
+              for place, code in failures:
+                  print(f" - {place}: exit {code}")
+              raise SystemExit(1)
+
+          print("\nAll places completed successfully.")
+          PY
