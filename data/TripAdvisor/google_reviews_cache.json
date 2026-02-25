@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-02-24T04:17:52.559620+00:00",
+  "updated_at": "2026-02-25T03:11:58.084514+00:00",
   "items": {
     "downtown bozeman::bozeman": {
       "attraction_name": "Downtown Bozeman",
@@ -3753,6 +3753,579 @@
         }
       ],
       "fetched_at": "2026-02-24T04:17:52.559581+00:00"
+    },
+    "garth jerri frehner museum of natural history::cedar city": {
+      "attraction_name": "Garth & Jerri Frehner Museum Of Natural History",
+      "query": "Garth & Jerri Frehner Museum Of Natural History, Cedar City, United States",
+      "google_place_id": "ChIJ5RPls75htYARgIhFVza9QA8",
+      "google_name": "Garth & Jerri Frehner Museum of Natural History",
+      "google_formatted_address": "162 S 300 W, Cedar City, UT 84720, USA",
+      "google_rating": 4.7,
+      "google_user_ratings_total": 41,
+      "google_maps_url": "https://maps.google.com/?cid=1099086350168459392",
+      "google_reviews_summary": "Jessica Scofield (5/5): Small but fantastic natural history museum. They have two microscopes set up with lots of interesting items to view. There is a magnetic marble run wall. There are children's books to read, rocks that glow under UV light, many taxidermied animals, etc. The museum is free and well worth a visit. | Danyelle Warner (5/5): Free museum inside University Science building; great for small children with interactive activities! University students available to answer questions or discuss artifacts. Highly recommend!! | Leie Ryce (5/5): It's quite small but really fun!",
+      "google_reviews_raw": [
+        {
+          "author_name": "Jessica Scofield",
+          "author_url": "https://www.google.com/maps/contrib/105644062935927346583/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjU0z6_aoFp2OakJzECSwkhuvK_pmKOJLbja_pynjxLX6Ivu7ewJVA=s128-c0x00000000-cc-rp-mo-ba5",
+          "rating": 5,
+          "relative_time_description": "4 months ago",
+          "text": "Small but fantastic natural history museum. They have two microscopes set up with lots of interesting items to view. There is a magnetic marble run wall. There are children's books to read, rocks that glow under UV light, many taxidermied animals, etc. The museum is free and well worth a visit.",
+          "time": 1759431915,
+          "translated": false
+        },
+        {
+          "author_name": "Danyelle Warner",
+          "author_url": "https://www.google.com/maps/contrib/115357019075714178367/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjXXKGVYcdZV0K00q_ZAqw6OFK75C-FCYzjFKzJ2ay0EInGQ3QY=s128-c0x00000000-cc-rp-mo-ba6",
+          "rating": 5,
+          "relative_time_description": "a year ago",
+          "text": "Free museum inside University Science building; great for small children with interactive activities! University students available to answer questions or discuss artifacts. Highly recommend!!",
+          "time": 1719442796,
+          "translated": false
+        },
+        {
+          "author_name": "Leie Ryce",
+          "author_url": "https://www.google.com/maps/contrib/105551627239261010624/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjX5X1vb6cQry08xpYTHT5MxWbwxK8BqRM6VVfAojBV8FAYVsBbi=s128-c0x00000000-cc-rp-mo-ba2",
+          "rating": 5,
+          "relative_time_description": "4 months ago",
+          "text": "It's quite small but really fun!",
+          "time": 1761510972,
+          "translated": false
+        }
+      ],
+      "fetched_at": "2026-02-25T03:10:44.117480+00:00"
+    },
+    "cedar sports::cedar city": {
+      "attraction_name": "Cedar Sports",
+      "query": "Cedar Sports, Cedar City, United States",
+      "google_place_id": "ChIJFV51gLBhtYARIEo9M8z4yLU",
+      "google_name": "Cedar Sports: Outdoor Gear and Rentals",
+      "google_formatted_address": "80 S Main St, Cedar City, UT 84720, USA",
+      "google_rating": 4.9,
+      "google_user_ratings_total": 382,
+      "google_maps_url": "https://maps.google.com/?cid=13098993072123759136",
+      "google_reviews_summary": "Lili Xu (5/5): We came here last winter to rent boots and had a great experience, so when it was time to buy boots and bindings for my son’s snowboard, we came back. Once again, the service was excellent—they took the time to help us try different styles and explained which ones would best suit my son’s skill level. If you need anything for winter sports, definitely check this place out—they even have climbing gear! | Hailey Kraft (Beck) (5/5): Cedar Sports is a great retailer for snow sports and other seasonal gear! Their store smells wonderful and has attentive staff. They have a great variety of sizes and styles of snow gear, but I wish they had more brands. They carry very high quality gear and are priced fairly for the quality. The store was very busy during the holiday break but that was to be expected. Their rental prices are good, but I wish their website was more convenient to use. Maybe they could post current or new products? | Jarom Winn (5/5): Rented a bunch of skis and gear for a day in Brian Head. The shop was friendly, helpful, and a joy to deal with. We were in and out quickly with everything we needed. Prices were great and the convenience of pickup and dropoff was way easier than anytime I've ever gotten equipment from a resort itself. Can't recommend them enough.",
+      "google_reviews_raw": [
+        {
+          "author_name": "Lili Xu",
+          "author_url": "https://www.google.com/maps/contrib/108390847138477212788/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjWN50ttxS6FIocWy5Z-QuqUngp4pfOHrxoC43dmAyimT2vNP9lkSw=s128-c0x00000000-cc-rp-mo-ba5",
+          "rating": 5,
+          "relative_time_description": "4 months ago",
+          "text": "We came here last winter to rent boots and had a great experience, so when it was time to buy boots and bindings for my son’s snowboard, we came back. Once again, the service was excellent—they took the time to help us try different styles and explained which ones would best suit my son’s skill level. If you need anything for winter sports, definitely check this place out—they even have climbing gear!",
+          "time": 1761511785,
+          "translated": false
+        },
+        {
+          "author_name": "Hailey Kraft (Beck)",
+          "author_url": "https://www.google.com/maps/contrib/114664329634724122180/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjW1QJAp8zRksHK1OwOEXjc5niKnSmutgXauurq12AM0KhGd1un5pA=s128-c0x00000000-cc-rp-mo-ba4",
+          "rating": 5,
+          "relative_time_description": "a month ago",
+          "text": "Cedar Sports is a great retailer for snow sports and other seasonal gear! Their store smells wonderful and has attentive staff. They have a great variety of sizes and styles of snow gear, but I wish they had more brands. They carry very high quality gear and are priced fairly for the quality. The store was very busy during the holiday break but that was to be expected. Their rental prices are good, but I wish their website was more convenient to use. Maybe they could post current or new products?",
+          "time": 1767215231,
+          "translated": false
+        },
+        {
+          "author_name": "Jarom Winn",
+          "author_url": "https://www.google.com/maps/contrib/114743765892895586692/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjVo5c-JHbFPQGORIfn5cpZeQMOVHoaDt6r0sCX3n6w9qtAh-qOjLw=s128-c0x00000000-cc-rp-mo",
+          "rating": 5,
+          "relative_time_description": "a month ago",
+          "text": "Rented a bunch of skis and gear for a day in Brian Head. The shop was friendly, helpful, and a joy to deal with. We were in and out quickly with everything we needed. Prices were great and the convenience of pickup and dropoff was way easier than anytime I've ever gotten equipment from a resort itself. Can't recommend them enough.",
+          "time": 1767382123,
+          "translated": false
+        }
+      ],
+      "fetched_at": "2026-02-25T03:10:45.711375+00:00"
+    },
+    "historic downtown cedar city::cedar city": {
+      "attraction_name": "Historic Downtown Cedar City",
+      "query": "Historic Downtown Cedar City, Cedar City, United States",
+      "google_place_id": "ChIJk9hOuPxhtYARCmCNTpo0FsE",
+      "google_name": "Historic Downtown Cedar City",
+      "google_formatted_address": "1 N Main St, Cedar City, UT 84720, USA",
+      "google_rating": 4,
+      "google_user_ratings_total": 15,
+      "google_maps_url": "https://maps.google.com/?cid=13913365936155222026",
+      "google_reviews_summary": "Karen Gayda (3/5): Not very historic or impressive. The only notable feature is the museum of the area's history. The downtown lacks interesting restaurants and shops that most historic districts provide. Mostly chain restaurants. The few places that did look promising were closed for Memorial Day | Lori Cole (4/5): I just wanted Chinese food, and I ended up discovering this wonderful street in Cedar City.\n\nThe coffee shop and adjacent bookstore reminded me of the good old days, vacations, and exploring small towns. I love the \"Mom & Pop\" type of locally owned businesses. I didn't have much time so I will go back for more leisurely exploring. | Peggy G (5/5): Charming town! We really enjoyed walking around leisurely. There are many options for eating and drinking. Love the French crepe place and the wine tasting! Don't miss the Shakespeare festival. Stay for a weekend and enjoy it all.",
+      "google_reviews_raw": [
+        {
+          "author_name": "Karen Gayda",
+          "author_url": "https://www.google.com/maps/contrib/115849916555472886934/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a/ACg8ocIZGH6Ph7HNVadbYfNNj0SULRolRalVks7dzhwGbeEY4mCanQ=s128-c0x00000000-cc-rp-mo-ba5",
+          "rating": 3,
+          "relative_time_description": "9 months ago",
+          "text": "Not very historic or impressive. The only notable feature is the museum of the area's history. The downtown lacks interesting restaurants and shops that most historic districts provide. Mostly chain restaurants. The few places that did look promising were closed for Memorial Day",
+          "time": 1748483169,
+          "translated": false
+        },
+        {
+          "author_name": "Lori Cole",
+          "author_url": "https://www.google.com/maps/contrib/101916311729490642035/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjXNc2UcctmUw2_rQKWT75V7oM5mrlkR9pc-mr3L01EczJxcx7_p=s128-c0x00000000-cc-rp-mo-ba4",
+          "rating": 4,
+          "relative_time_description": "a year ago",
+          "text": "I just wanted Chinese food, and I ended up discovering this wonderful street in Cedar City.\n\nThe coffee shop and adjacent bookstore reminded me of the good old days, vacations, and exploring small towns. I love the \"Mom & Pop\" type of locally owned businesses. I didn't have much time so I will go back for more leisurely exploring.",
+          "time": 1720499280,
+          "translated": false
+        },
+        {
+          "author_name": "Peggy G",
+          "author_url": "https://www.google.com/maps/contrib/100809879569855522273/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjXSPZo3hWsHK3RRxzS9dIoQAHKrNu1jc_9WBtxvk9fJtYGWBEkq2g=s128-c0x00000000-cc-rp-mo-ba2",
+          "rating": 5,
+          "relative_time_description": "2 years ago",
+          "text": "Charming town! We really enjoyed walking around leisurely. There are many options for eating and drinking. Love the French crepe place and the wine tasting! Don't miss the Shakespeare festival. Stay for a weekend and enjoy it all.",
+          "time": 1687441629,
+          "translated": false
+        }
+      ],
+      "fetched_at": "2026-02-25T03:10:46.947034+00:00"
+    },
+    "gold river gallery::cedar city": {
+      "attraction_name": "Gold River Gallery",
+      "query": "Gold River Gallery, Cedar City, United States",
+      "google_place_id": "ChIJgebGUupitYAR_CeuUHBEDnQ",
+      "google_name": "Gold River Gallery",
+      "google_formatted_address": "111 S Main St #2a, Cedar City, UT 84720, USA",
+      "google_rating": 5,
+      "google_user_ratings_total": 23,
+      "google_maps_url": "https://maps.google.com/?cid=8362696807254206460",
+      "google_reviews_summary": "Bob Barnhill (5/5): We love Gold River Gallery here in Cedar City!   They have the most beautiful art and frames and are so friendly and knowledgeable.  Bought an award winning piece of art by Kimberly Beck there and LOVE it!  Matter of fact its so beautiful that when my Mom saw it she had to have one too!!  The art brings such beauty into our home, really pleased! Love how wonderful Travis and  Sienna were to work with. | Deena Millecam (5/5): When I enter the Gold River Gallery,  I feel as though I have walked into a lovely art gallery in New York! The professional artists exhibiting are some of the best. The artwork is displayed beautifully and Travis Humphries and family are so welcoming. They take the time to introduce the viewer to the artists and their work. Who would have thought we have such a Gallery in Southern Utah. | Vicki Rondo (5/5): I love Gold River Gallery so much!  They carry so many beautiful pieces, and such a variety of art.  I ESPECIALLY LOVE their Gallery Manager, Sienna Michelle, she is amazing and so knowledgeable!\nI would recommend anyone with a taste for beautiful artwork to visit Gold River Gallery and let Sienna help you find something special for your home!",
+      "google_reviews_raw": [
+        {
+          "author_name": "Bob Barnhill",
+          "author_url": "https://www.google.com/maps/contrib/116911770381889243430/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjURpRZDEWtjUfWrqiSJrZMRGfJLFJmRlHRL0ElOgupsGDnKO6Ps=s128-c0x00000000-cc-rp-mo-ba2",
+          "rating": 5,
+          "relative_time_description": "3 weeks ago",
+          "text": "We love Gold River Gallery here in Cedar City!   They have the most beautiful art and frames and are so friendly and knowledgeable.  Bought an award winning piece of art by Kimberly Beck there and LOVE it!  Matter of fact its so beautiful that when my Mom saw it she had to have one too!!  The art brings such beauty into our home, really pleased! Love how wonderful Travis and  Sienna were to work with.",
+          "time": 1769802991,
+          "translated": false
+        },
+        {
+          "author_name": "Deena Millecam",
+          "author_url": "https://www.google.com/maps/contrib/112002967202671094167/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjWxYz61fTAkHg2bKQF26rBnXkHFexalwVAXKecOe8zhuAdybe0X=s128-c0x00000000-cc-rp-mo",
+          "rating": 5,
+          "relative_time_description": "3 weeks ago",
+          "text": "When I enter the Gold River Gallery,  I feel as though I have walked into a lovely art gallery in New York! The professional artists exhibiting are some of the best. The artwork is displayed beautifully and Travis Humphries and family are so welcoming. They take the time to introduce the viewer to the artists and their work. Who would have thought we have such a Gallery in Southern Utah.",
+          "time": 1769837266,
+          "translated": false
+        },
+        {
+          "author_name": "Vicki Rondo",
+          "author_url": "https://www.google.com/maps/contrib/117573974359269273292/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjV_c_P7P6FD5p5vTKqWUW8KWK2Q3H5zS8MRMmpoiS1mWzp2sZtHoA=s128-c0x00000000-cc-rp-mo",
+          "rating": 5,
+          "relative_time_description": "3 weeks ago",
+          "text": "I love Gold River Gallery so much!  They carry so many beautiful pieces, and such a variety of art.  I ESPECIALLY LOVE their Gallery Manager, Sienna Michelle, she is amazing and so knowledgeable!\nI would recommend anyone with a taste for beautiful artwork to visit Gold River Gallery and let Sienna help you find something special for your home!",
+          "time": 1769803555,
+          "translated": false
+        }
+      ],
+      "fetched_at": "2026-02-25T03:10:48.050802+00:00"
+    },
+    "ig winery::cedar city": {
+      "attraction_name": "IG Winery",
+      "query": "IG Winery, Cedar City, United States",
+      "google_place_id": "ChIJnVXiO7phtYAR3yu3tEryHcA",
+      "google_name": "I/G Winery & Tasting Room",
+      "google_formatted_address": "59 W Center St, Cedar City, UT 84720, USA",
+      "google_rating": 4.8,
+      "google_user_ratings_total": 202,
+      "google_maps_url": "https://maps.google.com/?cid=13843487232280177631",
+      "google_reviews_summary": "Stephany Anariba (5/5): Amazing spot for getting some wine. The environment feels very warm and  gives it a both lounge and sophisticated feeling. The only strange thing for me ( being from the west coast) if you purchase a wine bottle to go. You need to exit through the back…. Asides from that I would recommend this place! | Kyle Teichert (5/5): Absolutely amazing wine tasting and full serve with limited food options. The service was fantastic and the atmosphere perfect. We tried one of their local wines and it was fantastic. We got the charcuterie board to accompany and had an amazing time. | D J (5/5): What a great way to spend part of our day after exploring some of the many wonderful shops in the Cedar City downtown area.  Sipping wine in such a casual & relaxing atmosphere was just what the doctor ordered.  Our hostess was gracious in helping us make our wine selections to take back home.   She had that million dollar smile that made the whole experience unforgettable.",
+      "google_reviews_raw": [
+        {
+          "author_name": "Stephany Anariba",
+          "author_url": "https://www.google.com/maps/contrib/105140456697060291409/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjUhjAZCoCXXOMi3C9Og12p6QZKMz0yrhyNhmrHSAZeEnLpYYzaR2Q=s128-c0x00000000-cc-rp-mo-ba3",
+          "rating": 5,
+          "relative_time_description": "a month ago",
+          "text": "Amazing spot for getting some wine. The environment feels very warm and  gives it a both lounge and sophisticated feeling. The only strange thing for me ( being from the west coast) if you purchase a wine bottle to go. You need to exit through the back…. Asides from that I would recommend this place!",
+          "time": 1767310857,
+          "translated": false
+        },
+        {
+          "author_name": "Kyle Teichert",
+          "author_url": "https://www.google.com/maps/contrib/108001637506529362744/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjXenIh-bDZ7SzpSHjvWh-Qi2vVWSqFbqM8Fhz7FOxVE80rxYP_P=s128-c0x00000000-cc-rp-mo-ba5",
+          "rating": 5,
+          "relative_time_description": "7 months ago",
+          "text": "Absolutely amazing wine tasting and full serve with limited food options. The service was fantastic and the atmosphere perfect. We tried one of their local wines and it was fantastic. We got the charcuterie board to accompany and had an amazing time.",
+          "time": 1751296537,
+          "translated": false
+        },
+        {
+          "author_name": "D J",
+          "author_url": "https://www.google.com/maps/contrib/103757791599470783283/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a/ACg8ocIklmOhKOsmTnRikZjjk4wu6W7VzvFwjDqYI7-ZibFg3Pqnfw=s128-c0x00000000-cc-rp-mo-ba4",
+          "rating": 5,
+          "relative_time_description": "7 months ago",
+          "text": "What a great way to spend part of our day after exploring some of the many wonderful shops in the Cedar City downtown area.  Sipping wine in such a casual & relaxing atmosphere was just what the doctor ordered.  Our hostess was gracious in helping us make our wine selections to take back home.   She had that million dollar smile that made the whole experience unforgettable.",
+          "time": 1752434329,
+          "translated": false
+        }
+      ],
+      "fetched_at": "2026-02-25T03:10:49.160809+00:00"
+    },
+    "downtown farmers market::cedar city": {
+      "attraction_name": "Downtown Farmers Market",
+      "query": "Downtown Farmers Market, Cedar City, United States",
+      "google_place_id": "ChIJb-vZldNhtYARKIgJCXbijjI",
+      "google_name": "Cedar City Farmers Market",
+      "google_formatted_address": "100 W Harding Ave, Cedar City, UT 84720, USA",
+      "google_rating": 4.5,
+      "google_user_ratings_total": 2,
+      "google_maps_url": "https://maps.google.com/?cid=3643098145174947880",
+      "google_reviews_summary": "",
+      "google_reviews_raw": [
+        {
+          "author_name": "Melinda Shearer",
+          "author_url": "https://www.google.com/maps/contrib/115026448164106385166/reviews",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a/ACg8ocIOeDIDDAOL3A6LNtOOORXT42vHzQpKdZAerd3t4qqT_faC1g=s128-c0x00000000-cc-rp-mo",
+          "rating": 4,
+          "relative_time_description": "9 months ago",
+          "text": "",
+          "time": 1746917281,
+          "translated": false
+        },
+        {
+          "author_name": "Debz Peterson",
+          "author_url": "https://www.google.com/maps/contrib/117581982960502587429/reviews",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a/ACg8ocKSspMZv1kHZ0W-StYpUNMD60i_Dbi-nDYAc7Ma6dbG21U0Ig=s128-c0x00000000-cc-rp-mo",
+          "rating": 5,
+          "relative_time_description": "a year ago",
+          "text": "",
+          "time": 1721191951,
+          "translated": false
+        }
+      ],
+      "fetched_at": "2026-02-25T03:10:50.182046+00:00"
+    },
+    "artisans gallery::cedar city": {
+      "attraction_name": "Artisans Gallery",
+      "query": "Artisans Gallery, Cedar City, United States",
+      "google_place_id": "ChIJr3D9tLthtYAR-M_4ffFXZBk",
+      "google_name": "Artisans Art Gallery",
+      "google_formatted_address": "94 W Center St, Cedar City, UT 84720, USA",
+      "google_rating": 5,
+      "google_user_ratings_total": 19,
+      "google_maps_url": "https://maps.google.com/?cid=1829684043331457016",
+      "google_reviews_summary": "Georgia B (5/5): Diverse selection of work at very reasonable prices ! Sort of a gallery / shop / studio in one! Fantastic staff and gorgeous work all available for purchase !!! | Erin Whitfield (5/5): I stopped here and it’s a great gallery, i love it! Very beautiful artwork. I bought a handwoven textile. I will definitely be back. | David Sidwell (5/5): This is a very nice art gallery. I come here perhaps twice a year from out of town, and I always end up getting something. Local artists are this gallery’s mainstay, and the art is fabulous. The purveyors are super helpful and kind.",
+      "google_reviews_raw": [
+        {
+          "author_name": "Georgia B",
+          "author_url": "https://www.google.com/maps/contrib/113783760410143391340/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a/ACg8ocLQCE3UBQDAFGhEIxRoiLGojmoR8AZAx12XoQIxvZzWNd8OqEI=s128-c0x00000000-cc-rp-mo-ba4",
+          "rating": 5,
+          "relative_time_description": "3 weeks ago",
+          "text": "Diverse selection of work at very reasonable prices ! Sort of a gallery / shop / studio in one! Fantastic staff and gorgeous work all available for purchase !!!",
+          "time": 1769806335,
+          "translated": false
+        },
+        {
+          "author_name": "Erin Whitfield",
+          "author_url": "https://www.google.com/maps/contrib/111645099558572756900/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjV0p-291RXzo4sotYwogrhGHH0C5v6TBoYHs8VpHTn_BytcOk4Z=s128-c0x00000000-cc-rp-mo-ba3",
+          "rating": 5,
+          "relative_time_description": "4 months ago",
+          "text": "I stopped here and it’s a great gallery, i love it! Very beautiful artwork. I bought a handwoven textile. I will definitely be back.",
+          "time": 1760463333,
+          "translated": false
+        },
+        {
+          "author_name": "David Sidwell",
+          "author_url": "https://www.google.com/maps/contrib/104670533354336958342/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjUYqxQ1joCj-WftnHndyl9ULjCeHDTScbH9d0EaKBklHjf2fphA=s128-c0x00000000-cc-rp-mo-ba4",
+          "rating": 5,
+          "relative_time_description": "3 years ago",
+          "text": "This is a very nice art gallery. I come here perhaps twice a year from out of town, and I always end up getting something. Local artists are this gallery’s mainstay, and the art is fabulous. The purveyors are super helpful and kind.",
+          "time": 1658010208,
+          "translated": false
+        }
+      ],
+      "fetched_at": "2026-02-25T03:10:51.122634+00:00"
+    },
+    "festival city farmers market::cedar city": {
+      "attraction_name": "Festival City Farmers Market",
+      "query": "Festival City Farmers Market, Cedar City, United States",
+      "google_place_id": "ChIJs7ESPLphtYARu8SZ23Uax_k",
+      "google_name": "Festival City Farmers Market",
+      "google_formatted_address": "100 West W University Blvd, Cedar City, UT 84720, USA",
+      "google_rating": 4.8,
+      "google_user_ratings_total": 146,
+      "google_maps_url": "https://maps.google.com/?cid=17998383529307260091",
+      "google_reviews_summary": "Katherine B (5/5): Love this farmers market! Plenty of fresh produce, artisan goods, and local eateries. When you're done you can walk around and check out the other local shops or cafés like The Grind or Bristlecone! Live music was amazing and plenty of outdoor seating. Will definitely be back! | L French (Giggles McFrenchy) (5/5): Great variety of different vendors. There's always something to eat, and they always have a great musician playing music for everyone. They have everything from woodworking items to teaspoon rings, raku fired clay wares, homemade jewelry and handmade wreaths. | Rock-iT Barre (5/5): I have attended the Festival City Farmer's Market the last few weeks. I thought it was good the first time, but it is even better at the new location! I never thought Cedar City would have such a upbeat, fun, market that is appropriate for kids, adults, visitors and locals. It adds flavor and activities for everyone, and awesome food. There is a really good feel to it. Nice work Cedar City!",
+      "google_reviews_raw": [
+        {
+          "author_name": "Katherine B",
+          "author_url": "https://www.google.com/maps/contrib/116699543391085643925/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjUs_sK7ahEPVcYkLxSHeP-ZdecUXM-Vm1vUbXfMuFt5Eau3hQggBg=s128-c0x00000000-cc-rp-mo-ba3",
+          "rating": 5,
+          "relative_time_description": "a year ago",
+          "text": "Love this farmers market! Plenty of fresh produce, artisan goods, and local eateries. When you're done you can walk around and check out the other local shops or cafés like The Grind or Bristlecone! Live music was amazing and plenty of outdoor seating. Will definitely be back!",
+          "time": 1729362091,
+          "translated": false
+        },
+        {
+          "author_name": "L French (Giggles McFrenchy)",
+          "author_url": "https://www.google.com/maps/contrib/113212004306866218480/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjXDm7siVkBnyYwTFnONouEf7hmtNkz81nN5gAz_p7CyRj2WVmTEhQ=s128-c0x00000000-cc-rp-mo-ba5",
+          "rating": 5,
+          "relative_time_description": "a year ago",
+          "text": "Great variety of different vendors. There's always something to eat, and they always have a great musician playing music for everyone. They have everything from woodworking items to teaspoon rings, raku fired clay wares, homemade jewelry and handmade wreaths.",
+          "time": 1740307337,
+          "translated": false
+        },
+        {
+          "author_name": "Rock-iT Barre",
+          "author_url": "https://www.google.com/maps/contrib/110339525845522285284/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjXVGRnuIPzJyn-V87vAH50t6uKDA1zi1faIjbv3GbRgCLXMHg=s128-c0x00000000-cc-rp-mo",
+          "rating": 5,
+          "relative_time_description": "2 years ago",
+          "text": "I have attended the Festival City Farmer's Market the last few weeks. I thought it was good the first time, but it is even better at the new location! I never thought Cedar City would have such a upbeat, fun, market that is appropriate for kids, adults, visitors and locals. It adds flavor and activities for everyone, and awesome food. There is a really good feel to it. Nice work Cedar City!",
+          "time": 1686520576,
+          "translated": false
+        }
+      ],
+      "fetched_at": "2026-02-25T03:10:52.085200+00:00"
+    },
+    "stone path massage energy center::cedar city": {
+      "attraction_name": "Stone Path Massage & Energy Center",
+      "query": "Stone Path Massage & Energy Center, Cedar City, United States",
+      "google_place_id": "ChIJl4J8sLthtYARAKGcZWOndZk",
+      "google_name": "Stone Path Massage & Energy Center",
+      "google_formatted_address": "150 W University Blvd ste 2-b, Cedar City, UT 84720, USA",
+      "google_rating": 4.9,
+      "google_user_ratings_total": 43,
+      "google_maps_url": "https://maps.google.com/?cid=11057928505426485504",
+      "google_reviews_summary": "Janet Weinstock (5/5): Amazing place 👏! The energy healing & massages 💆‍♀️ can't be beat. Authentic, caring and friendly service and wonderful team especially the owner. Also, a wide selection of stone and product offerings. | Barbie C (5/5): Haven’t tried their services but loved shopping in the store. They have a huge selection of crystals. Very nice staff! I look forward to stopping in each time I visit Cedar City. | Brian Woodward (5/5): What a wonder shop. The owner is so genuine and caring. Staff is the same. Bought a lot of great books and items. Even had a card reading. It was profoundly memorable. This is my go-to shop from now on!",
+      "google_reviews_raw": [
+        {
+          "author_name": "Janet Weinstock",
+          "author_url": "https://www.google.com/maps/contrib/117858459279553382541/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjUFm87l3v8g5wzs_Aq9UmguA__XXT89S65QTtpJBD-xnRzyK7qTVA=s128-c0x00000000-cc-rp-mo-ba4",
+          "rating": 5,
+          "relative_time_description": "4 months ago",
+          "text": "Amazing place 👏! The energy healing & massages 💆‍♀️ can't be beat. Authentic, caring and friendly service and wonderful team especially the owner. Also, a wide selection of stone and product offerings.",
+          "time": 1759805730,
+          "translated": false
+        },
+        {
+          "author_name": "Barbie C",
+          "author_url": "https://www.google.com/maps/contrib/107332049296125069107/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjVsOK1mDvWlPVhPKPkeWtJXvv4TcSGo0rQKOivN3MB-p1T6oWVtYw=s128-c0x00000000-cc-rp-mo-ba3",
+          "rating": 5,
+          "relative_time_description": "7 months ago",
+          "text": "Haven’t tried their services but loved shopping in the store. They have a huge selection of crystals. Very nice staff! I look forward to stopping in each time I visit Cedar City.",
+          "time": 1752256548,
+          "translated": false
+        },
+        {
+          "author_name": "Brian Woodward",
+          "author_url": "https://www.google.com/maps/contrib/109413754919144328737/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjX5KtUH_BydNQOI7_elbG6t-cBFMNopeiceNd7F1BYSQlWznPW4=s128-c0x00000000-cc-rp-mo-ba5",
+          "rating": 5,
+          "relative_time_description": "2 years ago",
+          "text": "What a wonder shop. The owner is so genuine and caring. Staff is the same. Bought a lot of great books and items. Even had a card reading. It was profoundly memorable. This is my go-to shop from now on!",
+          "time": 1699733758,
+          "translated": false
+        }
+      ],
+      "fetched_at": "2026-02-25T03:10:53.147492+00:00"
+    },
+    "moab::moab": {
+      "attraction_name": "Moab",
+      "query": "Moab, Unknown",
+      "google_place_id": "ChIJN4RWdhVwSIcRkwPAdsPDqak",
+      "google_name": "Hole 'N' The Rock",
+      "google_formatted_address": "11037 S Hwy 191, Moab, UT 84532, USA",
+      "google_rating": 4.4,
+      "google_user_ratings_total": 3125,
+      "google_maps_url": "https://maps.google.com/?cid=12225517907752256403",
+      "google_reviews_summary": "Cin (5/5): It's a roadside attraction and very cool. The story of how it came to be is very interesting! Short little tour of the house but you cannot take pictures in there, it's worth a stop and to do the tour. Outside, the property had lots of art and things to check out which was very pretty. They have a general store, a trading and petting zoo too. We got there right as the petting zoo was closing, so bummed we couldn't check that out! | Jenna (5/5): Such a fun stop if you’re passing through the area. The Trading Post had a great selection of unique and handcrafted items. There are surprises around every corner as you stroll around the property (be sure to look for Big Foot), and there are fun activities perfect for breaking up a long drive. Be sure to tour the house… Austin is a fantastic guide! | Anburaja Balamurugan (5/5): So cool! They offer a 12-minute tour inside. Photos or videos are not allowed inside. The tour was informative to know the history behind it. The entrance fee is $8.50.",
+      "google_reviews_raw": [
+        {
+          "author_name": "Cin",
+          "author_url": "https://www.google.com/maps/contrib/111954356455049238082/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjXhBqUzNm8HH_blq6sO7Rc_zvjIIjRxjOAIFth9TbVzeLEfru0=s128-c0x00000000-cc-rp-mo-ba3",
+          "rating": 5,
+          "relative_time_description": "4 months ago",
+          "text": "It's a roadside attraction and very cool. The story of how it came to be is very interesting! Short little tour of the house but you cannot take pictures in there, it's worth a stop and to do the tour. Outside, the property had lots of art and things to check out which was very pretty. They have a general store, a trading and petting zoo too. We got there right as the petting zoo was closing, so bummed we couldn't check that out!",
+          "time": 1759894560,
+          "translated": false
+        },
+        {
+          "author_name": "Jenna",
+          "author_url": "https://www.google.com/maps/contrib/103450638799103058167/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjWo7WE3agBP6jOSx73YjnDJGUqZOjtqDiPcfwmcKA_UmOtxPNSO=s128-c0x00000000-cc-rp-mo-ba4",
+          "rating": 5,
+          "relative_time_description": "5 months ago",
+          "text": "Such a fun stop if you’re passing through the area. The Trading Post had a great selection of unique and handcrafted items. There are surprises around every corner as you stroll around the property (be sure to look for Big Foot), and there are fun activities perfect for breaking up a long drive. Be sure to tour the house… Austin is a fantastic guide!",
+          "time": 1758338224,
+          "translated": false
+        },
+        {
+          "author_name": "Anburaja Balamurugan",
+          "author_url": "https://www.google.com/maps/contrib/116814546425381574569/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjX_QOm7gUOCoDyWtCEdHCsMFrd-2NXmz8ZxMArKizlz4UBk5Aqm7g=s128-c0x00000000-cc-rp-mo-ba5",
+          "rating": 5,
+          "relative_time_description": "2 months ago",
+          "text": "So cool! They offer a 12-minute tour inside. Photos or videos are not allowed inside. The tour was informative to know the history behind it. The entrance fee is $8.50.",
+          "time": 1766351446,
+          "translated": false
+        }
+      ],
+      "fetched_at": "2026-02-25T03:11:33.183558+00:00"
+    },
+    "bryce canyon city::bryce canyon city": {
+      "attraction_name": "Bryce Canyon City",
+      "query": "Bryce Canyon City, Unknown",
+      "google_place_id": "ChIJbUw47h9pNYcRYv1Jemw3nHU",
+      "google_name": "Bryce Canyon City",
+      "google_formatted_address": "Bryce Canyon City, UT, USA",
+      "google_rating": null,
+      "google_user_ratings_total": null,
+      "google_maps_url": "https://maps.google.com/?cid=8474709537852095842",
+      "google_reviews_summary": "",
+      "google_reviews_raw": [],
+      "fetched_at": "2026-02-25T03:11:41.196825+00:00"
+    },
+    "kanab::kanab": {
+      "attraction_name": "Kanab",
+      "query": "Kanab, Unknown",
+      "google_place_id": "ChIJj6MEEubVNIcRJU014CVmMn4",
+      "google_name": "Columbus Unknown LLC",
+      "google_formatted_address": "N/A, Kanab, UT 84741, USA",
+      "google_rating": null,
+      "google_user_ratings_total": null,
+      "google_maps_url": "https://maps.google.com/?cid=9093442910475865381",
+      "google_reviews_summary": "",
+      "google_reviews_raw": [],
+      "fetched_at": "2026-02-25T03:11:45.051832+00:00"
+    },
+    "cedar city::cedar city": {
+      "attraction_name": "Cedar City",
+      "query": "Cedar City, Unknown",
+      "google_place_id": "ChIJk9hOuPxhtYARCmCNTpo0FsE",
+      "google_name": "Historic Downtown Cedar City",
+      "google_formatted_address": "1 N Main St, Cedar City, UT 84720, USA",
+      "google_rating": 4,
+      "google_user_ratings_total": 15,
+      "google_maps_url": "https://maps.google.com/?cid=13913365936155222026",
+      "google_reviews_summary": "Karen Gayda (3/5): Not very historic or impressive. The only notable feature is the museum of the area's history. The downtown lacks interesting restaurants and shops that most historic districts provide. Mostly chain restaurants. The few places that did look promising were closed for Memorial Day | Lori Cole (4/5): I just wanted Chinese food, and I ended up discovering this wonderful street in Cedar City.\n\nThe coffee shop and adjacent bookstore reminded me of the good old days, vacations, and exploring small towns. I love the \"Mom & Pop\" type of locally owned businesses. I didn't have much time so I will go back for more leisurely exploring. | Peggy G (5/5): Charming town! We really enjoyed walking around leisurely. There are many options for eating and drinking. Love the French crepe place and the wine tasting! Don't miss the Shakespeare festival. Stay for a weekend and enjoy it all.",
+      "google_reviews_raw": [
+        {
+          "author_name": "Karen Gayda",
+          "author_url": "https://www.google.com/maps/contrib/115849916555472886934/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a/ACg8ocIZGH6Ph7HNVadbYfNNj0SULRolRalVks7dzhwGbeEY4mCanQ=s128-c0x00000000-cc-rp-mo-ba5",
+          "rating": 3,
+          "relative_time_description": "9 months ago",
+          "text": "Not very historic or impressive. The only notable feature is the museum of the area's history. The downtown lacks interesting restaurants and shops that most historic districts provide. Mostly chain restaurants. The few places that did look promising were closed for Memorial Day",
+          "time": 1748483169,
+          "translated": false
+        },
+        {
+          "author_name": "Lori Cole",
+          "author_url": "https://www.google.com/maps/contrib/101916311729490642035/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjXNc2UcctmUw2_rQKWT75V7oM5mrlkR9pc-mr3L01EczJxcx7_p=s128-c0x00000000-cc-rp-mo-ba4",
+          "rating": 4,
+          "relative_time_description": "a year ago",
+          "text": "I just wanted Chinese food, and I ended up discovering this wonderful street in Cedar City.\n\nThe coffee shop and adjacent bookstore reminded me of the good old days, vacations, and exploring small towns. I love the \"Mom & Pop\" type of locally owned businesses. I didn't have much time so I will go back for more leisurely exploring.",
+          "time": 1720499280,
+          "translated": false
+        },
+        {
+          "author_name": "Peggy G",
+          "author_url": "https://www.google.com/maps/contrib/100809879569855522273/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjXSPZo3hWsHK3RRxzS9dIoQAHKrNu1jc_9WBtxvk9fJtYGWBEkq2g=s128-c0x00000000-cc-rp-mo-ba2",
+          "rating": 5,
+          "relative_time_description": "2 years ago",
+          "text": "Charming town! We really enjoyed walking around leisurely. There are many options for eating and drinking. Love the French crepe place and the wine tasting! Don't miss the Shakespeare festival. Stay for a weekend and enjoy it all.",
+          "time": 1687441629,
+          "translated": false
+        }
+      ],
+      "fetched_at": "2026-02-25T03:11:54.882348+00:00"
+    },
+    "hanksville::hanksville": {
+      "attraction_name": "Hanksville",
+      "query": "Hanksville, Unknown",
+      "google_place_id": "ChIJz5Ov2oHESYcR4e6K9FKe7V4",
+      "google_name": "Hanksville",
+      "google_formatted_address": "Hanksville, UT 84734, USA",
+      "google_rating": null,
+      "google_user_ratings_total": null,
+      "google_maps_url": "https://maps.google.com/?cid=6840297488172904161",
+      "google_reviews_summary": "",
+      "google_reviews_raw": [],
+      "fetched_at": "2026-02-25T03:11:58.084484+00:00"
     }
   }
 }
