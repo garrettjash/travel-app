@@ -79,7 +79,11 @@ WEB_SCRAPER_LIMIT = int(os.getenv("TA_WEB_SCRAPER_LIMIT", "0"))
 def get_s3_client():
     if not S3_BUCKET:
         return None
-    return boto3.client("s3")
+    region = (os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION") or "").strip()
+    if not region:
+        region = "us-east-1"
+        print("⚠️ AWS region not set; defaulting S3 client to us-east-1")
+    return boto3.client("s3", region_name=region)
 
 def s3_download_if_exists(s3, bucket, key, dest_path):
     try:
