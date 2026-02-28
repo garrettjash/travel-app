@@ -393,6 +393,12 @@ def scrape_and_crawl(destination):
     # 2. PHASE 2: CRAWL (Updated to use Selenium for Reviews)
     if not all_results: return
 
+    # Limit articles for testing (e.g. MAIN_SCRAPER_ARTICLE_LIMIT=1)
+    article_limit = int(os.getenv("MAIN_SCRAPER_ARTICLE_LIMIT", "0")) or None
+    if article_limit and article_limit > 0:
+        all_results = all_results[:article_limit]
+        print(f"📋 Limited to {article_limit} article(s) for test run")
+
     print(f"\n📥 PROCESSING {len(all_results)} PAGES (Using Selenium to capture reviews)...")
     
     # Initialize Driver ONCE
@@ -519,10 +525,15 @@ def run_post_tripadvisor_processors():
             print(f"⚠️ {label} exited with code {code}.")
 
 if __name__ == "__main__":
-    dest = input("Enter destination: ")
-    if not should_refresh_destination(dest):
+    dest = os.getenv("MAIN_SCRAPER_DESTINATION") or input("Enter destination: ").strip()
+    if not dest:
+        print("No destination provided")
+        sys.exit(1)
+    force = os.getenv("MAIN_SCRAPER_FORCE_REFRESH", "").lower() in ("1", "true", "yes")
+    if not force and not should_refresh_destination(dest):
         print("Data already exists")
         sys.exit(0)
     scrape_and_crawl(dest)
-    run_tripadvisor_scraper(dest)
-    run_post_tripadvisor_processors()
+    if not os.getenv("MAIN_SCRAPER_WEB_ONLY"):
+        run_tripadvisor_scraper(dest)
+        run_post_tripadvisor_processors()
