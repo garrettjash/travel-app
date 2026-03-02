@@ -7,19 +7,23 @@ on:
   workflow_dispatch:
     inputs:
       limit:
+        type: string
         description: "Max places to refresh this run (default: 3)"
         required: false
         default: "3"
       stale_days:
+        type: string
         description: "Consider stale if last refresh > N days ago (default: 90)"
         required: false
         default: "90"
   workflow_call:
     inputs:
       limit:
+        type: string
         required: false
         default: "3"
       stale_days:
+        type: string
         required: false
         default: "90"
 
