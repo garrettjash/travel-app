@@ -1,0 +1,28 @@
+# Orchestrates the full nightly data pipeline:
+# 1. Main scraper (web articles) → 2. TA scraper → 3. Refresh stale places → 4. AI processor
+# Each step runs as a reusable workflow so you can also run them individually.
+name: Nightly Pipeline
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  main_scraper:
+    uses: ./.github/workflows/main_scraper_nightly.yml
+
+  ta_scrape:
+    needs: main_scraper
+    uses: ./.github/workflows/ta_nightly.yml
+
+  refresh_stale:
+    needs: ta_scrape
+    uses: ./.github/workflows/refresh_stale_places_nightly.yml
+    with:
+      limit: "3"
+      stale_days: "90"
+
+  ai_process:
+    needs: refresh_stale
+    uses: ./.github/workflows/ai_processor.yml
