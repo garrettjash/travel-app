@@ -11,10 +11,12 @@ on:
 jobs:
   main_scraper:
     uses: ./.github/workflows/main_scraper_nightly.yml
+    secrets: inherit
 
   ta_scrape:
     needs: main_scraper
     uses: ./.github/workflows/ta_nightly.yml
+    secrets: inherit
 
   refresh_stale:
     needs: ta_scrape
@@ -22,7 +24,9 @@ jobs:
     with:
       limit: "3"
       stale_days: "90"
+    secrets: inherit
 
   ai_process:
     needs: refresh_stale
     uses: ./.github/workflows/ai_processor.yml
+    secrets: inherit
