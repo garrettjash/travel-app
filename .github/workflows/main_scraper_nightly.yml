@@ -40,7 +40,7 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
           TA_NON_INTERACTIVE: "1"
-          MAIN_SCRAPER_NIGHTLY_LIMIT: "50"
+          MAIN_SCRAPER_NIGHTLY_LIMIT: ${{ secrets.NIGHTLY_PLACE_LIMIT || '5' }}
         run: |
           python - <<'PY'
           import json

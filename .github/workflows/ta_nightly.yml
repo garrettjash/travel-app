@@ -29,5 +29,5 @@ jobs:
           AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION || secrets.AWS_REGION }}
           TA_DAILY_LIMIT: "100"
           TA_NON_INTERACTIVE: "1"
-          TA_WEB_SCRAPER_LIMIT: "25"
+          TA_WEB_SCRAPER_LIMIT: ${{ secrets.NIGHTLY_PLACE_LIMIT }}
         run: python data/TripAdvisor/ta_scraper.py
