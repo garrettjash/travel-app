@@ -46,6 +46,7 @@ export default function AiChatbotPage() {
   const [error, setError] = useState<string | null>(null);
   const [isLoginNoticeOpen, setIsLoginNoticeOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const previousMessageCountRef = useRef(0);
 
   const canSend = useMemo(
     () => draft.trim().length > 0 && !isSending,
@@ -89,8 +90,21 @@ export default function AiChatbotPage() {
   }, [sessionId]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ block: "end" });
-  }, [messages, isSending]);
+    const previousCount = previousMessageCountRef.current;
+    const hasNewMessage = messages.length > previousCount;
+    const latestMessage = messages[messages.length - 1];
+
+    if (hasNewMessage && latestMessage) {
+      if (latestMessage.role === "assistant") {
+        const assistantMessage = document.getElementById(`chat-message-${latestMessage.message_id}`);
+        assistantMessage?.scrollIntoView({ block: "start", behavior: "smooth" });
+      } else {
+        messagesEndRef.current?.scrollIntoView({ block: "end", behavior: "smooth" });
+      }
+    }
+
+    previousMessageCountRef.current = messages.length;
+  }, [messages]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -170,6 +184,10 @@ export default function AiChatbotPage() {
             <span aria-hidden="true">✨</span>
             <span>AI Chatbot</span>
           </button>
+          <button type="button" className="destinations-tab" onClick={() => router.push("/about")}>
+            <span aria-hidden="true">ℹ️</span>
+            <span>About</span>
+          </button>
         </nav>
 
         <div className="destinations-content destinations-content-chat">
@@ -187,6 +205,7 @@ export default function AiChatbotPage() {
                     msg.role === "assistant" ? "chat-message-assistant" : "chat-message-user"
                   }`}
                   key={msg.message_id}
+                  id={`chat-message-${msg.message_id}`}
                 >
                   <div className="chat-message-meta">
                     <strong>{msg.role === "user" ? "Me" : "Assistant"}</strong>

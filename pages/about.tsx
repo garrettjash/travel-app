@@ -2,18 +2,8 @@ import { useState } from "react";
 import { useRouter } from "next/router";
 import LoginNoticeModal from "../components/LoginNoticeModal";
 
-const funnyTravelDogImage =
-  "https://images.unsplash.com/photo-1544568100-847a948585b9?auto=format&fit=crop&w=1400&q=80";
-
-function getFeatureLabel(feature: string | string[] | undefined) {
-  const raw = Array.isArray(feature) ? feature[0] : feature;
-  if (raw === "flights") return "Flights";
-  return "Stays";
-}
-
-export default function ComingSoonPage() {
+export default function AboutPage() {
   const router = useRouter();
-  const featureLabel = getFeatureLabel(router.query.feature);
   const [isLoginNoticeOpen, setIsLoginNoticeOpen] = useState(false);
 
   return (
@@ -49,20 +39,54 @@ export default function ComingSoonPage() {
             <span aria-hidden="true">✨</span>
             <span>AI Chatbot</span>
           </button>
-          <button type="button" className="destinations-tab" onClick={() => router.push("/about")}>
+          <button type="button" className="destinations-tab destinations-tab-active">
             <span aria-hidden="true">ℹ️</span>
             <span>About</span>
           </button>
         </nav>
 
         <div className="destinations-content">
-          <section className="coming-soon-card">
-            <img src={funnyTravelDogImage} alt="Funny travel companion" className="coming-soon-image" />
-            <h1>{featureLabel} Are Not Here Yet</h1>
+          <section className="about-card">
+            <h1>About TravelApp</h1>
             <p>
-              Right now, we do not have {featureLabel.toLowerCase()} available.
-              We may be adding {featureLabel.toLowerCase()} later.
+              TravelApp helps you discover attractions, save favorites, build a quick itinerary, and ask the AI
+              chatbot for planning ideas in one workspace.
             </p>
+          </section>
+
+          <section className="about-card">
+            <h2>What This Site Does</h2>
+            <ul className="about-list">
+              <li>Shows destination and attraction data to support trip planning.</li>
+              <li>Lets you bookmark places and draft a day-by-day trip outline.</li>
+              <li>Provides AI-generated suggestions based on your prompts.</li>
+            </ul>
+          </section>
+
+          <section className="about-card">
+            <h2>Legal & Important Notes</h2>
+            <ul className="about-list">
+              <li>
+                Informational use only: content is for planning help and not professional legal, medical, financial,
+                or safety advice.
+              </li>
+              <li>
+                No guarantees: attraction details, pricing, operating hours, and availability can change at any time.
+              </li>
+              <li>
+                AI limitations: chatbot responses may be incomplete or incorrect; confirm important details directly
+                with official sources.
+              </li>
+              <li>
+                Third-party content: linked or sourced external content belongs to its respective owners and may have
+                separate terms.
+              </li>
+              <li>
+                Privacy reminder: avoid sharing sensitive personal information in chat prompts or notes unless you are
+                comfortable storing it.
+              </li>
+            </ul>
+            <p className="about-updated">Last updated: March 4, 2026</p>
           </section>
         </div>
       </section>

@@ -243,11 +243,19 @@ body {
 .destinations-content-chat {
   padding-left: 14px;
   padding-right: 14px;
+  padding-bottom: 14px;
+  height: calc(100vh - 64px);
+  overflow: hidden;
+  display: flex;
 }
 
 .destinations-content-chat .chat-shell {
   width: 100%;
   max-width: none;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .chat-header {
@@ -271,6 +279,9 @@ body {
   flex-direction: column;
   gap: 12px;
   background: #f8fafd;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .chat-state {
@@ -367,6 +378,9 @@ body {
   padding: 20px 24px 24px;
   border-top: 1px solid #e5e9f2;
   background: #ffffff;
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
 }
 
 .chat-form-label {
@@ -660,6 +674,45 @@ body {
   margin: 0;
   font-size: 1.05rem;
   color: #38536f;
+}
+
+.about-card {
+  max-width: 900px;
+  margin: 0 0 14px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid #d5e3f1;
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 10px 24px rgba(17, 61, 104, 0.08);
+}
+
+.about-card h1,
+.about-card h2 {
+  margin: 0;
+  color: #123d68;
+}
+
+.about-card h2 {
+  font-size: 1.3rem;
+}
+
+.about-card p {
+  margin: 10px 0 0;
+  color: #48627d;
+  line-height: 1.55;
+}
+
+.about-list {
+  margin: 10px 0 0;
+  padding-left: 20px;
+  color: #2f4861;
+  display: grid;
+  gap: 8px;
+}
+
+.about-updated {
+  font-size: 0.9rem;
+  color: #5f778f;
 }
 
 .saved-trips-header h1 {
@@ -973,6 +1026,11 @@ body {
 
   .saved-trips-stats {
     grid-template-columns: repeat(2, minmax(120px, 1fr));
+  }
+
+  .destinations-content-chat {
+    height: auto;
+    min-height: calc(100vh - 64px);
   }
 }
 
