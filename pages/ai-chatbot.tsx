@@ -154,22 +154,6 @@ export default function AiChatbotPage() {
 
       <section className="destinations-layout">
         <nav className="destinations-sidebar" aria-label="Main navigation">
-          <button
-            type="button"
-            className="destinations-tab"
-            onClick={() => router.push("/coming-soon?feature=stays")}
-          >
-            <span aria-hidden="true">🛏️</span>
-            <span>Stays</span>
-          </button>
-          <button
-            type="button"
-            className="destinations-tab"
-            onClick={() => router.push("/coming-soon?feature=flights")}
-          >
-            <span aria-hidden="true">✈️</span>
-            <span>Flights</span>
-          </button>
           <button type="button" className="destinations-tab" onClick={() => router.push("/home")}>
             <span aria-hidden="true">🗺️</span>
             <span>Destinations</span>

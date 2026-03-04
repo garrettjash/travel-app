@@ -14,8 +14,6 @@ function getFeatureLabel(feature: string | string[] | undefined) {
 export default function ComingSoonPage() {
   const router = useRouter();
   const featureLabel = getFeatureLabel(router.query.feature);
-  const isStays = featureLabel === "Stays";
-  const isFlights = featureLabel === "Flights";
   const [isLoginNoticeOpen, setIsLoginNoticeOpen] = useState(false);
 
   return (
@@ -35,22 +33,6 @@ export default function ComingSoonPage() {
 
       <section className="destinations-layout">
         <nav className="destinations-sidebar" aria-label="Main navigation">
-          <button
-            type="button"
-            className={`destinations-tab ${isStays ? "destinations-tab-active" : ""}`}
-            onClick={() => router.push("/coming-soon?feature=stays")}
-          >
-            <span aria-hidden="true">🛏️</span>
-            <span>Stays</span>
-          </button>
-          <button
-            type="button"
-            className={`destinations-tab ${isFlights ? "destinations-tab-active" : ""}`}
-            onClick={() => router.push("/coming-soon?feature=flights")}
-          >
-            <span aria-hidden="true">✈️</span>
-            <span>Flights</span>
-          </button>
           <button type="button" className="destinations-tab" onClick={() => router.push("/home")}>
             <span aria-hidden="true">🗺️</span>
             <span>Destinations</span>
