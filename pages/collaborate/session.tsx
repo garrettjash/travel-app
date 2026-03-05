@@ -18,11 +18,20 @@ type Attraction = {
 type VoteValue = "up" | "down";
 type VotesByAttraction = Record<number, VoteValue>;
 
+type SessionAttractionResult = {
+  attractionId: number;
+  yesVotes: number;
+  noVotes: number;
+  totalVotes: number;
+};
+
 type SessionPayload = {
   sessionId: string;
   placeId: number;
   place: string;
   attractions: Attraction[];
+  isExpired?: boolean;
+  results?: SessionAttractionResult[];
   error?: string;
 };
 
@@ -158,6 +167,8 @@ export default function CollaborateSessionPage() {
   const [error, setError] = useState<string | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [votesByAttraction, setVotesByAttraction] = useState<VotesByAttraction>({});
+  const [resultsByAttraction, setResultsByAttraction] = useState<Record<number, SessionAttractionResult>>({});
+  const [isSessionExpired, setIsSessionExpired] = useState(false);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [voteSavedMessage, setVoteSavedMessage] = useState<string | null>(null);
 
@@ -181,16 +192,36 @@ export default function CollaborateSessionPage() {
 
         if (!isActive) return;
 
+        const legacyExpired =
+          !response.ok &&
+          typeof payload.error === "string" &&
+          payload.error.toLowerCase().includes("expired");
+
+        if (legacyExpired) {
+          setDestination(destinationFromUrl);
+          setAttractions([]);
+          setIsSessionExpired(true);
+          setResultsByAttraction({});
+          setCurrentIndex(0);
+          return;
+        }
+
         if (!response.ok || payload.error) {
           throw new Error(payload.error || "Failed to load collab session.");
         }
 
         setDestination(payload.place || destinationFromUrl);
         setAttractions(payload.attractions ?? []);
+        setIsSessionExpired(Boolean(payload.isExpired));
+        setResultsByAttraction(
+          Object.fromEntries((payload.results ?? []).map((item) => [item.attractionId, item]))
+        );
         setCurrentIndex(0);
       } catch (loadError) {
         if (!isActive) return;
         setAttractions([]);
+        setIsSessionExpired(false);
+        setResultsByAttraction({});
         setError(loadError instanceof Error ? loadError.message : "Unknown error loading session");
       } finally {
         if (isActive) setIsLoading(false);
@@ -240,17 +271,41 @@ export default function CollaborateSessionPage() {
     };
   }, [guestId, sessionId]);
 
-  const currentAttraction = attractions[currentIndex] ?? null;
+  const displayedAttractions = useMemo(() => {
+    if (!isSessionExpired) return attractions;
+
+    return attractions
+      .filter((attraction) => {
+        const result = resultsByAttraction[attraction.id];
+        if (!result) return false;
+        return result.yesVotes >= result.noVotes;
+      })
+      .sort((left, right) => {
+        const leftYes = resultsByAttraction[left.id]?.yesVotes ?? 0;
+        const rightYes = resultsByAttraction[right.id]?.yesVotes ?? 0;
+        return rightYes - leftYes;
+      });
+  }, [attractions, isSessionExpired, resultsByAttraction]);
+
+  const currentAttraction = displayedAttractions[currentIndex] ?? null;
   const currentVote = currentAttraction ? votesByAttraction[currentAttraction.id] : undefined;
-  const votedCount = attractions.reduce(
+  const currentResult = currentAttraction ? resultsByAttraction[currentAttraction.id] : undefined;
+  const votedCount = displayedAttractions.reduce(
     (count, attraction) => (votesByAttraction[attraction.id] ? count + 1 : count),
     0
   );
-  const allAttractionsVoted = attractions.length > 0 && votedCount === attractions.length;
+  const allAttractionsVoted = displayedAttractions.length > 0 && votedCount === displayedAttractions.length;
   const currentVoteMessage = currentVote === "up" ? "You voted YES" : currentVote === "down" ? "You voted NO" : null;
 
+  useEffect(() => {
+    setCurrentIndex((index) => {
+      if (displayedAttractions.length === 0) return 0;
+      return Math.min(index, displayedAttractions.length - 1);
+    });
+  }, [displayedAttractions.length]);
+
   async function castVote(vote: VoteValue) {
-    if (!currentAttraction || !sessionId || !guestId) return;
+    if (!currentAttraction || !sessionId || !guestId || isSessionExpired) return;
     if (votesByAttraction[currentAttraction.id]) return;
 
     try {
@@ -282,7 +337,7 @@ export default function CollaborateSessionPage() {
       saveLocalVotes(sessionId, nextVotes);
       setVoteSavedMessage(null);
 
-      if (currentIndex < attractions.length - 1) {
+      if (currentIndex < displayedAttractions.length - 1) {
         setCurrentIndex((index) => index + 1);
       }
     } catch (voteError) {
@@ -339,12 +394,21 @@ export default function CollaborateSessionPage() {
 
         {!isLoading && !error && !currentAttraction && (
           <section className="about-card">
-            <p className="attractions-state">No attractions found for this session.</p>
+            <p className="attractions-state">
+              {isSessionExpired
+                ? "Polling is closed. No attractions met the YES-over-NO results criteria."
+                : "No attractions found for this session."}
+            </p>
           </section>
         )}
 
         {!isLoading && !error && currentAttraction && (
           <section className="about-card" style={{ maxWidth: 980 }}>
+            {isSessionExpired && (
+              <p style={{ margin: "0 0 10px", color: "#1f8f4a", fontWeight: 600 }}>
+                Polling is no longer live, but these are the results.
+              </p>
+            )}
             {currentVoteMessage && (
               <p style={{ margin: "0 0 10px", color: "#1f8f4a", fontWeight: 600 }}>
                 {currentVoteMessage}
@@ -357,7 +421,7 @@ export default function CollaborateSessionPage() {
             )}
 
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              {!allAttractionsVoted && (
+              {!allAttractionsVoted && !isSessionExpired && (
                 <button
                   type="button"
                   className={`saved-trips-button ${currentVote ? "saved-trips-button-muted" : "saved-trips-button-primary"}`}
@@ -416,10 +480,16 @@ export default function CollaborateSessionPage() {
                     <dt>Price</dt>
                     <dd>{currentAttraction.priceLevel || "N/A"}</dd>
                   </div>
+                  {isSessionExpired && currentResult && (
+                    <div>
+                      <dt>Result</dt>
+                      <dd>Recommended by group vote</dd>
+                    </div>
+                  )}
                 </dl>
               </article>
 
-              {!allAttractionsVoted && (
+              {!allAttractionsVoted && !isSessionExpired && (
                 <button
                   type="button"
                   className={`saved-trips-button ${currentVote ? "saved-trips-button-muted" : "saved-trips-button-primary"}`}
@@ -442,13 +512,13 @@ export default function CollaborateSessionPage() {
                 Previous
               </button>
               <p className="attractions-state" style={{ margin: 0 }}>
-                Card {currentIndex + 1} of {attractions.length}
+                Card {currentIndex + 1} of {displayedAttractions.length}
               </p>
               <button
                 type="button"
                 className="saved-trips-button"
-                onClick={() => setCurrentIndex((index) => Math.min(attractions.length - 1, index + 1))}
-                disabled={currentIndex >= attractions.length - 1}
+                onClick={() => setCurrentIndex((index) => Math.min(displayedAttractions.length - 1, index + 1))}
+                disabled={currentIndex >= displayedAttractions.length - 1}
               >
                 Next
               </button>

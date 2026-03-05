@@ -15,6 +15,13 @@ type AttractionItem = {
   imageUrls: string[];
 };
 
+type SessionAttractionResult = {
+  attractionId: number;
+  yesVotes: number;
+  noVotes: number;
+  totalVotes: number;
+};
+
 type CollabSessionResponse =
   | {
       sessionId: string;
@@ -28,6 +35,8 @@ type CollabSessionResponse =
       placeId: number;
       place: string;
       attractions: AttractionItem[];
+      isExpired?: boolean;
+      results?: SessionAttractionResult[];
     }
   | { error: string };
 
@@ -243,12 +252,10 @@ export default async function handler(
       const createdAtIso = normalizeText(sessionResult.data.created_at);
       const createdAt = Date.parse(createdAtIso);
 
+      let isExpired = false;
       if (Number.isFinite(createdAt)) {
         const expiresAt = createdAt + durationMinutes * 60 * 1000;
-        if (Date.now() > expiresAt) {
-          res.status(410).json({ error: "This collab session link has expired." });
-          return;
-        }
+        isExpired = Date.now() > expiresAt;
       }
 
       const placeId = Number(sessionResult.data.collab_place_id);
@@ -282,8 +289,42 @@ export default async function handler(
         .map((row) => Number(row.attraction_id))
         .filter(Number.isFinite);
 
+      const pollResult = await supabase
+        .from("poll")
+        .select("attraction_id, vote")
+        .eq("collab_session_id", sessionId)
+        .limit(10000);
+
+      if (pollResult.error) {
+        res.status(500).json({ error: pollResult.error.message });
+        return;
+      }
+
+      const resultByAttraction = new Map<number, SessionAttractionResult>();
+      for (const row of pollResult.data ?? []) {
+        const attractionId = Number(row.attraction_id);
+        if (!Number.isFinite(attractionId)) continue;
+
+        const current =
+          resultByAttraction.get(attractionId) ??
+          {
+            attractionId,
+            yesVotes: 0,
+            noVotes: 0,
+            totalVotes: 0
+          };
+
+        if (row.vote === true) current.yesVotes += 1;
+        if (row.vote === false) current.noVotes += 1;
+        current.totalVotes += 1;
+
+        resultByAttraction.set(attractionId, current);
+      }
+
+      const results = Array.from(resultByAttraction.values());
+
       if (attractionIds.length === 0) {
-        res.status(200).json({ sessionId, placeId, place, attractions: [] });
+        res.status(200).json({ sessionId, placeId, place, attractions: [], isExpired, results });
         return;
       }
 
@@ -401,7 +442,7 @@ export default async function handler(
           return leftPos - rightPos;
         });
 
-      res.status(200).json({ sessionId, placeId, place, attractions });
+      res.status(200).json({ sessionId, placeId, place, attractions, isExpired, results });
       return;
     }
 
