@@ -23,7 +23,8 @@ const ItineraryPage: NextPage = () => {
       setLoadError(null);
 
       try {
-        const params = new URLSearchParams({ itineraryId: idParam });
+        const params = new URLSearchParams();
+        params.set("itineraryId", String(idParam));
         const response = await fetch(`/api/itinerary?${params.toString()}`);
         const data = (await response.json()) as { itinerary?: SavedItinerary; error?: string };
 
