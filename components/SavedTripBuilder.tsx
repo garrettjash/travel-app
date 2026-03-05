@@ -19,6 +19,7 @@ export type DayPlan = {
 export type SavedItinerary = {
   itineraryId: string;
   tripName: string;
+  tripPlace?: string;
   startDate: string;
   endDate: string;
   pace: Pace;
@@ -111,6 +112,7 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
   const defaultEnd = new Date(today.getTime() + 1000 * 60 * 60 * 24 * 2).toISOString().slice(0, 10);
 
   const [tripName, setTripName] = useState(initialItinerary?.tripName ?? "My Weekend Escape");
+  const [tripPlace, setTripPlace] = useState(initialItinerary?.tripPlace ?? "");
   const [startDate, setStartDate] = useState(initialItinerary?.startDate ?? defaultStart);
   const [endDate, setEndDate] = useState(initialItinerary?.endDate ?? defaultEnd);
   const [pace, setPace] = useState<Pace>(initialItinerary?.pace ?? "balanced");
@@ -167,6 +169,7 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
     const payload = {
       itineraryId: activeItineraryId || undefined,
       tripName: activeTripName,
+      tripPlace: tripPlace.trim(),
       startDate,
       endDate,
       pace,
@@ -278,6 +281,16 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
               />
             </div>
             <div className="saved-trips-field">
+              <label htmlFor="trip-place">Trip Place</label>
+              <input
+                id="trip-place"
+                type="text"
+                value={tripPlace}
+                onChange={(event) => setTripPlace(event.target.value)}
+                placeholder="e.g. Paris, France"
+              />
+            </div>
+            <div className="saved-trips-field">
               <label htmlFor="trip-start">Start</label>
               <input
                 id="trip-start"
@@ -351,7 +364,14 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
                 <button
                   type="button"
                   className="saved-trips-button saved-trips-button-primary"
-                  onClick={() => router.push("/home")}
+                  onClick={() => {
+                    const placeQuery = tripPlace.trim();
+                    if (placeQuery) {
+                      router.push(`/home?place=${encodeURIComponent(placeQuery)}`);
+                    } else {
+                      router.push("/home");
+                    }
+                  }}
                 >
                   Browse Destinations
                 </button>

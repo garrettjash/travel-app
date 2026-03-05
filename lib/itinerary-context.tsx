@@ -8,6 +8,7 @@ type ItineraryContextValue = {
   addAttraction: (attraction: ItineraryAttraction) => void;
   removeAttraction: (attractionId: number) => void;
   clearAttractions: () => void;
+  isInItinerary: (attractionId: number) => boolean;
 };
 
 const ItineraryContext = createContext<ItineraryContextValue | undefined>(undefined);
@@ -52,14 +53,20 @@ export function ItineraryProvider({ children }: { children: ReactNode }) {
     setAttractions([]);
   }, []);
 
+  const isInItinerary = useCallback(
+    (attractionId: number) => attractions.some((item) => item.id === attractionId),
+    [attractions]
+  );
+
   const value = useMemo(
     () => ({
       attractions,
       addAttraction,
       removeAttraction,
-      clearAttractions
+      clearAttractions,
+      isInItinerary
     }),
-    [attractions, addAttraction, removeAttraction, clearAttractions]
+    [attractions, addAttraction, removeAttraction, clearAttractions, isInItinerary]
   );
 
   return <ItineraryContext.Provider value={value}>{children}</ItineraryContext.Provider>;

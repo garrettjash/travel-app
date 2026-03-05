@@ -51,6 +51,7 @@ type ItineraryRow = {
 type SavedItineraryPayload = {
   itineraryId?: string;
   tripName: string;
+  tripPlace?: string;
   startDate: string;
   endDate: string;
   pace: Pace;
@@ -99,6 +100,17 @@ function normalizeText(value: unknown) {
   if (typeof value === "string") return value.trim();
   if (value === null || value === undefined) return "";
   return String(value).trim();
+}
+
+function sanitizePlaceName(rawValue: unknown) {
+  const value = typeof rawValue === "string" ? rawValue : "";
+  return value
+    .normalize("NFKC")
+    .replace(/[\u0000-\u001F\u007F]/g, "")
+    .replace(/[^\p{L}\p{N}\s,.'()\-]/gu, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 120);
 }
 
 function generateItineraryId() {
@@ -188,12 +200,32 @@ export default async function handler(
       }
 
       const tripName = normalizeText(body.tripName) || "Untitled Trip";
+      const tripPlace = sanitizePlaceName(body.tripPlace);
       const startDate = normalizeText(body.startDate);
       const endDate = normalizeText(body.endDate);
       const pace = (normalizeText(body.pace) as Pace) || "balanced";
       const notes = normalizeText(body.notes);
       const days = Array.isArray(body.days) ? body.days : [];
       const unscheduled = Array.isArray(body.unscheduled) ? body.unscheduled : [];
+
+      let placeId: number | null = null;
+      if (tripPlace) {
+        const placeQuery = supabase
+          .from("place")
+          .select("place_id, place_city, place_countryregion")
+          .limit(1);
+
+        const placeResult = await placeQuery
+          .or(`place_city.ilike.${tripPlace},place_countryregion.ilike.${tripPlace}`)
+          .maybeSingle();
+
+        if (!placeResult.error && placeResult.data) {
+          const rawPlaceId = Number(placeResult.data.place_id);
+          if (Number.isFinite(rawPlaceId) && rawPlaceId > 0) {
+            placeId = rawPlaceId;
+          }
+        }
+      }
 
       if (!startDate || !endDate) {
         response.status(400).json({ error: "startDate and endDate are required." });
@@ -204,6 +236,7 @@ export default async function handler(
         const { error } = await supabase.from("itinerary").insert({
           itinerary_id: itineraryId,
           trip_name: tripName,
+          place_id: placeId,
           start_date: startDate,
           end_date: endDate,
           pace,
@@ -230,6 +263,7 @@ export default async function handler(
           .from("itinerary")
           .update({
             trip_name: tripName,
+            place_id: placeId,
             start_date: startDate,
             end_date: endDate,
             pace,

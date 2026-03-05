@@ -138,7 +138,7 @@ function dedupeAttractionsById(list: Attraction[]) {
 
 export default function AttractionsExplorer({ title, subtitle, initialPlace }: AttractionsExplorerProps) {
   const { toggleFavorite, isFavorite } = useFavorites();
-  const { addAttraction } = useItinerary();
+  const { addAttraction, isInItinerary } = useItinerary();
   const [filters, setFilters] = useState<Filters>(defaultFilters);
   const [visibleFilters, setVisibleFilters] = useState<FilterKey[]>(defaultVisibleFilters);
   const [selectedFilterToAdd, setSelectedFilterToAdd] = useState<FilterKey | "">("");
@@ -664,13 +664,17 @@ export default function AttractionsExplorer({ title, subtitle, initialPlace }: A
                         </button>
                         <button
                           type="button"
-                          className="attractions-view-more"
+                          className={`attractions-view-more ${
+                            isInItinerary(attraction.id) ? "attractions-view-more-disabled" : ""
+                          }`}
                           onClick={(event) => {
                             event.stopPropagation();
+                            if (isInItinerary(attraction.id)) return;
                             addAttraction(toFavoriteAttraction(attraction));
                           }}
+                          disabled={isInItinerary(attraction.id)}
                         >
-                          Add to itinerary
+                          {isInItinerary(attraction.id) ? "Added" : "Add to itinerary"}
                         </button>
                       </div>
                     </div>
