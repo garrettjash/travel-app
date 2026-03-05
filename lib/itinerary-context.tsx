@@ -7,6 +7,7 @@ type ItineraryContextValue = {
   attractions: ItineraryAttraction[];
   addAttraction: (attraction: ItineraryAttraction) => void;
   removeAttraction: (attractionId: number) => void;
+  reorderAttractions: (fromIndex: number, toIndex: number) => void;
   clearAttractions: () => void;
   isInItinerary: (attractionId: number) => boolean;
 };
@@ -49,6 +50,18 @@ export function ItineraryProvider({ children }: { children: ReactNode }) {
     setAttractions((current) => current.filter((item) => item.id !== attractionId));
   }, []);
 
+  const reorderAttractions = useCallback((fromIndex: number, toIndex: number) => {
+    setAttractions((current) => {
+      if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || fromIndex >= current.length || toIndex >= current.length) {
+        return current;
+      }
+      const next = [...current];
+      const [removed] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, removed);
+      return next;
+    });
+  }, []);
+
   const clearAttractions = useCallback(() => {
     setAttractions([]);
   }, []);
@@ -63,10 +76,11 @@ export function ItineraryProvider({ children }: { children: ReactNode }) {
       attractions,
       addAttraction,
       removeAttraction,
+      reorderAttractions,
       clearAttractions,
       isInItinerary
     }),
-    [attractions, addAttraction, removeAttraction, clearAttractions, isInItinerary]
+    [attractions, addAttraction, removeAttraction, reorderAttractions, clearAttractions, isInItinerary]
   );
 
   return <ItineraryContext.Provider value={value}>{children}</ItineraryContext.Provider>;

@@ -1,10 +1,68 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
 import { FavoriteAttraction } from "../lib/favorites-context";
 import { useItinerary } from "../lib/itinerary-context";
 
 type Pace = "relaxed" | "balanced" | "packed";
 type Slot = "Morning" | "Afternoon" | "Evening";
+
+type PlaceOption = {
+  id: number;
+  label: string;
+  city: string;
+  countryRegion: string;
+};
+
+/** API attraction shape from /api/attractions */
+type ApiAttraction = {
+  id: number;
+  name: string;
+  city: string;
+  stateProvince: string;
+  country: string;
+  summary: string;
+  vibe: string;
+  rating: number | null;
+  totalCountRatings: number | null;
+  credibilityTier: number | null;
+  reviewsSummary: string;
+  priceLevel: string;
+  popularityScore: number | null;
+  latitude: number | null;
+  longitude: number | null;
+  distanceFromPlace: number | null;
+  rawData: string;
+  lastRefreshed: string;
+  categories: string[];
+  imageUrl: string | null;
+  imageUrls: string[];
+};
+
+function apiAttractionToFavorite(a: ApiAttraction): FavoriteAttraction {
+  return {
+    id: a.id,
+    name: a.name,
+    city: a.city,
+    stateProvince: a.stateProvince,
+    country: a.country,
+    latitude: a.latitude,
+    longitude: a.longitude,
+    distanceFromPlace: a.distanceFromPlace,
+    summary: a.summary,
+    vibe: a.vibe,
+    rating: a.rating,
+    totalCountRatings: a.totalCountRatings,
+    credibilityTier: a.credibilityTier,
+    reviewsSummary: a.reviewsSummary,
+    priceLevel: a.priceLevel,
+    popularityScore: a.popularityScore,
+    rawData: a.rawData,
+    lastRefreshed: a.lastRefreshed,
+    categories: a.categories,
+    imageUrl: a.imageUrl,
+    imageUrls: a.imageUrls ?? []
+  };
+}
 
 type PlannedStop = {
   attraction: FavoriteAttraction;
@@ -103,14 +161,20 @@ function sanitizeItineraryId(raw: string | null | undefined) {
     .slice(0, 80);
 }
 
+const SUGGESTED_LIMIT = 24;
+
 export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRoute }: SavedTripBuilderProps) {
   const router = useRouter();
-  const { attractions, removeAttraction } = useItinerary();
+  const { attractions, addAttraction, removeAttraction, reorderAttractions, isInItinerary } = useItinerary();
 
   const today = new Date();
   const defaultStart = today.toISOString().slice(0, 10);
   const defaultEnd = new Date(today.getTime() + 1000 * 60 * 60 * 24 * 2).toISOString().slice(0, 10);
 
+  const [placesOptions, setPlacesOptions] = useState<PlaceOption[]>([]);
+  const [selectedPlace, setSelectedPlace] = useState<PlaceOption | null>(null);
+  const [suggestedAttractions, setSuggestedAttractions] = useState<FavoriteAttraction[]>([]);
+  const [loadingSuggested, setLoadingSuggested] = useState(false);
   const [tripName, setTripName] = useState(initialItinerary?.tripName ?? "My Weekend Escape");
   const [tripPlace, setTripPlace] = useState(initialItinerary?.tripPlace ?? "");
   const [startDate, setStartDate] = useState(initialItinerary?.startDate ?? defaultStart);
@@ -127,10 +191,67 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
   const [shareLink, setShareLink] = useState<string | null>(null);
   const [isShareCopied, setIsShareCopied] = useState(false);
   const [isLoginNoticeOpen, setIsLoginNoticeOpen] = useState(false);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
   const tripDays = useMemo(() => daysBetween(startDate, endDate), [startDate, endDate]);
   const totalStops = dayPlans.reduce((sum, day) => sum + day.stops.length, 0);
   const activeTripName = tripName.trim() || "Untitled Trip";
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/collab-places");
+        const data = (await res.json()) as { options?: PlaceOption[]; error?: string };
+        if (!cancelled && data.options) setPlacesOptions(data.options);
+      } catch {
+        if (!cancelled) setPlacesOptions([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!selectedPlace?.city && !selectedPlace?.countryRegion) {
+      setSuggestedAttractions([]);
+      return;
+    }
+    let cancelled = false;
+    setLoadingSuggested(true);
+    (async () => {
+      try {
+        const params = new URLSearchParams();
+        params.set("limit", String(SUGGESTED_LIMIT));
+        params.set("offset", "0");
+        if (selectedPlace.city) params.set("city", selectedPlace.city);
+        if (selectedPlace.countryRegion) params.set("countryRegion", selectedPlace.countryRegion);
+        const res = await fetch(`/api/attractions?${params.toString()}`);
+        const json = (await res.json()) as { data?: ApiAttraction[]; error?: string };
+        if (!cancelled && json.data) {
+          setSuggestedAttractions(json.data.map(apiAttractionToFavorite));
+        } else if (!cancelled) {
+          setSuggestedAttractions([]);
+        }
+      } catch {
+        if (!cancelled) setSuggestedAttractions([]);
+      } finally {
+        if (!cancelled) setLoadingSuggested(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedPlace?.id]);
+
+  useEffect(() => {
+    if (!initialItinerary?.tripPlace || placesOptions.length === 0) return;
+    const match = placesOptions.find(
+      (p) => p.label === initialItinerary.tripPlace || p.label.startsWith(initialItinerary.tripPlace ?? "")
+    );
+    if (match) setSelectedPlace(match);
+  }, [initialItinerary?.tripPlace, placesOptions]);
 
   useEffect(() => {
     if (!initialItinerary || !initialItinerary.itineraryId) return;
@@ -140,6 +261,16 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
     setShareLink(url);
     setActiveItineraryId(id);
   }, [initialItinerary]);
+
+  const handlePlaceChange = useCallback(
+    (placeId: string) => {
+      const id = placeId === "" ? null : Number(placeId);
+      const place = id != null ? placesOptions.find((p) => p.id === id) ?? null : null;
+      setSelectedPlace(place);
+      setTripPlace(place?.label ?? "");
+    },
+    [placesOptions]
+  );
 
   const scheduleAttraction = (attraction: FavoriteAttraction) => {
     const stopsPerDay = pace === "relaxed" ? 1 : pace === "packed" ? 3 : 2;
@@ -301,14 +432,20 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
               />
             </div>
             <div className="saved-trips-field">
-              <label htmlFor="trip-place">Trip Place</label>
-              <input
+              <label htmlFor="trip-place">Trip location</label>
+              <select
                 id="trip-place"
-                type="text"
-                value={tripPlace}
-                onChange={(event) => setTripPlace(event.target.value)}
-                placeholder="e.g. Paris, France"
-              />
+                value={selectedPlace?.id ?? ""}
+                onChange={(e) => handlePlaceChange(e.target.value)}
+                aria-label="Choose a destination to see suggested places"
+              >
+                <option value="">Choose a destination…</option>
+                {placesOptions.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.label}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="saved-trips-field">
               <label htmlFor="trip-start">Start</label>
@@ -376,22 +513,144 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
             </article>
           </section>
 
+          {selectedPlace && (
+            <section className="saved-suggested-section" aria-labelledby="suggested-heading">
+              <h2 id="suggested-heading">Suggested in {selectedPlace.label}</h2>
+              <p className="saved-suggested-intro">Click + to add a place to your itinerary.</p>
+              {loadingSuggested ? (
+                <p className="saved-suggested-loading">Loading suggestions…</p>
+              ) : (
+                <div className="saved-suggested-grid">
+                  {suggestedAttractions.map((attraction) => {
+                    const added = isInItinerary(attraction.id);
+                    return (
+                      <article className="saved-suggested-card" key={attraction.id}>
+                        {attraction.imageUrl ? (
+                          <img
+                            src={attraction.imageUrl}
+                            alt=""
+                            className="saved-suggested-card-img"
+                          />
+                        ) : (
+                          <div className="saved-suggested-card-img saved-suggested-card-placeholder" aria-hidden />
+                        )}
+                        <div className="saved-suggested-card-body">
+                          <h3>{attraction.name}</h3>
+                          <p className="saved-suggested-card-meta">
+                            {formatLocation(attraction.city, attraction.stateProvince, attraction.country)}
+                          </p>
+                          {attraction.summary && (
+                            <p className="saved-suggested-card-summary">
+                              {attraction.summary.slice(0, 120)}
+                              {attraction.summary.length > 120 ? "…" : ""}
+                            </p>
+                          )}
+                          <button
+                            type="button"
+                            className={`saved-suggested-add ${added ? "saved-suggested-added" : ""}`}
+                            aria-label={added ? `${attraction.name} already in itinerary` : `Add ${attraction.name} to itinerary`}
+                            onClick={() => {
+                              if (!added) addAttraction(attraction);
+                            }}
+                            disabled={added}
+                          >
+                            {added ? "✓ Added" : "+ Add"}
+                          </button>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          )}
+
+          <section className="saved-itinerary-cards-section" aria-labelledby="your-itinerary-heading">
+            <h2 id="your-itinerary-heading">Your itinerary</h2>
+            <p className="saved-itinerary-cards-intro">Drag to reorder. Use Build Itinerary to assign days.</p>
+            {attractions.length === 0 ? (
+              <p className="saved-itinerary-cards-empty">
+                No places yet. Pick a location above to see suggestions, or add from Destinations.
+              </p>
+            ) : (
+              <div
+                className="saved-itinerary-cards"
+                role="list"
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = "move";
+                }}
+              >
+                {attractions.map((attraction, index) => (
+                  <div
+                    key={attraction.id}
+                    className={`saved-itinerary-card ${draggedIndex === index ? "saved-itinerary-card-dragging" : ""}`}
+                    role="listitem"
+                    draggable
+                    data-index={index}
+                    onDragStart={(e) => {
+                      setDraggedIndex(index);
+                      e.dataTransfer.effectAllowed = "move";
+                      e.dataTransfer.setData("text/plain", String(index));
+                      e.dataTransfer.setData("application/json", JSON.stringify({ index }));
+                    }}
+                    onDragEnd={() => setDraggedIndex(null)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const from = Number(e.dataTransfer.getData("text/plain"));
+                      const to = index;
+                      if (Number.isFinite(from) && Number.isFinite(to) && from !== to) {
+                        reorderAttractions(from, to);
+                      }
+                      setDraggedIndex(null);
+                    }}
+                  >
+                    <span className="saved-itinerary-card-handle" aria-hidden title="Drag to reorder">
+                      ⋮⋮
+                    </span>
+                    {attraction.imageUrl ? (
+                      <img src={attraction.imageUrl} alt="" className="saved-itinerary-card-img" />
+                    ) : (
+                      <div className="saved-itinerary-card-img saved-itinerary-card-placeholder" aria-hidden />
+                    )}
+                    <div className="saved-itinerary-card-body">
+                      <h3>{attraction.name}</h3>
+                      <p className="saved-itinerary-card-meta">
+                        {formatLocation(attraction.city, attraction.stateProvince, attraction.country)}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className="saved-itinerary-card-remove"
+                      aria-label={`Remove ${attraction.name} from itinerary`}
+                      onClick={() => {
+                        removeAttraction(attraction.id);
+                        setDayPlans((current) =>
+                          current.map((day) => ({
+                            ...day,
+                            stops: day.stops.filter((s) => s.attraction.id !== attraction.id)
+                          }))
+                        );
+                        setUnscheduled((current) => current.filter((item) => item.id !== attraction.id));
+                      }}
+                    >
+                      🗑
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
           {attractions.length === 0 ? (
             <section className="saved-trips-empty">
-              <h2>No itinerary ideas yet</h2>
-              <p>Browse destinations, then add places to your itinerary and build a trip here.</p>
+              <h2>No places in your itinerary yet</h2>
+              <p>Pick a location above to see suggested places, or go to Destinations to add places. They’ll appear here and you can drag to reorder.</p>
               <div className="saved-trips-empty-actions">
                 <button
                   type="button"
                   className="saved-trips-button saved-trips-button-primary"
-                  onClick={() => {
-                    const placeQuery = tripPlace.trim();
-                    if (placeQuery) {
-                      router.push(`/home?place=${encodeURIComponent(placeQuery)}`);
-                    } else {
-                      router.push("/home");
-                    }
-                  }}
+                  onClick={() => router.push("/home")}
                 >
                   Browse Destinations
                 </button>

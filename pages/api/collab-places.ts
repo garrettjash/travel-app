@@ -4,6 +4,8 @@ import { createClient } from "@supabase/supabase-js";
 type PlaceOption = {
   id: number;
   label: string;
+  city: string;
+  countryRegion: string;
 };
 
 type PlacesResponse =
@@ -65,7 +67,9 @@ export default async function handler(
 
         return {
           id,
-          label
+          label: city && country ? `${city}, ${country}` : label,
+          city,
+          countryRegion: country
         } as PlaceOption;
       })
       .filter((item): item is PlaceOption => Boolean(item))
