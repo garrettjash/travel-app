@@ -103,6 +103,16 @@ function formatLocation(city: string, stateProvince: string, country: string) {
   return [city, stateProvince, country].filter(Boolean).join(", ") || "Location unavailable";
 }
 
+function formatCategoryLabel(categories: string[] | undefined): string {
+  if (!categories?.length) return "";
+  return categories.slice(0, 2).join(" • ").trim();
+}
+
+function getSlotLabel(stopIndex: number, totalInDay: number): string {
+  if (totalInDay > 3) return `Stop ${stopIndex + 1}`;
+  return slotOrder[stopIndex] ?? "Morning";
+}
+
 function daysBetween(startDate: string, endDate: string) {
   if (!startDate || !endDate) return 3;
 
@@ -259,6 +269,18 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
     for (const a of initialItinerary.unscheduled ?? []) all.push(a);
     all.forEach((a) => addAttraction(a));
   }, [initialItinerary?.itineraryId]);
+
+  // Sync unscheduled so items added from Destinations (or elsewhere) appear in Unassigned
+  useEffect(() => {
+    const inDayIds = new Set(dayPlans.flatMap((d) => d.stops.map((s) => s.attraction.id)));
+    const unassigned = attractions.filter((a) => !inDayIds.has(a.id));
+    setUnscheduled((current) => {
+      const currentIds = new Set(current.map((c) => c.id));
+      const toAdd = unassigned.filter((a) => !currentIds.has(a.id));
+      if (toAdd.length === 0) return current;
+      return [...current, ...toAdd];
+    });
+  }, [attractions, dayPlans]);
 
   const handleSelectPlace = useCallback((place: PlaceOption) => {
     setSelectedPlace(place);
@@ -610,6 +632,9 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
                           <h3>{attraction.name}</h3>
                           <p className="saved-suggested-card-meta">
                             {formatLocation(attraction.city, attraction.stateProvince, attraction.country)}
+                            {formatCategoryLabel(attraction.categories) && (
+                              <span className="saved-suggested-card-type"> · {formatCategoryLabel(attraction.categories)}</span>
+                            )}
                           </p>
                           {attraction.summary && (
                             <p className="saved-suggested-card-summary">
@@ -620,16 +645,19 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
                           <button
                             type="button"
                             className={`saved-suggested-add ${added ? "saved-suggested-added" : ""}`}
-                            aria-label={added ? `${attraction.name} already in itinerary` : `Add ${attraction.name} to itinerary`}
+                            aria-label={added ? `Remove ${attraction.name} from itinerary` : `Add ${attraction.name} to itinerary`}
                             onClick={() => {
-                              if (!added) {
+                              if (added) {
+                                removeAttraction(attraction.id);
+                                setUnscheduled((c) => c.filter((x) => x.id !== attraction.id));
+                                setDayPlans((c) => c.map((d) => ({ ...d, stops: d.stops.filter((s) => s.attraction.id !== attraction.id) })));
+                              } else {
                                 addAttraction(attraction);
                                 setUnscheduled((u) => [...u, attraction]);
                               }
                             }}
-                            disabled={added}
                           >
-                            {added ? "✓ Added" : "+ Add"}
+                            {added ? "✓ Added (click to remove)" : "+ Add"}
                           </button>
                         </div>
                       </article>
@@ -708,6 +736,9 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
                           <h3>{attraction.name}</h3>
                           <p className="saved-schedule-card-meta">
                             {formatLocation(attraction.city, attraction.stateProvince, attraction.country)}
+                            {formatCategoryLabel(attraction.categories) && (
+                              <span className="saved-schedule-card-type"> · {formatCategoryLabel(attraction.categories)}</span>
+                            )}
                           </p>
                         </div>
                         <button
@@ -716,6 +747,7 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
                           aria-label={`Remove ${attraction.name}`}
                           onClick={() => {
                             setUnscheduled((c) => c.filter((item) => item.id !== attraction.id));
+                            setDayPlans((c) => c.map((d) => ({ ...d, stops: d.stops.filter((s) => s.attraction.id !== attraction.id) })));
                             removeAttraction(attraction.id);
                           }}
                         >
@@ -759,7 +791,7 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
                               if (dragSource) moveStop(dragSource, { type: "day", dayIndex, insertIndex: slotIndex });
                             }}
                           >
-                            <span className="saved-stop-slot">{stop.slot}</span>
+                            <span className="saved-stop-slot">{getSlotLabel(slotIndex, day.stops.length)}</span>
                             {stop.attraction.imageUrl ? (
                               <img src={stop.attraction.imageUrl} alt="" className="saved-schedule-card-img" />
                             ) : (
@@ -769,6 +801,9 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
                               <h3>{stop.attraction.name}</h3>
                               <p className="saved-schedule-card-meta">
                                 {formatLocation(stop.attraction.city, stop.attraction.stateProvince, stop.attraction.country)}
+                                {formatCategoryLabel(stop.attraction.categories) && (
+                                  <span className="saved-schedule-card-type"> · {formatCategoryLabel(stop.attraction.categories)}</span>
+                                )}
                               </p>
                             </div>
                             <button

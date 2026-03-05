@@ -1017,6 +1017,11 @@ body {
   color: #4c6179;
 }
 
+.saved-schedule-card-type {
+  color: #3a6a96;
+  font-weight: 600;
+}
+
 .saved-schedule-card-remove {
   flex-shrink: 0;
   border: none;
@@ -1200,6 +1205,11 @@ body {
   margin: 0;
   font-size: 0.8rem;
   color: #4c6179;
+}
+
+.saved-suggested-card-type {
+  color: #3a6a96;
+  font-weight: 600;
 }
 
 .saved-suggested-card-summary {
