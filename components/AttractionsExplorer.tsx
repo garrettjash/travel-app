@@ -1,6 +1,7 @@
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import AttractionDetailsModal from "./AttractionDetailsModal";
 import { FavoriteAttraction, useFavorites } from "../lib/favorites-context";
+import { useItinerary } from "../lib/itinerary-context";
 
 type Attraction = {
   id: number;
@@ -137,6 +138,7 @@ function dedupeAttractionsById(list: Attraction[]) {
 
 export default function AttractionsExplorer({ title, subtitle, initialPlace }: AttractionsExplorerProps) {
   const { toggleFavorite, isFavorite } = useFavorites();
+  const { addAttraction } = useItinerary();
   const [filters, setFilters] = useState<Filters>(defaultFilters);
   const [visibleFilters, setVisibleFilters] = useState<FilterKey[]>(defaultVisibleFilters);
   const [selectedFilterToAdd, setSelectedFilterToAdd] = useState<FilterKey | "">("");
@@ -642,23 +644,35 @@ export default function AttractionsExplorer({ title, subtitle, initialPlace }: A
                   <div className="attraction-card-top">
                     <div className="attraction-card-title-row">
                       <h2>{attraction.name}</h2>
-                      <button
-                        type="button"
-                        className={`attraction-favorite-button ${
-                          isFavorite(attraction.id) ? "attraction-favorite-button-active" : ""
-                        }`}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          toggleFavorite(toFavoriteAttraction(attraction));
-                        }}
-                        aria-label={
-                          isFavorite(attraction.id)
-                            ? `Remove ${attraction.name} from favorites`
-                            : `Add ${attraction.name} to favorites`
-                        }
-                      >
-                        {isFavorite(attraction.id) ? "♥" : "♡"}
-                      </button>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button
+                          type="button"
+                          className={`attraction-favorite-button ${
+                            isFavorite(attraction.id) ? "attraction-favorite-button-active" : ""
+                          }`}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            toggleFavorite(toFavoriteAttraction(attraction));
+                          }}
+                          aria-label={
+                            isFavorite(attraction.id)
+                              ? `Remove ${attraction.name} from favorites`
+                              : `Add ${attraction.name} to favorites`
+                          }
+                        >
+                          {isFavorite(attraction.id) ? "♥" : "♡"}
+                        </button>
+                        <button
+                          type="button"
+                          className="attractions-view-more"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            addAttraction(toFavoriteAttraction(attraction));
+                          }}
+                        >
+                          Add to itinerary
+                        </button>
+                      </div>
                     </div>
                     <p>{formatLocation(attraction.city, attraction.country)}</p>
                   </div>
