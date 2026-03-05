@@ -105,7 +105,7 @@ function sanitizeItineraryId(raw: string | null | undefined) {
 
 export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRoute }: SavedTripBuilderProps) {
   const router = useRouter();
-  const { attractions } = useItinerary();
+  const { attractions, removeAttraction } = useItinerary();
 
   const today = new Date();
   const defaultStart = today.toISOString().slice(0, 10);
@@ -140,6 +140,26 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
     setShareLink(url);
     setActiveItineraryId(id);
   }, [initialItinerary]);
+
+  const scheduleAttraction = (attraction: FavoriteAttraction) => {
+    const stopsPerDay = pace === "relaxed" ? 1 : pace === "packed" ? 3 : 2;
+    const currentTotalStops = dayPlans.reduce((sum, day) => sum + day.stops.length, 0);
+    const dayIndex = Math.floor(currentTotalStops / stopsPerDay);
+    if (dayIndex >= tripDays) {
+      return;
+    }
+    const slotIndex = currentTotalStops % stopsPerDay;
+    const slot = slotOrder[slotIndex] ?? "Afternoon";
+
+    setDayPlans((current) => {
+      const next = current.map((day) => ({ ...day, stops: [...day.stops] }));
+      while (next.length < tripDays) {
+        next.push({ dayNumber: next.length + 1, stops: [] });
+      }
+      next[dayIndex].stops.push({ attraction, slot });
+      return next;
+    });
+  };
 
   const handleBuild = (randomize: boolean) => {
     if (attractions.length === 0) {
@@ -243,7 +263,7 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
           </button>
           <button type="button" className="destinations-tab destinations-tab-active">
             <span aria-hidden="true">💾</span>
-            <span>Saved Trips</span>
+            <span>Itinerary</span>
           </button>
           <button type="button" className="destinations-tab" onClick={() => router.push("/favorites")}>
             <span aria-hidden="true">❤</span>
@@ -265,7 +285,7 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
 
         <div className="destinations-content">
           <section className="saved-trips-header">
-            <h1>Saved Trips Studio</h1>
+            <h1>Itinerary</h1>
             <p>Turn your favorites into a ready-to-go itinerary in one click and save it with a shareable link.</p>
           </section>
 
@@ -413,7 +433,38 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
                             >
                               <span className="saved-stop-slot">{stop.slot}</span>
                               <div className="saved-stop-content">
-                                <h3>{stop.attraction.name}</h3>
+                                <div className="saved-stop-header">
+                                  <h3>{stop.attraction.name}</h3>
+                                  <button
+                                    type="button"
+                                    className="saved-stop-remove"
+                                    aria-label={`Remove ${stop.attraction.name} from itinerary`}
+                                    onClick={() => {
+                                      setDayPlans((current) =>
+                                        current.map((existingDay) =>
+                                          existingDay.dayNumber !== day.dayNumber
+                                            ? existingDay
+                                            : {
+                                                ...existingDay,
+                                                stops: existingDay.stops.filter(
+                                                  (s) =>
+                                                    !(
+                                                      s.attraction.id === stop.attraction.id &&
+                                                      s.slot === stop.slot
+                                                    )
+                                                )
+                                              }
+                                        )
+                                      );
+                                      setUnscheduled((current) =>
+                                        current.filter((item) => item.id !== stop.attraction.id)
+                                      );
+                                      removeAttraction(stop.attraction.id);
+                                    }}
+                                  >
+                                    🗑
+                                  </button>
+                                </div>
                                 <p>
                                   {formatLocation(
                                     stop.attraction.city,
@@ -443,7 +494,45 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
                   <div className="saved-unscheduled-grid">
                     {unscheduled.map((attraction) => (
                       <article className="saved-unscheduled-item" key={attraction.id}>
-                        <h3>{attraction.name}</h3>
+                        <div className="saved-stop-header">
+                          <h3>{attraction.name}</h3>
+                          <div className="saved-stop-actions">
+                            <button
+                              type="button"
+                              className="saved-stop-add"
+                              aria-label={`Add ${attraction.name} to itinerary schedule`}
+                              onClick={() => {
+                                scheduleAttraction(attraction);
+                                setUnscheduled((current) =>
+                                  current.filter((item) => item.id !== attraction.id)
+                                );
+                              }}
+                            >
+                              ➕
+                            </button>
+                            <button
+                              type="button"
+                              className="saved-stop-remove"
+                              aria-label={`Remove ${attraction.name} from itinerary`}
+                              onClick={() => {
+                                setUnscheduled((current) =>
+                                  current.filter((item) => item.id !== attraction.id)
+                                );
+                                setDayPlans((current) =>
+                                  current.map((existingDay) => ({
+                                    ...existingDay,
+                                    stops: existingDay.stops.filter(
+                                      (stop) => stop.attraction.id !== attraction.id
+                                    )
+                                  }))
+                                );
+                                removeAttraction(attraction.id);
+                              }}
+                            >
+                              🗑
+                            </button>
+                          </div>
+                        </div>
                         <p>
                           {formatLocation(
                             attraction.city,

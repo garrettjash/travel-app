@@ -36,7 +36,7 @@ export default function HomePage() {
             onClick={() => router.push("/saved-trips")}
           >
             <span aria-hidden="true">💾</span>
-            <span>Saved Trips</span>
+            <span>Itinerary</span>
           </button>
           <button
             type="button"

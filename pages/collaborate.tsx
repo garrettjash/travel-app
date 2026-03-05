@@ -241,7 +241,7 @@ export default function CollaboratePage() {
           </button>
           <button type="button" className="destinations-tab" onClick={() => router.push("/saved-trips")}>
             <span aria-hidden="true">💾</span>
-            <span>Saved Trips</span>
+            <span>Itinerary</span>
           </button>
           <button type="button" className="destinations-tab" onClick={() => router.push("/favorites")}>
             <span aria-hidden="true">❤</span>

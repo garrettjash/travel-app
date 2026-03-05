@@ -75,7 +75,7 @@ const ItineraryPage: NextPage = () => {
             </button>
             <button type="button" className="destinations-tab destinations-tab-active">
               <span aria-hidden="true">💾</span>
-              <span>Saved Trips</span>
+              <span>Itinerary</span>
             </button>
             <button type="button" className="destinations-tab" onClick={() => router.push("/favorites")}>
               <span aria-hidden="true">❤</span>
@@ -131,7 +131,7 @@ const ItineraryPage: NextPage = () => {
             </button>
             <button type="button" className="destinations-tab destinations-tab-active">
               <span aria-hidden="true">💾</span>
-              <span>Saved Trips</span>
+              <span>Itinerary</span>
             </button>
             <button type="button" className="destinations-tab" onClick={() => router.push("/favorites")}>
               <span aria-hidden="true">❤</span>

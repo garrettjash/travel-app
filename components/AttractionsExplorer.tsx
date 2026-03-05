@@ -138,7 +138,7 @@ function dedupeAttractionsById(list: Attraction[]) {
 
 export default function AttractionsExplorer({ title, subtitle, initialPlace }: AttractionsExplorerProps) {
   const { toggleFavorite, isFavorite } = useFavorites();
-  const { addAttraction, isInItinerary } = useItinerary();
+  const { addAttraction, removeAttraction, isInItinerary } = useItinerary();
   const [filters, setFilters] = useState<Filters>(defaultFilters);
   const [visibleFilters, setVisibleFilters] = useState<FilterKey[]>(defaultVisibleFilters);
   const [selectedFilterToAdd, setSelectedFilterToAdd] = useState<FilterKey | "">("");
@@ -669,12 +669,14 @@ export default function AttractionsExplorer({ title, subtitle, initialPlace }: A
                           }`}
                           onClick={(event) => {
                             event.stopPropagation();
-                            if (isInItinerary(attraction.id)) return;
-                            addAttraction(toFavoriteAttraction(attraction));
+                            if (isInItinerary(attraction.id)) {
+                              removeAttraction(attraction.id);
+                            } else {
+                              addAttraction(toFavoriteAttraction(attraction));
+                            }
                           }}
-                          disabled={isInItinerary(attraction.id)}
                         >
-                          {isInItinerary(attraction.id) ? "Added" : "Add to itinerary"}
+                          {isInItinerary(attraction.id) ? "Added (click to remove)" : "Add to itinerary"}
                         </button>
                       </div>
                     </div>
