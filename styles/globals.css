@@ -887,11 +887,55 @@ body {
   gap: 12px;
 }
 
+/* Drag-and-drop schedule: Unassigned + Days */
+.saved-trips-drag-schedule {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.saved-unassigned-zone {
+  border: 1px dashed #b8d0e8;
+  border-radius: 16px;
+  background: rgba(248, 252, 255, 0.9);
+  padding: 14px;
+  min-height: 80px;
+}
+
+.saved-unassigned-title {
+  margin: 0 0 4px;
+  font-size: 1.1rem;
+  color: #113d68;
+}
+
+.saved-unassigned-intro {
+  margin: 0 0 12px;
+  font-size: 0.9rem;
+  color: #4a627a;
+}
+
+.saved-unassigned-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.saved-days-drag {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
 .saved-day-card {
   border: 1px solid #d5e3f1;
   background: rgba(255, 255, 255, 0.94);
   border-radius: 16px;
   padding: 12px;
+}
+
+.saved-day-card.saved-day-droppable {
+  min-height: 120px;
 }
 
 .saved-day-card h2 {
@@ -904,12 +948,99 @@ body {
 .saved-trips-state {
   margin: 10px 0 0;
   color: #49627e;
+  font-size: 0.9rem;
 }
 
 .saved-day-stops {
   margin-top: 10px;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
+  min-height: 44px;
+}
+
+.saved-schedule-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #d6e4f2;
+  border-radius: 12px;
+  background: #f8fcff;
+  padding: 8px 10px;
+  cursor: grab;
+}
+
+.saved-schedule-card:active {
+  cursor: grabbing;
+}
+
+.saved-schedule-card-dragging {
+  opacity: 0.7;
+  box-shadow: 0 4px 12px rgba(17, 61, 104, 0.15);
+}
+
+.saved-schedule-card-handle {
+  flex-shrink: 0;
+  color: #5f778f;
+  font-size: 0.9rem;
+  user-select: none;
+}
+
+.saved-schedule-card-img {
+  width: 56px;
+  height: 42px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+  background: #e0eef9;
+}
+
+.saved-schedule-card-placeholder {
+  min-width: 56px;
+  min-height: 42px;
+}
+
+.saved-schedule-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.saved-schedule-card-body h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #1b3350;
+}
+
+.saved-schedule-card-meta {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+  color: #4c6179;
+}
+
+.saved-schedule-card-remove {
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 1rem;
+  opacity: 0.85;
+}
+
+.saved-schedule-card-remove:hover {
+  opacity: 1;
+}
+
+.saved-schedule-card-in-day .saved-stop-slot {
+  width: fit-content;
+  border: 1px solid #bad6ef;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 0.72rem;
+  color: #1f5b8b;
+  background: #e8f4ff;
+  font-weight: 600;
+  flex-shrink: 0;
 }
 
 .saved-stop {

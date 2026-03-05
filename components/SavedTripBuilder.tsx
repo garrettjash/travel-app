@@ -93,12 +93,11 @@ type SavedTripBuilderProps = {
   itineraryIdFromRoute?: string | null;
 };
 
-type BuildResult = {
-  days: DayPlan[];
-  unscheduled: FavoriteAttraction[];
-};
-
 const slotOrder: Slot[] = ["Morning", "Afternoon", "Evening"];
+
+type DragSource =
+  | { type: "day"; dayIndex: number; slotIndex: number }
+  | { type: "unscheduled"; index: number };
 
 function formatLocation(city: string, stateProvince: string, country: string) {
   return [city, stateProvince, country].filter(Boolean).join(", ") || "Location unavailable";
@@ -116,43 +115,6 @@ function daysBetween(startDate: string, endDate: string) {
   return Math.max(1, dayDiff);
 }
 
-function shuffle<T>(items: T[]) {
-  const next = [...items];
-  for (let i = next.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [next[i], next[j]] = [next[j], next[i]];
-  }
-  return next;
-}
-
-function buildItinerary(
-  favorites: FavoriteAttraction[],
-  tripDays: number,
-  pace: Pace,
-  randomize: boolean
-): BuildResult {
-  const stopsPerDay = pace === "relaxed" ? 1 : pace === "packed" ? 3 : 2;
-  const capacity = tripDays * stopsPerDay;
-  const source = randomize ? shuffle(favorites) : [...favorites];
-  const picked = source.slice(0, capacity);
-  const unscheduled = source.slice(capacity);
-
-  const days: DayPlan[] = Array.from({ length: tripDays }, (_, index) => ({
-    dayNumber: index + 1,
-    stops: []
-  }));
-
-  picked.forEach((attraction, index) => {
-    const dayIndex = Math.floor(index / stopsPerDay);
-    const slotIndex = index % stopsPerDay;
-    const slot = slotOrder[slotIndex] ?? "Afternoon";
-
-    days[dayIndex].stops.push({ attraction, slot });
-  });
-
-  return { days, unscheduled };
-}
-
 function sanitizeItineraryId(raw: string | null | undefined) {
   if (!raw) return "";
   return raw
@@ -165,7 +127,7 @@ const SUGGESTED_LIMIT = 24;
 
 export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRoute }: SavedTripBuilderProps) {
   const router = useRouter();
-  const { attractions, addAttraction, removeAttraction, reorderAttractions, isInItinerary } = useItinerary();
+  const { attractions, addAttraction, removeAttraction, isInItinerary } = useItinerary();
 
   const today = new Date();
   const defaultStart = today.toISOString().slice(0, 10);
@@ -194,9 +156,18 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
   const [shareLink, setShareLink] = useState<string | null>(null);
   const [isShareCopied, setIsShareCopied] = useState(false);
   const [isLoginNoticeOpen, setIsLoginNoticeOpen] = useState(false);
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragSource, setDragSource] = useState<DragSource | null>(null);
 
   const tripDays = useMemo(() => daysBetween(startDate, endDate), [startDate, endDate]);
+
+  /** Padded day plans so we always have tripDays entries for drop zones */
+  const paddedDayPlans = useMemo(() => {
+    const next = [...dayPlans];
+    while (next.length < tripDays) {
+      next.push({ dayNumber: next.length + 1, stops: [] });
+    }
+    return next.slice(0, tripDays);
+  }, [dayPlans, tripDays]);
   const totalStops = dayPlans.reduce((sum, day) => sum + day.stops.length, 0);
   const activeTripName = tripName.trim() || "Untitled Trip";
 
@@ -279,6 +250,16 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
     setActiveItineraryId(id);
   }, [initialItinerary]);
 
+  useEffect(() => {
+    if (!initialItinerary) return;
+    const all: FavoriteAttraction[] = [];
+    for (const day of initialItinerary.days ?? []) {
+      for (const stop of day.stops) all.push(stop.attraction);
+    }
+    for (const a of initialItinerary.unscheduled ?? []) all.push(a);
+    all.forEach((a) => addAttraction(a));
+  }, [initialItinerary?.itineraryId]);
+
   const handleSelectPlace = useCallback((place: PlaceOption) => {
     setSelectedPlace(place);
     setTripPlace(place.label);
@@ -296,37 +277,73 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const scheduleAttraction = (attraction: FavoriteAttraction) => {
-    const stopsPerDay = pace === "relaxed" ? 1 : pace === "packed" ? 3 : 2;
-    const currentTotalStops = dayPlans.reduce((sum, day) => sum + day.stops.length, 0);
-    const dayIndex = Math.floor(currentTotalStops / stopsPerDay);
-    if (dayIndex >= tripDays) {
-      return;
-    }
-    const slotIndex = currentTotalStops % stopsPerDay;
-    const slot = slotOrder[slotIndex] ?? "Afternoon";
+  type DropTarget =
+    | { type: "day"; dayIndex: number; insertIndex: number }
+    | { type: "unscheduled"; insertIndex: number };
 
-    setDayPlans((current) => {
-      const next = current.map((day) => ({ ...day, stops: [...day.stops] }));
-      while (next.length < tripDays) {
-        next.push({ dayNumber: next.length + 1, stops: [] });
+  const moveStop = useCallback(
+    (from: DragSource, to: DropTarget) => {
+      let attraction: FavoriteAttraction;
+      let slot: Slot = "Morning";
+
+      if (from.type === "day") {
+        const stop = dayPlans[from.dayIndex]?.stops[from.slotIndex];
+        if (!stop) return;
+        attraction = stop.attraction;
+        slot = stop.slot;
+      } else {
+        const item = unscheduled[from.index];
+        if (!item) return;
+        attraction = item;
+        if (to.type === "day") slot = slotOrder[to.insertIndex % slotOrder.length] ?? "Morning";
       }
-      next[dayIndex].stops.push({ attraction, slot });
-      return next;
-    });
-  };
 
-  const handleBuild = (randomize: boolean) => {
-    if (attractions.length === 0) {
-      setDayPlans([]);
-      setUnscheduled([]);
-      return;
-    }
+      setDayPlans((current) => {
+        const next = current.map((d) => ({ ...d, stops: [...d.stops] }));
+        while (next.length < tripDays) next.push({ dayNumber: next.length + 1, stops: [] });
 
-    const built = buildItinerary(attractions, tripDays, pace, randomize);
-    setDayPlans(built.days);
-    setUnscheduled(built.unscheduled);
-  };
+        if (from.type === "day") {
+          const day = next[from.dayIndex];
+          if (day) day.stops.splice(from.slotIndex, 1);
+        }
+
+        if (to.type === "day") {
+          while (next.length <= to.dayIndex) next.push({ dayNumber: next.length + 1, stops: [] });
+          const targetDay = next[to.dayIndex];
+          if (targetDay) {
+            let insertIdx = to.insertIndex;
+            if (from.type === "day" && from.dayIndex === to.dayIndex && from.slotIndex < to.insertIndex) {
+              insertIdx = to.insertIndex - 1;
+            }
+            const newStop: PlannedStop = { attraction, slot };
+            targetDay.stops.splice(insertIdx, 0, newStop);
+          }
+        }
+        return next.slice(0, tripDays);
+      });
+
+      setUnscheduled((current) => {
+        if (from.type === "unscheduled") {
+          const next = current.filter((_, i) => i !== from.index);
+          if (to.type === "unscheduled") {
+            let insertIdx = to.insertIndex;
+            if (from.index < to.insertIndex) insertIdx = to.insertIndex - 1;
+            next.splice(insertIdx, 0, attraction);
+            return next;
+          }
+          return next;
+        }
+        if (to.type === "unscheduled") {
+          const next = [...current];
+          next.splice(to.insertIndex, 0, attraction);
+          return next;
+        }
+        return current;
+      });
+      setDragSource(null);
+    },
+    [dayPlans, unscheduled, tripDays]
+  );
 
   const clearPlan = () => {
     setDayPlans([]);
@@ -543,18 +560,8 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
               </select>
             </div>
             <div className="saved-trips-actions">
-              <button
-                type="button"
-                className="saved-trips-button saved-trips-button-primary"
-                onClick={() => handleBuild(false)}
-              >
-                Build Itinerary
-              </button>
-              <button type="button" className="saved-trips-button" onClick={() => handleBuild(true)}>
-                Surprise Me
-              </button>
               <button type="button" className="saved-trips-button saved-trips-button-muted" onClick={clearPlan}>
-                Clear Plan
+                Clear schedule
               </button>
             </div>
           </form>
@@ -615,7 +622,10 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
                             className={`saved-suggested-add ${added ? "saved-suggested-added" : ""}`}
                             aria-label={added ? `${attraction.name} already in itinerary` : `Add ${attraction.name} to itinerary`}
                             onClick={() => {
-                              if (!added) addAttraction(attraction);
+                              if (!added) {
+                                addAttraction(attraction);
+                                setUnscheduled((u) => [...u, attraction]);
+                              }
                             }}
                             disabled={added}
                           >
@@ -629,87 +639,6 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
               )}
             </section>
           )}
-
-          <section className="saved-itinerary-cards-section" aria-labelledby="your-itinerary-heading">
-            <h2 id="your-itinerary-heading">Your itinerary</h2>
-            <p className="saved-itinerary-cards-intro">Drag to reorder. Use Build Itinerary to assign days.</p>
-            {attractions.length === 0 ? (
-              <p className="saved-itinerary-cards-empty">
-                No places yet. Pick a location above to see suggestions, or add from Destinations.
-              </p>
-            ) : (
-              <div
-                className="saved-itinerary-cards"
-                role="list"
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  e.dataTransfer.dropEffect = "move";
-                }}
-              >
-                {attractions.map((attraction, index) => (
-                  <div
-                    key={attraction.id}
-                    className={`saved-itinerary-card ${draggedIndex === index ? "saved-itinerary-card-dragging" : ""}`}
-                    role="listitem"
-                    draggable
-                    data-index={index}
-                    onDragStart={(e) => {
-                      setDraggedIndex(index);
-                      e.dataTransfer.effectAllowed = "move";
-                      e.dataTransfer.setData("text/plain", String(index));
-                      e.dataTransfer.setData("application/json", JSON.stringify({ index }));
-                    }}
-                    onDragEnd={() => setDraggedIndex(null)}
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                      e.dataTransfer.dropEffect = "move";
-                    }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      const from = Number(e.dataTransfer.getData("text/plain"));
-                      const to = index;
-                      if (Number.isFinite(from) && Number.isFinite(to) && from !== to) {
-                        reorderAttractions(from, to);
-                      }
-                      setDraggedIndex(null);
-                    }}
-                  >
-                    <span className="saved-itinerary-card-handle" aria-hidden title="Drag to reorder">
-                      ⋮⋮
-                    </span>
-                    {attraction.imageUrl ? (
-                      <img src={attraction.imageUrl} alt="" className="saved-itinerary-card-img" />
-                    ) : (
-                      <div className="saved-itinerary-card-img saved-itinerary-card-placeholder" aria-hidden />
-                    )}
-                    <div className="saved-itinerary-card-body">
-                      <h3>{attraction.name}</h3>
-                      <p className="saved-itinerary-card-meta">
-                        {formatLocation(attraction.city, attraction.stateProvince, attraction.country)}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      className="saved-itinerary-card-remove"
-                      aria-label={`Remove ${attraction.name} from itinerary`}
-                      onClick={() => {
-                        removeAttraction(attraction.id);
-                        setDayPlans((current) =>
-                          current.map((day) => ({
-                            ...day,
-                            stops: day.stops.filter((s) => s.attraction.id !== attraction.id)
-                          }))
-                        );
-                        setUnscheduled((current) => current.filter((item) => item.id !== attraction.id));
-                      }}
-                    >
-                      🗑
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
 
           {attractions.length === 0 ? (
             <section className="saved-trips-empty">
@@ -738,141 +667,137 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
                 />
               </section>
 
-              <section className="saved-trips-timeline">
-                {dayPlans.length === 0 ? (
-                  <p className="saved-trips-state">
-                    Build an itinerary to see your day-by-day plan.
-                  </p>
-                ) : (
-                  dayPlans.map((day) => (
-                    <article className="saved-day-card" key={day.dayNumber}>
+              <section className="saved-trips-drag-schedule" aria-label="Schedule">
+                <div
+                  className="saved-unassigned-zone"
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = "move";
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (dragSource) moveStop(dragSource, { type: "unscheduled", insertIndex: unscheduled.length });
+                  }}
+                >
+                  <h2 className="saved-unassigned-title">Unassigned</h2>
+                  <p className="saved-unassigned-intro">Drag places here or into a day. Drag between days to reorder.</p>
+                  <div className="saved-unassigned-cards">
+                    {unscheduled.map((attraction, idx) => (
+                      <div
+                        key={attraction.id}
+                        className={`saved-schedule-card ${dragSource?.type === "unscheduled" && dragSource.index === idx ? "saved-schedule-card-dragging" : ""}`}
+                        draggable
+                        onDragStart={() => setDragSource({ type: "unscheduled", index: idx })}
+                        onDragEnd={() => setDragSource(null)}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.dataTransfer.dropEffect = "move";
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          if (dragSource) moveStop(dragSource, { type: "unscheduled", insertIndex: idx });
+                        }}
+                      >
+                        <span className="saved-schedule-card-handle" aria-hidden>⋮⋮</span>
+                        {attraction.imageUrl ? (
+                          <img src={attraction.imageUrl} alt="" className="saved-schedule-card-img" />
+                        ) : (
+                          <div className="saved-schedule-card-img saved-schedule-card-placeholder" aria-hidden />
+                        )}
+                        <div className="saved-schedule-card-body">
+                          <h3>{attraction.name}</h3>
+                          <p className="saved-schedule-card-meta">
+                            {formatLocation(attraction.city, attraction.stateProvince, attraction.country)}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          className="saved-schedule-card-remove"
+                          aria-label={`Remove ${attraction.name}`}
+                          onClick={() => {
+                            setUnscheduled((c) => c.filter((item) => item.id !== attraction.id));
+                            removeAttraction(attraction.id);
+                          }}
+                        >
+                          🗑
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="saved-days-drag">
+                  {paddedDayPlans.map((day, dayIndex) => (
+                    <article className="saved-day-card saved-day-droppable" key={day.dayNumber}>
                       <header>
                         <h2>Day {day.dayNumber}</h2>
                       </header>
-
-                      {day.stops.length === 0 ? (
-                        <p className="saved-day-empty">No stops for this day.</p>
-                      ) : (
-                        <div className="saved-day-stops">
-                          {day.stops.map((stop) => (
-                            <div
-                              className="saved-stop"
-                              key={`${day.dayNumber}-${stop.attraction.id}-${stop.slot}`}
-                            >
-                              <span className="saved-stop-slot">{stop.slot}</span>
-                              <div className="saved-stop-content">
-                                <div className="saved-stop-header">
-                                  <h3>{stop.attraction.name}</h3>
-                                  <button
-                                    type="button"
-                                    className="saved-stop-remove"
-                                    aria-label={`Remove ${stop.attraction.name} from itinerary`}
-                                    onClick={() => {
-                                      setDayPlans((current) =>
-                                        current.map((existingDay) =>
-                                          existingDay.dayNumber !== day.dayNumber
-                                            ? existingDay
-                                            : {
-                                                ...existingDay,
-                                                stops: existingDay.stops.filter(
-                                                  (s) =>
-                                                    !(
-                                                      s.attraction.id === stop.attraction.id &&
-                                                      s.slot === stop.slot
-                                                    )
-                                                )
-                                              }
-                                        )
-                                      );
-                                      setUnscheduled((current) =>
-                                        current.filter((item) => item.id !== stop.attraction.id)
-                                      );
-                                      removeAttraction(stop.attraction.id);
-                                    }}
-                                  >
-                                    🗑
-                                  </button>
-                                </div>
-                                <p>
-                                  {formatLocation(
-                                    stop.attraction.city,
-                                    stop.attraction.stateProvince,
-                                    stop.attraction.country
-                                  )}
-                                </p>
-                                {stop.attraction.categories.length > 0 && (
-                                  <p className="saved-stop-tags">
-                                    {stop.attraction.categories.slice(0, 3).join(" • ")}
-                                  </p>
-                                )}
-                              </div>
+                      <div
+                        className="saved-day-stops"
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.dataTransfer.dropEffect = "move";
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          if (dragSource) moveStop(dragSource, { type: "day", dayIndex, insertIndex: day.stops.length });
+                        }}
+                      >
+                        {day.stops.map((stop, slotIndex) => (
+                          <div
+                            key={`${day.dayNumber}-${stop.attraction.id}-${stop.slot}`}
+                            className={`saved-schedule-card saved-schedule-card-in-day ${dragSource?.type === "day" && dragSource.dayIndex === dayIndex && dragSource.slotIndex === slotIndex ? "saved-schedule-card-dragging" : ""}`}
+                            draggable
+                            onDragStart={() => setDragSource({ type: "day", dayIndex, slotIndex })}
+                            onDragEnd={() => setDragSource(null)}
+                            onDragOver={(e) => {
+                              e.preventDefault();
+                              e.dataTransfer.dropEffect = "move";
+                            }}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              if (dragSource) moveStop(dragSource, { type: "day", dayIndex, insertIndex: slotIndex });
+                            }}
+                          >
+                            <span className="saved-stop-slot">{stop.slot}</span>
+                            {stop.attraction.imageUrl ? (
+                              <img src={stop.attraction.imageUrl} alt="" className="saved-schedule-card-img" />
+                            ) : (
+                              <div className="saved-schedule-card-img saved-schedule-card-placeholder" aria-hidden />
+                            )}
+                            <div className="saved-schedule-card-body">
+                              <h3>{stop.attraction.name}</h3>
+                              <p className="saved-schedule-card-meta">
+                                {formatLocation(stop.attraction.city, stop.attraction.stateProvince, stop.attraction.country)}
+                              </p>
                             </div>
-                          ))}
-                        </div>
-                      )}
-                    </article>
-                  ))
-                )}
-              </section>
-
-              {unscheduled.length > 0 && (
-                <section className="saved-trips-unscheduled">
-                  <h2>Still on your list</h2>
-                  <p>These did not fit your current date range and pace.</p>
-                  <div className="saved-unscheduled-grid">
-                    {unscheduled.map((attraction) => (
-                      <article className="saved-unscheduled-item" key={attraction.id}>
-                        <div className="saved-stop-header">
-                          <h3>{attraction.name}</h3>
-                          <div className="saved-stop-actions">
                             <button
                               type="button"
-                              className="saved-stop-add"
-                              aria-label={`Add ${attraction.name} to itinerary schedule`}
+                              className="saved-schedule-card-remove"
+                              aria-label={`Remove ${stop.attraction.name}`}
                               onClick={() => {
-                                scheduleAttraction(attraction);
-                                setUnscheduled((current) =>
-                                  current.filter((item) => item.id !== attraction.id)
-                                );
-                              }}
-                            >
-                              ➕
-                            </button>
-                            <button
-                              type="button"
-                              className="saved-stop-remove"
-                              aria-label={`Remove ${attraction.name} from itinerary`}
-                              onClick={() => {
-                                setUnscheduled((current) =>
-                                  current.filter((item) => item.id !== attraction.id)
-                                );
                                 setDayPlans((current) =>
-                                  current.map((existingDay) => ({
-                                    ...existingDay,
-                                    stops: existingDay.stops.filter(
-                                      (stop) => stop.attraction.id !== attraction.id
-                                    )
-                                  }))
+                                  current.map((d) =>
+                                    d.dayNumber !== day.dayNumber
+                                      ? d
+                                      : { ...d, stops: d.stops.filter((s) => s.attraction.id !== stop.attraction.id) }
+                                  )
                                 );
-                                removeAttraction(attraction.id);
+                                removeAttraction(stop.attraction.id);
                               }}
                             >
                               🗑
                             </button>
                           </div>
-                        </div>
-                        <p>
-                          {formatLocation(
-                            attraction.city,
-                            attraction.stateProvince,
-                            attraction.country
-                          )}
-                        </p>
-                      </article>
-                    ))}
-                  </div>
-                </section>
-              )}
+                        ))}
+                        {day.stops.length === 0 && (
+                          <p className="saved-day-empty">Drop places here</p>
+                        )}
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>
             </>
           )}
 
