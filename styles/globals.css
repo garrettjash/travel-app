@@ -1109,11 +1109,17 @@ body {
   cursor: pointer;
   padding: 4px;
   font-size: 1rem;
-  opacity: 0.85;
+  opacity: 0.9;
+  pointer-events: auto;
 }
 
 .saved-schedule-card-remove:hover {
   opacity: 1;
+}
+
+.saved-schedule-card-remove:focus {
+  outline: 2px solid #113d68;
+  outline-offset: 2px;
 }
 
 .saved-schedule-card-in-day .saved-stop-slot {

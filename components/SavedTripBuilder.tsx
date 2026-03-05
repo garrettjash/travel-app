@@ -98,6 +98,7 @@ const slotOrder: Slot[] = ["Morning", "Afternoon", "Evening"];
 const BUILD_CATEGORIES = [
   "Landmark",
   "Restaurant",
+  "Food",
   "Activity",
   "Shopping",
   "Nature",
@@ -108,6 +109,11 @@ const BUILD_CATEGORIES = [
   "Attraction",
   "Entertainment"
 ];
+
+/** Map user-facing type (e.g. Food) to category values we match in attraction.categories. Enables future AI-driven mapping. */
+const BUILD_TYPE_ALIASES: Record<string, string[]> = {
+  Food: ["Restaurant", "Food", "Dining", "Cafe", "Bar"]
+};
 
 type DragSource =
   | { type: "day"; dayIndex: number; slotIndex: number }
@@ -287,15 +293,21 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
     all.forEach((a) => addAttraction(a));
   }, [initialItinerary?.itineraryId]);
 
-  // Sync unscheduled so items added from Destinations (or elsewhere) appear in Unassigned (deduplicated)
+  // Sync unscheduled so items added from Destinations (or elsewhere) appear in Unassigned (deduplicated by id)
   useEffect(() => {
     const inDayIds = new Set(dayPlans.flatMap((d) => d.stops.map((s) => s.attraction.id)));
     const unassigned = attractions.filter((a) => !inDayIds.has(a.id));
     setUnscheduled((current) => {
       const kept = current.filter((c) => unassigned.some((u) => u.id === c.id));
-      const toAppend = unassigned.filter((a) => !current.some((c) => c.id === a.id));
-      if (toAppend.length === 0) return kept;
-      return [...kept, ...toAppend];
+      const seenIds = new Set<number>();
+      const dedupedKept = kept.filter((c) => {
+        if (seenIds.has(c.id)) return false;
+        seenIds.add(c.id);
+        return true;
+      });
+      const toAppend = unassigned.filter((a) => !seenIds.has(a.id));
+      if (toAppend.length === 0) return dedupedKept;
+      return [...dedupedKept, ...toAppend];
     });
   }, [attractions, dayPlans]);
 
@@ -314,6 +326,13 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Clear drag state when any drag ends (e.g. drop outside or cancel) so cards don't stay greyed
+  useEffect(() => {
+    const clearDrag = () => setDragSource(null);
+    document.addEventListener("dragend", clearDrag);
+    return () => document.removeEventListener("dragend", clearDrag);
   }, []);
 
   type DropTarget =
@@ -389,13 +408,24 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
     setNotes("");
   };
 
+  /** Remove an attraction from the entire itinerary (context, unscheduled, all days). Use for every remove action. */
+  const removeFromItinerary = useCallback((attractionId: number) => {
+    removeAttraction(attractionId);
+    setUnscheduled((c) => c.filter((x) => x.id !== attractionId));
+    setDayPlans((c) => c.map((d) => ({ ...d, stops: d.stops.filter((s) => s.attraction.id !== attractionId) })));
+  }, [removeAttraction]);
+
+  /** Build itinerary from unassigned items matching selected types (and pace). Structured for future AI hook. */
   const handleBuildForMeApply = useCallback(() => {
     const stopsPerDay = pace === "relaxed" ? 1 : pace === "packed" ? 3 : 2;
     const capacity = tripDays * stopsPerDay;
     let pool = unscheduled.filter((a) => {
       if (buildTypes.size === 0) return true;
-      const cats = a.categories ?? [];
-      return buildTypes.size === 0 || [...buildTypes].some((t) => cats.some((c) => c.toLowerCase() === t.toLowerCase()));
+      const cats = (a.categories ?? []).map((c) => c.toLowerCase());
+      return [...buildTypes].some((t) => {
+        const aliases = BUILD_TYPE_ALIASES[t] ?? [t];
+        return aliases.some((alias) => cats.includes(alias.toLowerCase()));
+      });
     });
     if (buildShuffle) {
       const next = [...pool];
@@ -651,7 +681,9 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
             {buildForMeOpen && (
               <section className="saved-build-for-me-panel" aria-label="Build for me options">
                 <h3 className="saved-build-for-me-title">Auto-fill your days</h3>
-                <p className="saved-build-for-me-intro">Choose pace, filter by type, then apply to distribute your unassigned places across days.</p>
+                <p className="saved-build-for-me-intro">
+                  Only unassigned places matching the types you check below will be used. Pace sets how many per day. Apply distributes them across your trip (e.g. 2 days × 2/day = 4 places).
+                </p>
                 <div className="saved-build-for-me-row">
                   <label className="saved-build-for-me-label">Pace</label>
                   <select
@@ -772,9 +804,7 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
                             aria-label={added ? `Remove ${attraction.name} from itinerary` : `Add ${attraction.name} to itinerary`}
                             onClick={() => {
                               if (added) {
-                                removeAttraction(attraction.id);
-                                setUnscheduled((c) => c.filter((x) => x.id !== attraction.id));
-                                setDayPlans((c) => c.map((d) => ({ ...d, stops: d.stops.filter((s) => s.attraction.id !== attraction.id) })));
+                                removeFromItinerary(attraction.id);
                               } else {
                                 addAttraction(attraction);
                                 setUnscheduled((u) => [...u, attraction]);
@@ -869,10 +899,10 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
                           type="button"
                           className="saved-schedule-card-remove"
                           aria-label={`Remove ${attraction.name}`}
-                          onClick={() => {
-                            setUnscheduled((c) => c.filter((item) => item.id !== attraction.id));
-                            setDayPlans((c) => c.map((d) => ({ ...d, stops: d.stops.filter((s) => s.attraction.id !== attraction.id) })));
-                            removeAttraction(attraction.id);
+                          onMouseDown={(e) => e.stopPropagation()}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeFromItinerary(attraction.id);
                           }}
                         >
                           🗑
@@ -934,15 +964,10 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
                               type="button"
                               className="saved-schedule-card-remove"
                               aria-label={`Remove ${stop.attraction.name}`}
-                              onClick={() => {
-                                setDayPlans((current) =>
-                                  current.map((d) =>
-                                    d.dayNumber !== day.dayNumber
-                                      ? d
-                                      : { ...d, stops: d.stops.filter((s) => s.attraction.id !== stop.attraction.id) }
-                                  )
-                                );
-                                removeAttraction(stop.attraction.id);
+                              onMouseDown={(e) => e.stopPropagation()}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeFromItinerary(stop.attraction.id);
                               }}
                             >
                               🗑
