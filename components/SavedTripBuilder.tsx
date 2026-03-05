@@ -1,4 +1,4 @@
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import { FavoriteAttraction } from "../lib/favorites-context";
 import { useItinerary } from "../lib/itinerary-context";
@@ -173,6 +173,9 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
 
   const [placesOptions, setPlacesOptions] = useState<PlaceOption[]>([]);
   const [selectedPlace, setSelectedPlace] = useState<PlaceOption | null>(null);
+  const [placeInputValue, setPlaceInputValue] = useState("");
+  const [placeDropdownOpen, setPlaceDropdownOpen] = useState(false);
+  const placeDropdownRef = useRef<HTMLDivElement>(null);
   const [suggestedAttractions, setSuggestedAttractions] = useState<FavoriteAttraction[]>([]);
   const [loadingSuggested, setLoadingSuggested] = useState(false);
   const [tripName, setTripName] = useState(initialItinerary?.tripName ?? "My Weekend Escape");
@@ -225,8 +228,8 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
         const params = new URLSearchParams();
         params.set("limit", String(SUGGESTED_LIMIT));
         params.set("offset", "0");
+        // Filter by city only so we match DB (e.g. "United States" vs "USA")
         if (selectedPlace.city) params.set("city", selectedPlace.city);
-        if (selectedPlace.countryRegion) params.set("countryRegion", selectedPlace.countryRegion);
         const res = await fetch(`/api/attractions?${params.toString()}`);
         const json = (await res.json()) as { data?: ApiAttraction[]; error?: string };
         if (!cancelled && json.data) {
@@ -250,8 +253,22 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
     const match = placesOptions.find(
       (p) => p.label === initialItinerary.tripPlace || p.label.startsWith(initialItinerary.tripPlace ?? "")
     );
-    if (match) setSelectedPlace(match);
+    if (match) {
+      setSelectedPlace(match);
+      setPlaceInputValue(match.label);
+    }
   }, [initialItinerary?.tripPlace, placesOptions]);
+
+  const filteredPlaces = useMemo(() => {
+    const q = placeInputValue.trim().toLowerCase();
+    if (!q) return placesOptions.slice(0, 50);
+    return placesOptions.filter(
+      (p) =>
+        p.label.toLowerCase().includes(q) ||
+        p.city.toLowerCase().includes(q) ||
+        (p.countryRegion && p.countryRegion.toLowerCase().includes(q))
+    ).slice(0, 50);
+  }, [placesOptions, placeInputValue]);
 
   useEffect(() => {
     if (!initialItinerary || !initialItinerary.itineraryId) return;
@@ -262,15 +279,22 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
     setActiveItineraryId(id);
   }, [initialItinerary]);
 
-  const handlePlaceChange = useCallback(
-    (placeId: string) => {
-      const id = placeId === "" ? null : Number(placeId);
-      const place = id != null ? placesOptions.find((p) => p.id === id) ?? null : null;
-      setSelectedPlace(place);
-      setTripPlace(place?.label ?? "");
-    },
-    [placesOptions]
-  );
+  const handleSelectPlace = useCallback((place: PlaceOption) => {
+    setSelectedPlace(place);
+    setTripPlace(place.label);
+    setPlaceInputValue(place.label);
+    setPlaceDropdownOpen(false);
+  }, []);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (placeDropdownRef.current && !placeDropdownRef.current.contains(event.target as Node)) {
+        setPlaceDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const scheduleAttraction = (attraction: FavoriteAttraction) => {
     const stopsPerDay = pace === "relaxed" ? 1 : pace === "packed" ? 3 : 2;
@@ -431,21 +455,62 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
                 placeholder="Name your trip"
               />
             </div>
-            <div className="saved-trips-field">
+            <div className="saved-trips-field saved-trips-field-place" ref={placeDropdownRef}>
               <label htmlFor="trip-place">Trip location</label>
-              <select
+              <input
                 id="trip-place"
-                value={selectedPlace?.id ?? ""}
-                onChange={(e) => handlePlaceChange(e.target.value)}
-                aria-label="Choose a destination to see suggested places"
-              >
-                <option value="">Choose a destination…</option>
-                {placesOptions.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.label}
-                  </option>
-                ))}
-              </select>
+                type="text"
+                value={placeInputValue}
+                onChange={(e) => {
+                  setPlaceInputValue(e.target.value);
+                  setPlaceDropdownOpen(true);
+                  if (!e.target.value.trim()) {
+                    setSelectedPlace(null);
+                    setTripPlace("");
+                  }
+                }}
+                onFocus={() => setPlaceDropdownOpen(true)}
+                onBlur={() => {
+                  // Delay so option click registers
+                  setTimeout(() => setPlaceDropdownOpen(false), 180);
+                }}
+                placeholder="Type to search destinations…"
+                autoComplete="off"
+                aria-label="Trip location — type to search and pick a destination"
+                aria-expanded={placeDropdownOpen}
+                aria-haspopup="listbox"
+                aria-controls="trip-place-listbox"
+                role="combobox"
+              />
+              {placeDropdownOpen && (
+                <ul
+                  id="trip-place-listbox"
+                  className="saved-trips-place-listbox"
+                  role="listbox"
+                  aria-label="Available destinations"
+                >
+                  {filteredPlaces.length === 0 ? (
+                    <li className="saved-trips-place-option saved-trips-place-option-empty" role="option">
+                      No matching places
+                    </li>
+                  ) : (
+                    filteredPlaces.map((p) => (
+                      <li
+                        key={p.id}
+                        role="option"
+                        className="saved-trips-place-option"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          handleSelectPlace(p);
+                        }}
+                        aria-selected={selectedPlace?.id === p.id}
+                      >
+                        {p.label}
+                      </li>
+                    ))
+                  )}
+                </ul>
+              )}
             </div>
             <div className="saved-trips-field">
               <label htmlFor="trip-start">Start</label>
@@ -595,6 +660,10 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
                       e.dataTransfer.setData("application/json", JSON.stringify({ index }));
                     }}
                     onDragEnd={() => setDraggedIndex(null)}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.dataTransfer.dropEffect = "move";
+                    }}
                     onDrop={(e) => {
                       e.preventDefault();
                       const from = Number(e.dataTransfer.getData("text/plain"));

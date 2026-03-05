@@ -763,6 +763,48 @@ body {
   color: #1a2a3b;
 }
 
+.saved-trips-field-place {
+  position: relative;
+}
+
+.saved-trips-place-listbox {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid #c6d8ec;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(17, 61, 104, 0.12);
+  z-index: 10;
+}
+
+.saved-trips-place-option {
+  padding: 10px 12px;
+  cursor: pointer;
+  color: #1a2a3b;
+  border-bottom: 1px solid #e8f0f7;
+}
+
+.saved-trips-place-option:last-child {
+  border-bottom: none;
+}
+
+.saved-trips-place-option:hover,
+.saved-trips-place-option[aria-selected="true"] {
+  background: #e8f4ff;
+}
+
+.saved-trips-place-option-empty {
+  color: #5f778f;
+  cursor: default;
+}
+
 .saved-trips-actions {
   grid-column: 1 / -1;
   display: flex;
