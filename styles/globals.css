@@ -812,6 +812,78 @@ body {
   gap: 8px;
 }
 
+/* Build for me panel */
+.saved-build-for-me-panel {
+  grid-column: 1 / -1;
+  margin-top: 12px;
+  padding: 16px;
+  border: 1px solid #c6d8ec;
+  border-radius: 12px;
+  background: #f0f7ff;
+}
+
+.saved-build-for-me-title {
+  margin: 0 0 6px;
+  font-size: 1rem;
+  color: #113d68;
+}
+
+.saved-build-for-me-intro {
+  margin: 0 0 14px;
+  font-size: 0.9rem;
+  color: #4a627a;
+}
+
+.saved-build-for-me-row {
+  margin-bottom: 12px;
+}
+
+.saved-build-for-me-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #395977;
+  margin-bottom: 6px;
+}
+
+.saved-build-for-me-select {
+  border: 1px solid #c6d8ec;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font: inherit;
+  min-width: 180px;
+}
+
+.saved-build-for-me-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin-top: 6px;
+}
+
+.saved-build-for-me-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: #1a2a3b;
+  cursor: pointer;
+}
+
+.saved-build-for-me-check input {
+  margin: 0;
+}
+
+.saved-build-for-me-shuffle {
+  margin-top: 8px;
+}
+
+.saved-build-for-me-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
 .saved-trips-button {
   border: 1px solid #b9d2ea;
   border-radius: 10px;
@@ -956,7 +1028,15 @@ body {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  min-height: 44px;
+  min-height: 52px;
+}
+
+.saved-day-stops:has(.saved-day-empty) {
+  min-height: 72px;
+  border: 1px dashed #b8d0e8;
+  border-radius: 10px;
+  padding: 8px;
+  background: rgba(248, 252, 255, 0.6);
 }
 
 .saved-schedule-card {
