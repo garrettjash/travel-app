@@ -157,7 +157,7 @@ const SUGGESTED_LIMIT = 24;
 
 export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRoute }: SavedTripBuilderProps) {
   const router = useRouter();
-  const { attractions, addAttraction, removeAttraction, isInItinerary } = useItinerary();
+  const { attractions, addAttraction, removeAttraction, clearAttractions, isInItinerary } = useItinerary();
 
   const today = new Date();
   const defaultStart = today.toISOString().slice(0, 10);
@@ -201,6 +201,20 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
     }
     return next.slice(0, tripDays);
   }, [dayPlans, tripDays]);
+
+  /** Type options for Build for me: categories that actually appear in unassigned, so the list is always relevant */
+  const buildTypeOptions = useMemo(() => {
+    const seen = new Set<string>();
+    for (const a of unscheduled) {
+      for (const c of a.categories ?? []) {
+        const t = c.trim();
+        if (t) seen.add(t);
+      }
+    }
+    const list = Array.from(seen).sort((a, b) => a.localeCompare(b));
+    return list.length > 0 ? list : BUILD_CATEGORIES;
+  }, [unscheduled]);
+
   const totalStops = dayPlans.reduce((sum, day) => sum + day.stops.length, 0);
   const activeTripName = tripName.trim() || "Untitled Trip";
 
@@ -403,6 +417,11 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
   );
 
   const clearPlan = () => {
+    if (typeof window !== "undefined") {
+      const confirmed = window.confirm("Clear schedule and remove all places from this itinerary?");
+      if (!confirmed) return;
+    }
+    clearAttractions();
     setDayPlans([]);
     setUnscheduled([]);
     setNotes("");
@@ -652,18 +671,6 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
                 onChange={(event) => setEndDate(event.target.value)}
               />
             </div>
-            <div className="saved-trips-field">
-              <label htmlFor="trip-pace">Pace</label>
-              <select
-                id="trip-pace"
-                value={pace}
-                onChange={(event) => setPace(event.target.value as Pace)}
-              >
-                <option value="relaxed">Relaxed (1 stop/day)</option>
-                <option value="balanced">Balanced (2 stops/day)</option>
-                <option value="packed">Packed (3 stops/day)</option>
-              </select>
-            </div>
             <div className="saved-trips-actions">
               <button
                 type="button"
@@ -682,7 +689,7 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
               <section className="saved-build-for-me-panel" aria-label="Build for me options">
                 <h3 className="saved-build-for-me-title">Auto-fill your days</h3>
                 <p className="saved-build-for-me-intro">
-                  Only unassigned places matching the types you check below will be used. Pace sets how many per day. Apply distributes them across your trip (e.g. 2 days × 2/day = 4 places).
+                  Apply will automatically put your unassigned places into the days above. Choose pace (stops per day). Optionally filter by type—only checked types are used; if none are checked, all unassigned places are used.
                 </p>
                 <div className="saved-build-for-me-row">
                   <label className="saved-build-for-me-label">Pace</label>
@@ -697,9 +704,9 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
                   </select>
                 </div>
                 <div className="saved-build-for-me-row">
-                  <span className="saved-build-for-me-label">Types of attractions</span>
+                  <span className="saved-build-for-me-label">Types (from your unassigned list)</span>
                   <div className="saved-build-for-me-types">
-                    {BUILD_CATEGORIES.map((cat) => (
+                    {buildTypeOptions.map((cat) => (
                       <label key={cat} className="saved-build-for-me-check">
                         <input
                           type="checkbox"
@@ -877,6 +884,7 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
                         }}
                         onDrop={(e) => {
                           e.preventDefault();
+                          e.stopPropagation();
                           if (dragSource) moveStop(dragSource, { type: "unscheduled", insertIndex: idx });
                         }}
                       >
@@ -942,6 +950,7 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
                             }}
                             onDrop={(e) => {
                               e.preventDefault();
+                              e.stopPropagation();
                               if (dragSource) moveStop(dragSource, { type: "day", dayIndex, insertIndex: slotIndex });
                             }}
                           >
