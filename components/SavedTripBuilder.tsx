@@ -232,7 +232,13 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
         const params = new URLSearchParams();
         params.set("search", q);
         const res = await fetch(`/api/collab-places?${params.toString()}`);
-        const data = (await res.json()) as { options?: PlaceOption[]; error?: string };
+        let data: { options?: PlaceOption[]; error?: string } = {};
+        try {
+          const text = await res.text();
+          if (text && text.trim().startsWith("{")) data = JSON.parse(text);
+        } catch {
+          /* response was not valid JSON (e.g. HTML error page) */
+        }
         if (!cancelled && data.options) setPlacesOptions(data.options);
         else if (!cancelled) setPlacesOptions([]);
       } catch {
@@ -837,7 +843,7 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
             </section>
           )}
 
-          {attractions.length === 0 ? (
+          {(unscheduled.length === 0 && !dayPlans.some((d) => d.stops.length > 0)) ? (
             <section className="saved-trips-empty">
               <h2>No places in your itinerary yet</h2>
               <p>Pick a location above to see suggested places, or go to Destinations to add places. They’ll appear here and you can drag to reorder.</p>

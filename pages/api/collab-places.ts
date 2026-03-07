@@ -55,9 +55,10 @@ export default async function handler(
       .select("place_id, place_city, place_countryregion");
 
     if (search) {
-      const escaped = search.replace(/[%_\\]/g, "\\$&");
+      const escaped = search.replace(/[%_\\]/g, "\\$&").replace(/"/g, '\\"');
+      const pattern = `"%${escaped}%"`;
       query = query.or(
-        `place_city.ilike.%${escaped}%,place_countryregion.ilike.%${escaped}%`
+        `place_city.ilike.${pattern},place_countryregion.ilike.${pattern}`
       );
     }
 
