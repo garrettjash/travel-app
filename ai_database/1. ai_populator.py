@@ -595,7 +595,19 @@ def main() -> None:
 		default="data/TripAdvisor/seed_places.json",
 		help="Path to JSON array of place strings",
 	)
-	parser.add_argument("--seed-limit", type=int, default=None, help="Optional max number of seed places to process")
+	parser.add_argument(
+		"--seed-start-index",
+		type=int,
+		default=0,
+		help="0-based index into seed list to start scanning from",
+	)
+	parser.add_argument("--seed-limit", type=int, default=None, help="Optional max number of seed places to scan")
+	parser.add_argument(
+		"--target-new-places",
+		type=int,
+		default=None,
+		help="Stop after this many new places are created (skips existing places until target is met)",
+	)
 	parser.add_argument("--dry-run", action="store_true")
 	args = parser.parse_args()
 
@@ -612,18 +624,33 @@ def main() -> None:
 		if not seed_path.is_absolute():
 			seed_path = Path(__file__).resolve().parents[1] / seed_path
 
-		seed_places = load_seed_places(seed_path)
-		if args.seed_limit is not None and args.seed_limit > 0:
-			seed_places = seed_places[: args.seed_limit]
+		all_seed_places = load_seed_places(seed_path)
+		start_index = max(0, int(args.seed_start_index or 0))
+		if start_index >= len(all_seed_places):
+			print(f"Seed start index {start_index} is beyond seed list size ({len(all_seed_places)}). Nothing to do.")
+			return
 
-		print(f"Loaded {len(seed_places)} places from seed list: {seed_path}")
+		seed_places = all_seed_places[start_index:]
+		max_scan = args.seed_limit if args.seed_limit is not None and args.seed_limit > 0 else None
+		target_new = args.target_new_places if args.target_new_places is not None and args.target_new_places > 0 else None
+		if max_scan is not None:
+			seed_places = seed_places[:max_scan]
+
+		print(f"Loaded {len(seed_places)} places from seed list: {seed_path} (start_index={start_index})")
+		if target_new is not None:
+			print(f"Target new places to create: {target_new}")
 		total_created = 0
 		total_exists = 0
 		total_added = 0
 		total_images = 0
 		total_skipped = 0
+		processed = 0
 
 		for idx, place_input in enumerate(seed_places, start=1):
+			if target_new is not None and total_created >= target_new:
+				break
+
+			processed += 1
 			print(f"\n[{idx}/{len(seed_places)}] Processing: {place_input}")
 			result = process_one_place_input(
 				place_input=place_input,
@@ -648,7 +675,7 @@ def main() -> None:
 			total_skipped += int(result.get("skipped", 0))
 
 		print("\n✅ Seed run complete")
-		print(f"   Places processed: {len(seed_places)}")
+		print(f"   Places processed: {processed}")
 		print(f"   New places created: {total_created}")
 		print(f"   Places already existing: {total_exists}")
 		print(f"   Attractions inserted/updated: {total_added}")
