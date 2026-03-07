@@ -84,6 +84,12 @@ body {
   z-index: 5;
 }
 
+.landing-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .landing-hero {
   min-height: calc(100vh - 64px);
   display: flex;
@@ -442,6 +448,330 @@ body {
   color: #c53030;
 }
 
+.solo-planner-page {
+  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
+  background: linear-gradient(180deg, #e7ecf9 0%, #f8fafc 100%);
+  position: relative;
+}
+
+.solo-planner-topbar {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+}
+
+.solo-back-button {
+  border: 1px solid #c9d9ea;
+  background: #ffffff;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1f3f60;
+  cursor: pointer;
+}
+
+.solo-chat-area {
+  height: calc(100vh - 56px);
+  padding: 0 16px 16px 16px;
+  width: 100%;
+  margin-left: 0;
+  transition: width 220ms ease, margin-left 220ms ease;
+}
+
+.solo-chat-shell {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.solo-chat-shell .chat-messages {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.solo-panel-toggle {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 1px solid #9ec4e7;
+  background: #ffffff;
+  color: #11385b;
+  font-weight: 700;
+  border-radius: 10px;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  padding: 10px 8px;
+  cursor: pointer;
+  z-index: 15;
+}
+
+.solo-itinerary-panel {
+  position: absolute;
+  inset: 56px auto 0 0;
+  width: 50%;
+  background: rgba(255, 255, 255, 0.97);
+  border-right: 1px solid #d4e1ef;
+  box-shadow: 20px 0 40px rgba(15, 23, 42, 0.14);
+  transform: translateX(-102%);
+  transition: transform 220ms ease;
+  z-index: 20;
+}
+
+.solo-itinerary-panel-open {
+  transform: translateX(0);
+}
+
+.solo-planner-page-panel-open .solo-chat-area {
+  width: 50%;
+  margin-left: 50%;
+}
+
+.solo-planner-page-panel-open.solo-planner-page-chat-collapsed .solo-chat-area {
+  width: 0;
+  margin-left: 100%;
+  padding: 0;
+  pointer-events: none;
+}
+
+.solo-planner-page-panel-open.solo-planner-page-chat-collapsed .solo-itinerary-panel {
+  width: 100%;
+}
+
+.solo-itinerary-panel-inner {
+  height: 100%;
+  overflow-y: auto;
+  padding: 22px;
+}
+
+.solo-itinerary-panel-header {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.solo-itinerary-collapse {
+  border: 1px solid #c7d9ea;
+  background: #ffffff;
+  color: #1f3f60;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.solo-itinerary-panel-inner h2 {
+  margin: 0;
+}
+
+.solo-itinerary-panel-inner > p {
+  margin: 8px 0 0;
+  color: #52606d;
+}
+
+.solo-itinerary-field {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.solo-itinerary-field label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #214262;
+}
+
+.solo-itinerary-field input,
+.solo-itinerary-field textarea {
+  border: 1px solid #c4d8eb;
+  border-radius: 10px;
+  background: #fff;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+}
+
+.solo-itinerary-field-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.solo-itinerary-actions {
+  margin-top: 14px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.solo-itinerary-success {
+  margin: 10px 0 0;
+  color: #1f7a4d;
+  font-weight: 600;
+}
+
+.solo-itinerary-suggested,
+.solo-itinerary-selected {
+  margin-top: 18px;
+}
+
+.solo-itinerary-suggested h3,
+.solo-itinerary-selected h3 {
+  margin: 0 0 10px;
+}
+
+.solo-itinerary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.solo-itinerary-item {
+  border: 1px solid #d4e1ef;
+  border-radius: 12px;
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  background: #ffffff;
+}
+
+.solo-itinerary-item p {
+  margin: 4px 0 0;
+  color: #52606d;
+  font-size: 0.88rem;
+}
+
+.collab-planner-page {
+  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
+  background:
+    radial-gradient(1200px 600px at 20% -20%, rgba(86, 168, 255, 0.22), transparent 60%),
+    radial-gradient(1000px 500px at 100% 0%, rgba(92, 214, 186, 0.2), transparent 55%),
+    #eef3f8;
+  color: #162333;
+  position: relative;
+}
+
+.collab-planner-topbar {
+  height: 56px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.collab-chat-toggle {
+  border: 1px solid #c7d9ea;
+  background: #ffffff;
+  color: #1f3f60;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.collab-planner-main {
+  height: calc(100vh - 56px);
+  width: 100%;
+  margin-right: 0;
+  transition: width 220ms ease, margin-right 220ms ease;
+  overflow-y: auto;
+  padding: 0 16px 18px;
+}
+
+.collab-planner-content {
+  width: min(980px, 100%);
+  margin: 0 auto;
+}
+
+.collab-chat-panel {
+  position: absolute;
+  inset: 56px 0 0 auto;
+  width: 50%;
+  background: rgba(255, 255, 255, 0.97);
+  border-left: 1px solid #d4e1ef;
+  box-shadow: -20px 0 40px rgba(15, 23, 42, 0.14);
+  transform: translateX(102%);
+  transition: transform 220ms ease;
+  z-index: 20;
+  padding: 10px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.collab-chat-panel-open {
+  transform: translateX(0);
+}
+
+.collab-planner-page-chat-open .collab-planner-main {
+  width: 50%;
+  margin-right: 50%;
+}
+
+.collab-planner-page-chat-open.collab-planner-page-main-collapsed .collab-planner-main {
+  width: 0;
+  margin-right: 100%;
+  padding: 0;
+  pointer-events: none;
+}
+
+.collab-planner-page-chat-open.collab-planner-page-main-collapsed .collab-chat-panel {
+  width: 100%;
+}
+
+.collab-chat-panel-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+.collab-chat-shell {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.collab-chat-shell .chat-messages {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.saved-trips-embedded-page {
+  min-height: 0;
+  height: auto;
+  background: transparent;
+  color: inherit;
+}
+
+.saved-trips-embedded-layout {
+  min-height: 0;
+  display: block;
+}
+
+.saved-trips-embedded-content {
+  padding: 0;
+}
+
 @keyframes chatSpin {
   to {
     transform: rotate(360deg);
@@ -472,6 +802,58 @@ body {
 
   .chat-send-button {
     height: 44px;
+  }
+
+  .solo-panel-toggle {
+    top: auto;
+    bottom: 14px;
+    transform: none;
+    writing-mode: horizontal-tb;
+    padding: 8px 12px;
+  }
+
+  .solo-itinerary-panel {
+    width: 100vw;
+    min-width: 0;
+    inset: 56px 0 0 0;
+  }
+
+  .solo-planner-page-panel-open .solo-chat-area {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .solo-planner-page-panel-open.solo-planner-page-chat-collapsed .solo-chat-area {
+    width: 0;
+    margin-left: 100%;
+  }
+
+  .solo-itinerary-field-row {
+    grid-template-columns: 1fr;
+  }
+
+  .collab-planner-main {
+    width: 100%;
+    margin-right: 0;
+  }
+
+  .collab-chat-panel {
+    width: 100vw;
+    inset: 56px 0 0 0;
+  }
+
+  .collab-planner-page-chat-open .collab-planner-main {
+    width: 100%;
+    margin-right: 0;
+  }
+
+  .collab-planner-page-chat-open.collab-planner-page-main-collapsed .collab-planner-main {
+    width: 0;
+    margin-right: 100%;
+  }
+
+  .collab-planner-page-chat-open.collab-planner-page-main-collapsed .collab-chat-panel {
+    width: 100vw;
   }
 }
 
@@ -522,6 +904,175 @@ body {
   color: #1f3f60;
   font-weight: 600;
   cursor: pointer;
+}
+
+.planning-options-shell {
+  min-height: calc(100vh - 64px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  position: relative;
+  background-size: cover;
+  background-position: center;
+}
+
+.planning-options-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.planning-options-card {
+  width: min(760px, 100%);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #d4e1ef;
+  border-radius: 24px;
+  box-shadow: 0 18px 40px rgba(16, 46, 76, 0.1);
+  padding: 28px;
+  position: relative;
+  z-index: 1;
+}
+
+.planning-options-eyebrow {
+  margin: 0 0 10px;
+  font-size: 0.9rem;
+  color: #4d6883;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.planning-options-card h1 {
+  margin: 0;
+  font-size: 1.9rem;
+  line-height: 1.2;
+}
+
+.planning-options-card > p {
+  margin: 12px 0 0;
+  color: #425b73;
+}
+
+.planning-options-actions {
+  margin-top: 24px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.planning-option-button {
+  min-height: 56px;
+  border-radius: 14px;
+  border: 1px solid #b8d0e7;
+  background: #f5f9fd;
+  color: #11385b;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 10px 14px;
+}
+
+.planning-option-button:hover {
+  background: #e7f2fb;
+  border-color: #9ec4e7;
+}
+
+.planning-solo-flow {
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid #d2e2f2;
+  border-radius: 14px;
+  background: #f7fbff;
+}
+
+.planning-solo-question {
+  margin: 0;
+  font-size: 0.98rem;
+  color: #214262;
+  font-weight: 600;
+}
+
+.planning-solo-answer-row {
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
+}
+
+.planning-solo-choice {
+  border: 1px solid #b8d0e7;
+  background: #ffffff;
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #11385b;
+  cursor: pointer;
+}
+
+.planning-solo-form {
+  margin-top: 14px;
+}
+
+.planning-solo-label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #214262;
+  margin-bottom: 8px;
+}
+
+.planning-solo-input-row {
+  display: flex;
+  gap: 10px;
+}
+
+.planning-solo-input {
+  flex: 1;
+  border: 1px solid #c4d8eb;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  color: #1f2933;
+}
+
+.planning-solo-next {
+  border: 1px solid #89b3d8;
+  border-radius: 10px;
+  background: #dff0ff;
+  color: #0f3f67;
+  padding: 10px 16px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@media (max-width: 700px) {
+  .landing-topbar-actions {
+    gap: 8px;
+  }
+
+  .destinations-login {
+    font-size: 0.92rem;
+    padding: 7px 11px;
+  }
+
+  .planning-options-card {
+    padding: 22px;
+  }
+
+  .planning-options-card h1 {
+    font-size: 1.45rem;
+  }
+
+  .planning-options-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .planning-solo-input-row {
+    flex-direction: column;
+  }
 }
 
 .destinations-layout {

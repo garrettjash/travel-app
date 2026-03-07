@@ -91,6 +91,7 @@ export type SavedItinerary = {
 type SavedTripBuilderProps = {
   initialItinerary?: SavedItinerary | null;
   itineraryIdFromRoute?: string | null;
+  embedded?: boolean;
 };
 
 const slotOrder: Slot[] = ["Morning", "Afternoon", "Evening"];
@@ -155,7 +156,7 @@ function sanitizeItineraryId(raw: string | null | undefined) {
 
 const SUGGESTED_LIMIT = 24;
 
-export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRoute }: SavedTripBuilderProps) {
+export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRoute, embedded = false }: SavedTripBuilderProps) {
   const router = useRouter();
   const { attractions, addAttraction, removeAttraction, clearAttractions, isInItinerary } = useItinerary();
 
@@ -537,49 +538,53 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
   }
 
   return (
-    <main className="destinations-page">
-      <header className="destinations-topbar">
-        <button
-          type="button"
-          className="destinations-brand destinations-brand-button"
-          onClick={() => router.push("/")}
-        >
-          TravelApp
-        </button>
-        <button type="button" className="destinations-login" onClick={() => setIsLoginNoticeOpen(true)}>
-          Login
-        </button>
-      </header>
+    <main className={`destinations-page ${embedded ? "saved-trips-embedded-page" : ""}`}>
+      {!embedded && (
+        <header className="destinations-topbar">
+          <button
+            type="button"
+            className="destinations-brand destinations-brand-button"
+            onClick={() => router.push("/")}
+          >
+            TravelApp
+          </button>
+          <button type="button" className="destinations-login" onClick={() => setIsLoginNoticeOpen(true)}>
+            Login
+          </button>
+        </header>
+      )}
 
-      <section className="destinations-layout">
-        <nav className="destinations-sidebar" aria-label="Main navigation">
-          <button type="button" className="destinations-tab" onClick={() => router.push("/home")}>
-            <span aria-hidden="true">🗺️</span>
-            <span>Destinations</span>
-          </button>
-          <button type="button" className="destinations-tab destinations-tab-active">
-            <span aria-hidden="true">💾</span>
-            <span>Itinerary</span>
-          </button>
-          <button type="button" className="destinations-tab" onClick={() => router.push("/favorites")}>
-            <span aria-hidden="true">❤</span>
-            <span>Favorites</span>
-          </button>
-          <button type="button" className="destinations-tab" onClick={() => router.push("/collaborate")}>
-            <span aria-hidden="true">👥</span>
-            <span>Collaborate</span>
-          </button>
-          <button type="button" className="destinations-tab" onClick={() => router.push("/ai-chatbot")}>
-            <span aria-hidden="true">✨</span>
-            <span>AI Chatbot</span>
-          </button>
-          <button type="button" className="destinations-tab" onClick={() => router.push("/about")}>
-            <span aria-hidden="true">ℹ️</span>
-            <span>About</span>
-          </button>
-        </nav>
+      <section className={embedded ? "saved-trips-embedded-layout" : "destinations-layout"}>
+        {!embedded && (
+          <nav className="destinations-sidebar" aria-label="Main navigation">
+            <button type="button" className="destinations-tab" onClick={() => router.push("/home")}>
+              <span aria-hidden="true">🗺️</span>
+              <span>Destinations</span>
+            </button>
+            <button type="button" className="destinations-tab destinations-tab-active">
+              <span aria-hidden="true">💾</span>
+              <span>Itinerary</span>
+            </button>
+            <button type="button" className="destinations-tab" onClick={() => router.push("/favorites")}>
+              <span aria-hidden="true">❤</span>
+              <span>Favorites</span>
+            </button>
+            <button type="button" className="destinations-tab" onClick={() => router.push("/collaborate")}>
+              <span aria-hidden="true">👥</span>
+              <span>Collaborate</span>
+            </button>
+            <button type="button" className="destinations-tab" onClick={() => router.push("/ai-chatbot")}>
+              <span aria-hidden="true">✨</span>
+              <span>AI Chatbot</span>
+            </button>
+            <button type="button" className="destinations-tab" onClick={() => router.push("/about")}>
+              <span aria-hidden="true">ℹ️</span>
+              <span>About</span>
+            </button>
+          </nav>
+        )}
 
-        <div className="destinations-content">
+        <div className={embedded ? "saved-trips-embedded-content" : "destinations-content"}>
           <section className="saved-trips-header">
             <h1>Itinerary</h1>
             <p>Turn your favorites into a ready-to-go itinerary in one click and save it with a shareable link.</p>
@@ -1030,4 +1035,3 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
     </main>
   );
 }
-

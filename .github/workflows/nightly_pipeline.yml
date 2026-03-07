@@ -3,9 +3,10 @@
 # Each step runs as a reusable workflow so you can also run them individually.
 name: Nightly Pipeline
 
+# Nightly schedule disabled. Run manually via workflow_dispatch.
 on:
-  schedule:
-    - cron: "0 2 * * *"
+  # schedule:
+  #   - cron: "0 2 * * *"
   workflow_dispatch:
 
 jobs:
