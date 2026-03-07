@@ -45,11 +45,23 @@ export default async function handler(
 
   const supabase = createClient(supabaseUrl, supabaseKey);
 
+  const rawSearch = req.query.search;
+  const search =
+    typeof rawSearch === "string" ? rawSearch.trim().slice(0, 100) : "";
+
   try {
-    const result = await supabase
+    let query = supabase
       .from("place")
-      .select("place_id, place_city, place_countryregion")
-      .limit(5000);
+      .select("place_id, place_city, place_countryregion");
+
+    if (search) {
+      const escaped = search.replace(/[%_\\]/g, "\\$&");
+      query = query.or(
+        `place_city.ilike.%${escaped}%,place_countryregion.ilike.%${escaped}%`
+      );
+    }
+
+    const result = await query.limit(search ? 50 : 5000);
 
     if (result.error) {
       res.status(500).json({ error: result.error.message });

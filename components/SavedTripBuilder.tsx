@@ -221,20 +221,29 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
   const activeTripName = tripName.trim() || "Untitled Trip";
 
   useEffect(() => {
+    const q = placeInputValue.trim();
+    if (!q) {
+      setPlacesOptions([]);
+      return;
+    }
     let cancelled = false;
-    (async () => {
+    const timer = setTimeout(async () => {
       try {
-        const res = await fetch("/api/collab-places");
+        const params = new URLSearchParams();
+        params.set("search", q);
+        const res = await fetch(`/api/collab-places?${params.toString()}`);
         const data = (await res.json()) as { options?: PlaceOption[]; error?: string };
         if (!cancelled && data.options) setPlacesOptions(data.options);
+        else if (!cancelled) setPlacesOptions([]);
       } catch {
         if (!cancelled) setPlacesOptions([]);
       }
-    })();
+    }, 200);
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
-  }, []);
+  }, [placeInputValue]);
 
   useEffect(() => {
     if (!selectedPlace?.city && !selectedPlace?.countryRegion) {
@@ -269,6 +278,12 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
   }, [selectedPlace?.id]);
 
   useEffect(() => {
+    if (initialItinerary?.tripPlace && !placeInputValue) {
+      setPlaceInputValue(initialItinerary.tripPlace);
+    }
+  }, [initialItinerary?.tripPlace, placeInputValue]);
+
+  useEffect(() => {
     if (!initialItinerary?.tripPlace || placesOptions.length === 0) return;
     const match = placesOptions.find(
       (p) => p.label === initialItinerary.tripPlace || p.label.startsWith(initialItinerary.tripPlace ?? "")
@@ -279,16 +294,7 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
     }
   }, [initialItinerary?.tripPlace, placesOptions]);
 
-  const filteredPlaces = useMemo(() => {
-    const q = placeInputValue.trim().toLowerCase();
-    if (!q) return placesOptions.slice(0, 50);
-    return placesOptions.filter(
-      (p) =>
-        p.label.toLowerCase().includes(q) ||
-        p.city.toLowerCase().includes(q) ||
-        (p.countryRegion && p.countryRegion.toLowerCase().includes(q))
-    ).slice(0, 50);
-  }, [placesOptions, placeInputValue]);
+  const filteredPlaces = useMemo(() => placesOptions.slice(0, 50), [placesOptions]);
 
   useEffect(() => {
     if (!initialItinerary || !initialItinerary.itineraryId) return;
