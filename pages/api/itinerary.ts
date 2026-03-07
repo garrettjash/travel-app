@@ -50,6 +50,7 @@ type ItineraryRow = {
 
 type SavedItineraryPayload = {
   itineraryId?: string;
+  userId?: string;
   tripName: string;
   tripPlace?: string;
   startDate: string;
@@ -207,6 +208,11 @@ export default async function handler(
       const notes = normalizeText(body.notes);
       const days = Array.isArray(body.days) ? body.days : [];
       const unscheduled = Array.isArray(body.unscheduled) ? body.unscheduled : [];
+      const rawUserId = body.userId;
+      const userId =
+        typeof rawUserId === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawUserId)
+          ? rawUserId
+          : null;
 
       let placeId: number | null = null;
       if (tripPlace) {
@@ -233,7 +239,7 @@ export default async function handler(
       }
 
       if (request.method === "POST") {
-        const { error } = await supabase.from("itinerary").insert({
+        const insertRow: Record<string, unknown> = {
           itinerary_id: itineraryId,
           trip_name: tripName,
           place_id: placeId,
@@ -243,7 +249,9 @@ export default async function handler(
           notes,
           days,
           unscheduled
-        });
+        };
+        if (userId) insertRow.user_id = userId;
+        const { error } = await supabase.from("itinerary").insert(insertRow);
 
         if (error) {
           const isDuplicate = error.code === "23505";

@@ -2,6 +2,7 @@ import { FormEvent, ReactNode, useEffect, useMemo, useRef, useState } from "reac
 import { useRouter } from "next/router";
 import AuthButton from "../components/AuthButton";
 import { FavoriteAttraction } from "../lib/favorites-context";
+import { useAuth } from "../lib/auth-context";
 import { useItinerary } from "../lib/itinerary-context";
 
 type ChatMessage = {
@@ -65,6 +66,7 @@ function formatLocation(city: string, stateProvince: string, country: string) {
 }
 
 export default function SoloPlannerPage() {
+  const { user } = useAuth();
   const router = useRouter();
   const placeQuery = router.query.place;
   const initialPlace = Array.isArray(placeQuery) ? placeQuery[0] : placeQuery;
@@ -203,7 +205,7 @@ export default function SoloPlannerPage() {
       const agentResponse = await fetch("/api/agent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: content, session_id: sessionId })
+        body: JSON.stringify({ prompt: content, session_id: sessionId, user_id: user?.id ?? undefined })
       });
 
       const agentData = await agentResponse.json();
@@ -232,6 +234,7 @@ export default function SoloPlannerPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          userId: user?.id ?? undefined,
           tripName: tripName.trim() || "My AI Trip Plan",
           tripPlace: initialPlace ?? "",
           startDate,

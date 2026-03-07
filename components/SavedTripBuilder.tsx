@@ -1,6 +1,7 @@
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import AuthButton from "./AuthButton";
+import { useAuth } from "../lib/auth-context";
 import { FavoriteAttraction } from "../lib/favorites-context";
 import { useItinerary } from "../lib/itinerary-context";
 
@@ -158,6 +159,7 @@ const SUGGESTED_LIMIT = 24;
 
 export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRoute }: SavedTripBuilderProps) {
   const router = useRouter();
+  const { user } = useAuth();
   const { attractions, addAttraction, removeAttraction, clearAttractions, isInItinerary } = useItinerary();
 
   const today = new Date();
@@ -484,6 +486,7 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
 
     const payload = {
       itineraryId: activeItineraryId || undefined,
+      userId: user?.id ?? undefined,
       tripName: activeTripName,
       tripPlace: tripPlace.trim(),
       startDate,

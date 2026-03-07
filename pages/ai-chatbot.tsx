@@ -1,6 +1,7 @@
 import { FormEvent, ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import AuthButton from "../components/AuthButton";
+import { useAuth } from "../lib/auth-context";
 
 type ChatMessage = {
   message_id: string;
@@ -59,6 +60,7 @@ function renderFormattedMessage(content: string): ReactNode {
 
 export default function AiChatbotPage() {
   const router = useRouter();
+  const { user } = useAuth();
 
   const [sessionId, setSessionId] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -147,7 +149,7 @@ export default function AiChatbotPage() {
       const agentResponse = await fetch("/api/agent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: content, session_id: sessionId })
+        body: JSON.stringify({ prompt: content, session_id: sessionId, user_id: user?.id ?? undefined })
       });
 
       const agentData = await agentResponse.json();

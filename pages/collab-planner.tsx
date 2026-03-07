@@ -1,6 +1,7 @@
 import { FormEvent, ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import AuthButton from "../components/AuthButton";
+import { useAuth } from "../lib/auth-context";
 
 type FilterOptionsResponse = {
   options?: Array<{
@@ -111,6 +112,7 @@ function renderFormattedMessage(content: string): ReactNode {
 
 export default function CollabPlannerPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const placeQuery = router.query.place;
   const initialPlace = sanitizePlainText(Array.isArray(placeQuery) ? placeQuery[0] ?? "" : placeQuery ?? "");
 
@@ -379,7 +381,7 @@ export default function CollabPlannerPage() {
       const agentResponse = await fetch("/api/agent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: content, session_id: sessionId })
+        body: JSON.stringify({ prompt: content, session_id: sessionId, user_id: user?.id ?? undefined })
       });
 
       const agentData = await agentResponse.json();
