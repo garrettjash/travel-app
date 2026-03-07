@@ -463,7 +463,6 @@ def propose_top_attractions(
 	client: OpenAI,
 	city: str,
 	country: str,
-	target_total: int,
 	existing_names: list[str],
 	model: str,
 ) -> list[AttractionCandidate]:
@@ -471,7 +470,10 @@ def propose_top_attractions(
 	prompt = f"""
 You are helping fill a travel attractions database.
 
-Return the {target_total} most popular attractions for {city}, {country}.
+Return a natural-sized list of truly popular attractions for {city}, {country}.
+Do NOT target a fixed count.
+- Large global destinations can return many attractions.
+- Smaller places should return fewer attractions.
 Avoid duplicates against this existing list:
 {existing_block if existing_block else "(none)"}
 
@@ -794,11 +796,10 @@ def process_place(
 	place: dict[str, Any],
 	google_maps_key: str,
 	openai_model: str,
-	target_total: int,
-	max_new_per_place: int,
 	images_bucket: Optional[str],
 	aws_region: str,
 	dry_run: bool,
+	deadline_epoch: Optional[float] = None,
 ) -> dict[str, int]:
 	place_id = place.get("place_id")
 	city = (place.get("place_city") or "").strip()
@@ -806,7 +807,7 @@ def process_place(
 	display_country = country or "Unknown"
 
 	if not place_id or not city:
-		return {"added": 0, "images": 0, "skipped": 0, "removed": 0, "summaries_updated": 0}
+		return {"added": 0, "images": 0, "skipped": 0, "removed": 0, "summaries_updated": 0, "timed_out": 0}
 
 	print(f"\n🌍 Processing {city}, {display_country} (place_id={place_id})")
 	distance_updated = backfill_missing_distance_for_place(supabase, place)
@@ -852,7 +853,6 @@ def process_place(
 			client=openai_client,
 			city=city,
 			country=display_country,
-			target_total=target_total,
 			existing_names=existing_names,
 			model=openai_model,
 		)
@@ -877,16 +877,23 @@ def process_place(
 			"skipped": 0,
 			"removed": maintenance_stats["removed"],
 			"summaries_updated": maintenance_stats["summaries_updated"],
+			"timed_out": 0,
 		}
 
-	to_add = deduped_candidates[:max_new_per_place]
-	print(f"   Missing top attractions identified: {len(deduped_candidates)} (adding up to {len(to_add)})")
+	to_add = deduped_candidates
+	print(f"   Missing popular attractions identified: {len(deduped_candidates)}")
 
 	added = 0
 	images_added = 0
 	skipped = 0
+	timed_out = 0
 
 	for rank, candidate in enumerate(to_add, start=1):
+		if deadline_epoch is not None and time.time() >= deadline_epoch:
+			print("   ⏱️ Runtime limit reached while processing attractions for this place. Stopping place early.")
+			timed_out = 1
+			break
+
 		query_parts = [candidate.name, candidate.city or city]
 		if country:
 			query_parts.append(country)
@@ -1102,15 +1109,20 @@ def process_place(
 		"skipped": skipped,
 		"removed": maintenance_stats["removed"],
 		"summaries_updated": maintenance_stats["summaries_updated"],
+		"timed_out": timed_out,
 	}
 
 
 def main() -> None:
 	parser = argparse.ArgumentParser(description="Backfill missing popular attractions per place using OpenAI + Google Maps")
 	parser.add_argument("--place", type=str, default=None, help="Only process this exact place_city")
-	parser.add_argument("--target-total", type=int, default=int(os.getenv("BACKFILL_TARGET_TOTAL", "15")))
-	parser.add_argument("--max-new-per-place", type=int, default=int(os.getenv("BACKFILL_MAX_NEW_PER_PLACE", "8")))
 	parser.add_argument("--limit-places", type=int, default=None)
+	parser.add_argument(
+		"--max-runtime-minutes",
+		type=int,
+		default=int(os.getenv("BACKFILL_MAX_RUNTIME_MINUTES", "0")),
+		help="Stop gracefully after N minutes (0 disables limit)",
+	)
 	parser.add_argument("--dry-run", action="store_true")
 	args = parser.parse_args()
 
@@ -1132,15 +1144,26 @@ def main() -> None:
 		return
 
 	print(f"Found {len(places)} place(s) to process")
-	print(f"target_total={args.target_total}, max_new_per_place={args.max_new_per_place}, dry_run={args.dry_run}")
+	print(f"mode=fluid_unbounded, dry_run={args.dry_run}")
+	if args.max_runtime_minutes and args.max_runtime_minutes > 0:
+		print(f"max_runtime_minutes={args.max_runtime_minutes}")
 
 	total_added = 0
 	total_images = 0
 	total_skipped = 0
 	total_removed = 0
 	total_summaries_updated = 0
+	deadline_epoch: Optional[float] = None
+	if args.max_runtime_minutes and args.max_runtime_minutes > 0:
+		deadline_epoch = time.time() + (args.max_runtime_minutes * 60)
+	timed_out_any = 0
 
 	for place in places:
+		if deadline_epoch is not None and time.time() >= deadline_epoch:
+			print("\n⏱️ Runtime limit reached before next place. Stopping run.")
+			timed_out_any = 1
+			break
+
 		stats = process_place(
 			supabase=supabase,
 			openai_client=openai_client,
@@ -1148,17 +1171,21 @@ def main() -> None:
 			place=place,
 			google_maps_key=google_maps_key,
 			openai_model=openai_model,
-			target_total=args.target_total,
-			max_new_per_place=args.max_new_per_place,
 			images_bucket=images_bucket,
 			aws_region=aws_region,
 			dry_run=args.dry_run,
+			deadline_epoch=deadline_epoch,
 		)
 		total_added += stats["added"]
 		total_images += stats["images"]
 		total_skipped += stats["skipped"]
 		total_removed += stats.get("removed", 0)
 		total_summaries_updated += stats.get("summaries_updated", 0)
+		if stats.get("timed_out", 0):
+			timed_out_any = 1
+			if deadline_epoch is not None and time.time() >= deadline_epoch:
+				print("\n⏱️ Runtime limit reached. Stopping run.")
+				break
 
 	print("\n✅ Backfill complete")
 	print(f"   Attractions added/updated: {total_added}")
@@ -1166,6 +1193,8 @@ def main() -> None:
 	print(f"   Useless attractions removed: {total_removed}")
 	print(f"   Weak summaries rewritten: {total_summaries_updated}")
 	print(f"   Skipped/errors: {total_skipped}")
+	if timed_out_any:
+		print("   Stopped early due to runtime limit")
 
 
 if __name__ == "__main__":

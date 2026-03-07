@@ -13,16 +13,11 @@ on:
         description: "Optional max number of places to process (blank = no limit)."
         required: false
         default: ""
-      target_total:
+      max_runtime_minutes:
         type: string
-        description: "Target top attractions considered per place."
+        description: "Optional runtime cap in minutes (blank/0 = no cap)."
         required: false
-        default: "15"
-      max_new_per_place:
-        type: string
-        description: "Max new attractions to add per place."
-        required: false
-        default: "8"
+        default: ""
       dry_run:
         type: boolean
         description: "Preview only; no DB/S3 writes"
@@ -62,13 +57,12 @@ jobs:
           GOOGLE_IMAGE_MAX_WIDTH: ${{ vars.GOOGLE_IMAGE_MAX_WIDTH || '800' }}
           PLACE: ${{ github.event.inputs.place }}
           LIMIT_PLACES: ${{ github.event.inputs.limit_places }}
-          TARGET_TOTAL: ${{ github.event.inputs.target_total || '15' }}
-          MAX_NEW_PER_PLACE: ${{ github.event.inputs.max_new_per_place || '8' }}
+          MAX_RUNTIME_MINUTES: ${{ github.event.inputs.max_runtime_minutes || vars.BACKFILL_MAX_RUNTIME_MINUTES || '0' }}
           DRY_RUN: ${{ github.event.inputs.dry_run }}
         run: |
           set -e
 
-          ARGS=(--target-total "${TARGET_TOTAL}" --max-new-per-place "${MAX_NEW_PER_PLACE}")
+          ARGS=()
 
           if [ -n "${PLACE}" ]; then
             ARGS+=(--place "${PLACE}")
@@ -76,6 +70,10 @@ jobs:
 
           if [ -n "${LIMIT_PLACES}" ]; then
             ARGS+=(--limit-places "${LIMIT_PLACES}")
+          fi
+
+          if [ -n "${MAX_RUNTIME_MINUTES}" ] && [ "${MAX_RUNTIME_MINUTES}" != "0" ]; then
+            ARGS+=(--max-runtime-minutes "${MAX_RUNTIME_MINUTES}")
           fi
 
           if [ "${DRY_RUN}" = "true" ]; then
