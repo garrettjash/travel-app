@@ -1,5 +1,6 @@
 import { TouchEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
+import AuthButton from "../../components/AuthButton";
 
 type Attraction = {
   id: number;
@@ -371,6 +372,7 @@ export default function CollaborateSessionPage() {
         >
           TravelApp
         </button>
+        <AuthButton />
       </header>
 
       <section className="destinations-content" style={{ padding: "24px" }}>

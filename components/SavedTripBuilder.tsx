@@ -1,5 +1,6 @@
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
+import AuthButton from "./AuthButton";
 import { FavoriteAttraction } from "../lib/favorites-context";
 import { useItinerary } from "../lib/itinerary-context";
 
@@ -185,7 +186,6 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
   );
   const [shareLink, setShareLink] = useState<string | null>(null);
   const [isShareCopied, setIsShareCopied] = useState(false);
-  const [isLoginNoticeOpen, setIsLoginNoticeOpen] = useState(false);
   const [dragSource, setDragSource] = useState<DragSource | null>(null);
   const [buildForMeOpen, setBuildForMeOpen] = useState(false);
   const [buildTypes, setBuildTypes] = useState<Set<string>>(new Set());
@@ -546,9 +546,7 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
         >
           TravelApp
         </button>
-        <button type="button" className="destinations-login" onClick={() => setIsLoginNoticeOpen(true)}>
-          Login
-        </button>
+        <AuthButton />
       </header>
 
       <section className="destinations-layout">

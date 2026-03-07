@@ -1,5 +1,6 @@
 import { FormEvent, ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
+import AuthButton from "../components/AuthButton";
 import { FavoriteAttraction } from "../lib/favorites-context";
 import { useItinerary } from "../lib/itinerary-context";
 
@@ -255,6 +256,7 @@ export default function SoloPlannerPage() {
         <button type="button" className="solo-back-button" onClick={() => router.push("/planning-options")}>
           ← Back
         </button>
+        <AuthButton />
       </header>
 
       <button

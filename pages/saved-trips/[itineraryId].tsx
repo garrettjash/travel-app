@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import type { NextPage } from "next";
 import { useRouter } from "next/router";
+import AuthButton from "../../components/AuthButton";
 import SavedTripBuilder, { SavedItinerary } from "../../components/SavedTripBuilder";
-import LoginNoticeModal from "../../components/LoginNoticeModal";
 
 const ItineraryPage: NextPage = () => {
   const router = useRouter();
@@ -10,7 +10,6 @@ const ItineraryPage: NextPage = () => {
   const [initialItinerary, setInitialItinerary] = useState<SavedItinerary | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoginNoticeOpen, setIsLoginNoticeOpen] = useState(false);
 
   useEffect(() => {
     const idParam = Array.isArray(itineraryId) ? itineraryId[0] : itineraryId;
@@ -62,9 +61,7 @@ const ItineraryPage: NextPage = () => {
           >
             TravelApp
           </button>
-          <button type="button" className="destinations-login" onClick={() => setIsLoginNoticeOpen(true)}>
-            Login
-          </button>
+          <AuthButton />
         </header>
 
         <section className="destinations-layout">
@@ -102,7 +99,6 @@ const ItineraryPage: NextPage = () => {
             </section>
           </div>
         </section>
-        <LoginNoticeModal isOpen={isLoginNoticeOpen} onClose={() => setIsLoginNoticeOpen(false)} />
       </main>
     );
   }
@@ -118,9 +114,7 @@ const ItineraryPage: NextPage = () => {
           >
             TravelApp
           </button>
-          <button type="button" className="destinations-login" onClick={() => setIsLoginNoticeOpen(true)}>
-            Login
-          </button>
+          <AuthButton />
         </header>
 
         <section className="destinations-layout">
@@ -165,7 +159,6 @@ const ItineraryPage: NextPage = () => {
             </section>
           </div>
         </section>
-        <LoginNoticeModal isOpen={isLoginNoticeOpen} onClose={() => setIsLoginNoticeOpen(false)} />
       </main>
     );
   }

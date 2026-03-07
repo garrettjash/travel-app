@@ -8,6 +8,17 @@ TypeScript is enabled.
 - `pages` - UI pages and API routes (`/api/health`)
 - `styles` - global styles
 
+## Auth (Supabase)
+
+Auth uses Supabase Auth with email/password. Store in `.env`:
+
+- `NEXT_PUBLIC_SUPABASE_URL` – Supabase project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` or `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` – anon (public) key
+
+In Supabase Dashboard: **Authentication → Providers → Email** – enable Email provider and optionally disable "Confirm email" for local development.
+
+Signup stores `first_name` and `last_name` in `user_metadata`.
+
 ## Local dev
 Install deps at the repo root:
 

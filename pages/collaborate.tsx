@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
-import LoginNoticeModal from "../components/LoginNoticeModal";
+import AuthButton from "../components/AuthButton";
 
 type FilterOptionsResponse = {
   options?: Array<{
@@ -57,7 +57,6 @@ function getSafeCollabUrl(inputValue: string) {
 
 export default function CollaboratePage() {
   const router = useRouter();
-  const [isLoginNoticeOpen, setIsLoginNoticeOpen] = useState(false);
   const [places, setPlaces] = useState<Array<{ id: number; label: string }>>([]);
   const [isLoadingPlaces, setIsLoadingPlaces] = useState(true);
   const [placeError, setPlaceError] = useState<string | null>(null);
@@ -228,9 +227,7 @@ export default function CollaboratePage() {
         >
           TravelApp
         </button>
-        <button type="button" className="destinations-login" onClick={() => setIsLoginNoticeOpen(true)}>
-          Login
-        </button>
+        <AuthButton />
       </header>
 
       <section className="destinations-layout">
@@ -367,7 +364,6 @@ export default function CollaboratePage() {
           </section>
         </div>
       </section>
-      <LoginNoticeModal isOpen={isLoginNoticeOpen} onClose={() => setIsLoginNoticeOpen(false)} />
     </main>
   );
 }

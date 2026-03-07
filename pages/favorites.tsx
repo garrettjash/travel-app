@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
 import AttractionDetailsModal from "../components/AttractionDetailsModal";
-import LoginNoticeModal from "../components/LoginNoticeModal";
+import AuthButton from "../components/AuthButton";
 import { useFavorites } from "../lib/favorites-context";
 
 function formatLocation(city: string, stateProvince: string, country: string) {
@@ -21,7 +21,6 @@ export default function FavoritesPage() {
   const { favorites, toggleFavorite, isFavorite } = useFavorites();
   const [imageIndexByAttraction, setImageIndexByAttraction] = useState<Record<number, number>>({});
   const [selectedAttraction, setSelectedAttraction] = useState<(typeof favorites)[number] | null>(null);
-  const [isLoginNoticeOpen, setIsLoginNoticeOpen] = useState(false);
 
   return (
     <main className="destinations-page">
@@ -33,9 +32,7 @@ export default function FavoritesPage() {
         >
           TravelApp
         </button>
-        <button type="button" className="destinations-login" onClick={() => setIsLoginNoticeOpen(true)}>
-          Login
-        </button>
+        <AuthButton />
       </header>
 
       <section className="destinations-layout">
@@ -174,7 +171,6 @@ export default function FavoritesPage() {
         onToggleFavorite={toggleFavorite}
         onClose={() => setSelectedAttraction(null)}
       />
-      <LoginNoticeModal isOpen={isLoginNoticeOpen} onClose={() => setIsLoginNoticeOpen(false)} />
     </main>
   );
 }

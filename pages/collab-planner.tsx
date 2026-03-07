@@ -1,5 +1,6 @@
 import { FormEvent, ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
+import AuthButton from "../components/AuthButton";
 
 type FilterOptionsResponse = {
   options?: Array<{
@@ -412,6 +413,7 @@ export default function CollabPlannerPage() {
         >
           {isChatOpen ? "Hide AI Chatbot" : "Expand AI Chatbot"}
         </button>
+        <AuthButton />
       </header>
 
       <section className="collab-planner-main">
