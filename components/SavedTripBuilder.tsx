@@ -843,6 +843,17 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
             </section>
           )}
 
+          <section className="saved-trips-notes">
+            <label htmlFor="trip-notes">Trip Notes</label>
+            <textarea
+              id="trip-notes"
+              value={notes}
+              onChange={(event) => setNotes(event.target.value)}
+              placeholder="Add reminders: reservations, neighborhood plans, must-eat spots..."
+              rows={3}
+            />
+          </section>
+
           {(unscheduled.length === 0 && !dayPlans.some((d) => d.stops.length > 0)) ? (
             <section className="saved-trips-empty">
               <h2>No places in your itinerary yet</h2>
@@ -858,19 +869,7 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
               </div>
             </section>
           ) : (
-            <>
-              <section className="saved-trips-notes">
-                <label htmlFor="trip-notes">Trip Notes</label>
-                <textarea
-                  id="trip-notes"
-                  value={notes}
-                  onChange={(event) => setNotes(event.target.value)}
-                  placeholder="Add reminders: reservations, neighborhood plans, must-eat spots..."
-                  rows={3}
-                />
-              </section>
-
-              <section className="saved-trips-drag-schedule" aria-label="Schedule">
+            <section className="saved-trips-drag-schedule" aria-label="Schedule">
                 <div
                   className="saved-unassigned-zone"
                   onDragOver={(e) => {
@@ -1005,7 +1004,6 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
                   ))}
                 </div>
               </section>
-            </>
           )}
 
           <section className="saved-trips-share">
