@@ -2513,6 +2513,41 @@ body {
   background: #f5f9fd;
 }
 
+/* My Itineraries list */
+.my-itineraries-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.my-itineraries-item {
+  display: block;
+  width: 100%;
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  border: 1px solid #d5e3f1;
+  border-radius: 12px;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.my-itineraries-item:hover {
+  background: #f5f9fd;
+  border-color: #11385b;
+}
+.my-itineraries-name {
+  display: block;
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: #11385b;
+}
+.my-itineraries-location {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.9rem;
+  color: #4d6883;
+}
+
 .attraction-modal-image,
 .attraction-modal-image-fallback {
   width: 100%;

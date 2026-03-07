@@ -64,6 +64,17 @@ export default function AuthButton() {
               type="button"
               className="auth-button-menu-item"
               role="menuitem"
+              onClick={() => {
+                router.push("/my-itineraries");
+                setMenuOpen(false);
+              }}
+            >
+              My Itineraries
+            </button>
+            <button
+              type="button"
+              className="auth-button-menu-item"
+              role="menuitem"
               onClick={handleLogout}
             >
               Sign out

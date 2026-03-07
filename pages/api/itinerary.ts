@@ -38,6 +38,7 @@ type DayPlan = {
 type ItineraryRow = {
   itinerary_id: string;
   trip_name: string | null;
+  place_id: number | null;
   start_date: string | null;
   end_date: string | null;
   pace: string | null;
@@ -46,6 +47,12 @@ type ItineraryRow = {
   unscheduled: FavoriteAttraction[] | null;
   created_at: string | null;
   updated_at: string | null;
+};
+
+type ItineraryListItem = {
+  itineraryId: string;
+  tripName: string;
+  location: string;
 };
 
 type SavedItineraryPayload = {
@@ -79,6 +86,7 @@ type ItineraryResponse =
         createdAt?: string;
         updatedAt?: string;
       };
+      itineraries?: ItineraryListItem[];
       error?: string;
     }
   | { error: string };
@@ -138,13 +146,66 @@ export default async function handler(
 
   try {
     if (request.method === "GET") {
+      const rawUserId = request.query.userId;
+      const userId =
+        typeof rawUserId === "string" &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawUserId)
+          ? rawUserId
+          : null;
+
+      if (userId) {
+        const { data: rows, error } = await supabase
+          .from("itinerary")
+          .select("itinerary_id, trip_name, place_id")
+          .eq("user_id", userId)
+          .order("updated_at", { ascending: false });
+
+        if (error) {
+          response.status(500).json({ error: error.message });
+          return;
+        }
+
+        const placeIds = [...new Set((rows ?? []).map((r) => r.place_id).filter(Boolean))];
+        let placeMap: Record<number, { city: string; country: string }> = {};
+        if (placeIds.length > 0) {
+          const { data: places } = await supabase
+            .from("place")
+            .select("place_id, place_city, place_countryregion")
+            .in("place_id", placeIds);
+          for (const p of places ?? []) {
+            const id = Number(p.place_id);
+            placeMap[id] = {
+              city: normalizeText(p.place_city) || "",
+              country: normalizeText(p.place_countryregion) || ""
+            };
+          }
+        }
+
+        const itineraries: ItineraryListItem[] = (rows ?? []).map((r) => {
+          const tripName = normalizeText(r.trip_name) || "Untitled Trip";
+          let location = "";
+          if (r.place_id && placeMap[r.place_id]) {
+            const { city, country } = placeMap[r.place_id];
+            location = city && country ? `${city}, ${country}` : city || country;
+          }
+          return {
+            itineraryId: r.itinerary_id,
+            tripName,
+            location
+          };
+        });
+
+        response.status(200).json({ itineraries });
+        return;
+      }
+
       const rawId = request.query.itineraryId;
       const itineraryId = sanitizeItineraryId(
         Array.isArray(rawId) ? rawId[0] : rawId ?? ""
       );
 
       if (!itineraryId) {
-        response.status(400).json({ error: "itineraryId is required." });
+        response.status(400).json({ error: "itineraryId or userId is required." });
         return;
       }
 
