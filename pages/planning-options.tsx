@@ -30,7 +30,7 @@ export default function PlanningOptionsPage() {
   const goToCollabPlanner = () => {
     const place = groupDestination.trim();
     if (!place) {
-      router.push("/collab-planner");
+      router.push({ pathname: "/collab-planner", query: { chat: "open" } });
       return;
     }
     router.push({ pathname: "/collab-planner", query: { place } });

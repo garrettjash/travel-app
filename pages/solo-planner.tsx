@@ -1,7 +1,6 @@
 import { FormEvent, ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
-import { FavoriteAttraction } from "../lib/favorites-context";
-import { useItinerary } from "../lib/itinerary-context";
+import SavedTripBuilder from "../components/SavedTripBuilder";
 
 type ChatMessage = {
   message_id: string;
@@ -9,8 +8,6 @@ type ChatMessage = {
   content: string;
   createdAt: string;
 };
-
-type ApiAttraction = FavoriteAttraction;
 
 function formatTimestamp(value: string) {
   const date = new Date(value);
@@ -59,26 +56,13 @@ function renderFormattedMessage(content: string): ReactNode {
   return parts.length > 0 ? parts : content;
 }
 
-function formatLocation(city: string, stateProvince: string, country: string) {
-  return [city, stateProvince, country].filter(Boolean).join(", ") || "Location unavailable";
-}
-
 export default function SoloPlannerPage() {
   const router = useRouter();
   const placeQuery = router.query.place;
   const initialPlace = Array.isArray(placeQuery) ? placeQuery[0] : placeQuery;
 
-  const { attractions, addAttraction, removeAttraction, clearAttractions, isInItinerary } = useItinerary();
-
   const [panelOpen, setPanelOpen] = useState(false);
-  const [tripName, setTripName] = useState("My AI Trip Plan");
-  const [notes, setNotes] = useState("");
-  const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
-  const [endDate, setEndDate] = useState(new Date(Date.now() + 86400000 * 2).toISOString().slice(0, 10));
-  const [suggestedAttractions, setSuggestedAttractions] = useState<FavoriteAttraction[]>([]);
-  const [isLoadingSuggested, setIsLoadingSuggested] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
+  const [isChatCollapsed, setIsChatCollapsed] = useState(false);
 
   const [sessionId, setSessionId] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -89,6 +73,11 @@ export default function SoloPlannerPage() {
   const previousMessageCountRef = useRef(0);
 
   const canSend = useMemo(() => draft.trim().length > 0 && !isSending, [draft, isSending]);
+
+  useEffect(() => {
+    if (panelOpen) return;
+    setIsChatCollapsed(false);
+  }, [panelOpen]);
 
   const fetchMessages = async (activeSessionId: string) => {
     try {
@@ -147,40 +136,6 @@ export default function SoloPlannerPage() {
     setDraft(`Show me the best things to do in ${initialPlace}`);
   }, [initialPlace, sessionId]);
 
-  useEffect(() => {
-    if (!initialPlace) {
-      setSuggestedAttractions([]);
-      return;
-    }
-
-    let cancelled = false;
-    setIsLoadingSuggested(true);
-    (async () => {
-      try {
-        const params = new URLSearchParams();
-        params.set("limit", "20");
-        params.set("offset", "0");
-        params.set("search", initialPlace);
-
-        const res = await fetch(`/api/attractions?${params.toString()}`);
-        const data = (await res.json()) as { data?: ApiAttraction[]; error?: string };
-        if (!cancelled && data.data) {
-          setSuggestedAttractions(data.data);
-        } else if (!cancelled) {
-          setSuggestedAttractions([]);
-        }
-      } catch {
-        if (!cancelled) setSuggestedAttractions([]);
-      } finally {
-        if (!cancelled) setIsLoadingSuggested(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [initialPlace]);
-
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const content = draft.trim();
@@ -222,39 +177,25 @@ export default function SoloPlannerPage() {
     }
   };
 
-  const handleSaveStarter = async () => {
-    setSaveError(null);
-    setSaveSuccess(null);
-
-    try {
-      const res = await fetch("/api/itinerary", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          tripName: tripName.trim() || "My AI Trip Plan",
-          tripPlace: initialPlace ?? "",
-          startDate,
-          endDate,
-          pace: "balanced",
-          notes,
-          days: [],
-          unscheduled: attractions
-        })
-      });
-      const payload = (await res.json()) as { itineraryId?: string; path?: string; error?: string };
-      if (!res.ok || !payload.path) throw new Error(payload.error || "Failed to save itinerary");
-      setSaveSuccess("Starter itinerary saved.");
-    } catch (error) {
-      setSaveError(error instanceof Error ? error.message : "Failed to save itinerary.");
-    }
-  };
-
   return (
-    <main className={`solo-planner-page ${panelOpen ? "solo-planner-page-panel-open" : ""}`}>
+    <main
+      className={`solo-planner-page ${panelOpen ? "solo-planner-page-panel-open" : ""} ${
+        isChatCollapsed ? "solo-planner-page-chat-collapsed" : ""
+      }`}
+    >
       <header className="solo-planner-topbar">
         <button type="button" className="solo-back-button" onClick={() => router.push("/planning-options")}>
           ← Back
         </button>
+        {panelOpen && (
+          <button
+            type="button"
+            className="collab-chat-toggle"
+            onClick={() => setIsChatCollapsed((collapsed) => !collapsed)}
+          >
+            {isChatCollapsed ? "Show Chatbot" : "Collapse Chatbot"}
+          </button>
+        )}
       </header>
 
       <button
@@ -330,106 +271,18 @@ export default function SoloPlannerPage() {
       <aside className={`solo-itinerary-panel ${panelOpen ? "solo-itinerary-panel-open" : ""}`}>
         <div className="solo-itinerary-panel-inner">
           <div className="solo-itinerary-panel-header">
+            <button
+              type="button"
+              className="solo-itinerary-collapse"
+              onClick={() => setIsChatCollapsed((collapsed) => !collapsed)}
+            >
+              {isChatCollapsed ? "Show Chatbot" : "Collapse Chatbot"}
+            </button>
             <button type="button" className="solo-itinerary-collapse" onClick={() => setPanelOpen(false)}>
               Collapse
             </button>
           </div>
-          <h2>Start Building Your Itinerary</h2>
-          <p>Add places to your list while chatting with AI.</p>
-
-          <div className="solo-itinerary-field">
-            <label htmlFor="solo-trip-name">Trip name</label>
-            <input
-              id="solo-trip-name"
-              type="text"
-              value={tripName}
-              onChange={(event) => setTripName(event.target.value)}
-            />
-          </div>
-          <div className="solo-itinerary-field-row">
-            <div className="solo-itinerary-field">
-              <label htmlFor="solo-start-date">Start</label>
-              <input id="solo-start-date" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-            </div>
-            <div className="solo-itinerary-field">
-              <label htmlFor="solo-end-date">End</label>
-              <input id="solo-end-date" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-            </div>
-          </div>
-          <div className="solo-itinerary-field">
-            <label htmlFor="solo-notes">Notes</label>
-            <textarea
-              id="solo-notes"
-              rows={3}
-              value={notes}
-              onChange={(event) => setNotes(event.target.value)}
-              placeholder="Reservations, must-see places, reminders..."
-            />
-          </div>
-
-          <div className="solo-itinerary-actions">
-            <button type="button" className="saved-trips-button saved-trips-button-primary" onClick={handleSaveStarter}>
-              Save Starter Itinerary
-            </button>
-            <button type="button" className="saved-trips-button saved-trips-button-muted" onClick={clearAttractions}>
-              Clear List
-            </button>
-          </div>
-          {saveError && <p className="chat-error">{saveError}</p>}
-          {saveSuccess && <p className="solo-itinerary-success">{saveSuccess}</p>}
-
-          {initialPlace && (
-            <section className="solo-itinerary-suggested">
-              <h3>Suggested for {initialPlace}</h3>
-              {isLoadingSuggested ? (
-                <p className="saved-suggested-loading">Loading suggestions...</p>
-              ) : (
-                <div className="solo-itinerary-list">
-                  {suggestedAttractions.slice(0, 8).map((attraction) => {
-                    const added = isInItinerary(attraction.id);
-                    return (
-                      <article className="solo-itinerary-item" key={attraction.id}>
-                        <div>
-                          <strong>{attraction.name}</strong>
-                          <p>{formatLocation(attraction.city, attraction.stateProvince, attraction.country)}</p>
-                        </div>
-                        <button
-                          type="button"
-                          className={`saved-suggested-add ${added ? "saved-suggested-added" : ""}`}
-                          onClick={() => (added ? removeAttraction(attraction.id) : addAttraction(attraction))}
-                        >
-                          {added ? "Added" : "+ Add"}
-                        </button>
-                      </article>
-                    );
-                  })}
-                </div>
-              )}
-            </section>
-          )}
-
-          <section className="solo-itinerary-selected">
-            <h3>Selected ({attractions.length})</h3>
-            <div className="solo-itinerary-list">
-              {attractions.length === 0 && <p className="chat-state">No places selected yet.</p>}
-              {attractions.map((attraction) => (
-                <article className="solo-itinerary-item" key={attraction.id}>
-                  <div>
-                    <strong>{attraction.name}</strong>
-                    <p>{formatLocation(attraction.city, attraction.stateProvince, attraction.country)}</p>
-                  </div>
-                  <button
-                    type="button"
-                    className="saved-schedule-card-remove"
-                    aria-label={`Remove ${attraction.name}`}
-                    onClick={() => removeAttraction(attraction.id)}
-                  >
-                    🗑
-                  </button>
-                </article>
-              ))}
-            </div>
-          </section>
+          <SavedTripBuilder embedded />
         </div>
       </aside>
     </main>
