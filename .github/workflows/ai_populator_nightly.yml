@@ -45,10 +45,12 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+          GOOGLE_IMAGE_MAX_WIDTH: ${{ vars.GOOGLE_IMAGE_MAX_WIDTH || '800' }}
           NIGHTLY_PLACE_LIMIT: ${{ github.event.inputs.place_limit || vars.NIGHTLY_PLACE_LIMIT || '10' }}
           NIGHTLY_SEED_START_INDEX: ${{ github.event.inputs.seed_start_index || vars.NIGHTLY_SEED_START_INDEX || '0' }}
         run: |
           set -e
           echo "NIGHTLY_PLACE_LIMIT=${NIGHTLY_PLACE_LIMIT}"
           echo "NIGHTLY_SEED_START_INDEX=${NIGHTLY_SEED_START_INDEX}"
+          echo "GOOGLE_IMAGE_MAX_WIDTH=${GOOGLE_IMAGE_MAX_WIDTH}"
           python -u "ai_database/1. ai_populator.py" --from-seed --seed-file "data/TripAdvisor/seed_places.json" --seed-start-index "${NIGHTLY_SEED_START_INDEX}" --target-new-places "${NIGHTLY_PLACE_LIMIT}"

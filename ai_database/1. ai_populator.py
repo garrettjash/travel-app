@@ -1,10 +1,13 @@
 import argparse
 import datetime
+import importlib.util
 import json
 import math
 import mimetypes
 import os
 import re
+import threading
+import time
 from pathlib import Path
 from typing import Any, Optional
 from urllib.parse import urlparse
@@ -43,6 +46,9 @@ class PlaceAttractionPlan(BaseModel):
 
 
 NEXT_CANONICAL_ID: Optional[int] = None
+GOOGLE_REVIEWS_MODULE = None
+GOOGLE_REVIEWS_MODULE_LOADED = False
+GOOGLE_MODULE_LOCK = threading.Lock()
 
 
 def load_env() -> None:
@@ -75,6 +81,154 @@ def get_clients() -> tuple[Client, OpenAI, Any]:
 		aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
 	)
 	return create_client(supabase_url, supabase_key), OpenAI(api_key=openai_key), s3
+
+
+def load_google_reviews_module():
+	global GOOGLE_REVIEWS_MODULE
+	global GOOGLE_REVIEWS_MODULE_LOADED
+
+	with GOOGLE_MODULE_LOCK:
+		if GOOGLE_REVIEWS_MODULE_LOADED:
+			return GOOGLE_REVIEWS_MODULE
+
+		repo_root = Path(__file__).resolve().parents[1]
+		module_path = repo_root / "data" / "TripAdvisor" / "google_reviews_api.py"
+		GOOGLE_REVIEWS_MODULE_LOADED = True
+
+		if not module_path.exists():
+			return None
+
+		try:
+			spec = importlib.util.spec_from_file_location("google_reviews_api", str(module_path))
+			if spec is None or spec.loader is None:
+				return None
+			module = importlib.util.module_from_spec(spec)
+			spec.loader.exec_module(module)
+			GOOGLE_REVIEWS_MODULE = module
+		except Exception:
+			GOOGLE_REVIEWS_MODULE = None
+
+		return GOOGLE_REVIEWS_MODULE
+
+
+def fetch_google_reviews_payload(
+	attraction_name: str,
+	place_hint: Optional[str],
+	city: Optional[str],
+	country: Optional[str],
+	force_refresh: bool = False,
+) -> Optional[dict[str, Any]]:
+	module = load_google_reviews_module()
+	if not module:
+		return None
+	try:
+		return module.fetch_google_reviews_for_attraction(
+			attraction_name=attraction_name,
+			place_hint=place_hint,
+			city=city,
+			country=country,
+			force_refresh=force_refresh,
+		)
+	except Exception:
+		return None
+
+
+def ta_get(path: str, params: Optional[dict[str, Any]] = None, retries: int = 3, timeout: int = 25) -> Optional[dict[str, Any]]:
+	ta_key = os.getenv("TA_API_KEY")
+	if not ta_key:
+		return None
+
+	url = f"https://api.content.tripadvisor.com/api/v1{path}"
+	query = dict(params or {})
+	query["key"] = ta_key
+	headers = {"accept": "application/json"}
+
+	for i in range(retries):
+		try:
+			resp = requests.get(url, headers=headers, params=query, timeout=timeout)
+			if resp.status_code == 429:
+				time.sleep(0.4 * (2 ** i))
+				continue
+			if resp.status_code != 200:
+				continue
+			return resp.json()
+		except Exception:
+			time.sleep(0.4 * (2 ** i))
+	return None
+
+
+def fetch_tripadvisor_payload(attraction_name: str, city: Optional[str], country: Optional[str]) -> Optional[dict[str, Any]]:
+	if not os.getenv("TA_API_KEY"):
+		return None
+
+	parts = [attraction_name]
+	if city and city.lower() not in attraction_name.lower():
+		parts.append(city)
+	if country:
+		parts.append(country)
+	query = ", ".join([p for p in parts if p])
+
+	search = ta_get(
+		"/location/search",
+		params={
+			"searchQuery": query,
+			"category": "attractions",
+			"language": "en",
+		},
+	)
+	if not search:
+		return None
+
+	rows = search.get("data") or []
+	if not rows:
+		return None
+
+	best = None
+	norm_name = normalize_name(attraction_name)
+	best_score = -1
+	for row in rows[:10]:
+		name = row.get("name") or ""
+		score = 0
+		if normalize_name(name) == norm_name:
+			score += 50
+		elif norm_name and (norm_name in normalize_name(name) or normalize_name(name) in norm_name):
+			score += 20
+		if city:
+			addr = row.get("address_obj") or {}
+			addr_city = (addr.get("city") or "").strip().lower()
+			if addr_city and city.lower() in addr_city:
+				score += 15
+		if row.get("location_id"):
+			score += 10
+		if score > best_score:
+			best_score = score
+			best = row
+
+	if not best or not best.get("location_id"):
+		return None
+
+	details = ta_get(
+		f"/location/{best.get('location_id')}/details",
+		params={"language": "en", "currency": "USD"},
+	)
+	if not details:
+		details = {}
+
+	return {
+		"query": query,
+		"location_id": best.get("location_id"),
+		"name": details.get("name") or best.get("name"),
+		"description": details.get("description") or "",
+		"rating": details.get("rating") if details.get("rating") is not None else best.get("rating"),
+		"num_reviews": details.get("num_reviews") if details.get("num_reviews") is not None else best.get("num_reviews"),
+		"latitude": details.get("latitude") if details.get("latitude") is not None else best.get("latitude"),
+		"longitude": details.get("longitude") if details.get("longitude") is not None else best.get("longitude"),
+		"website": details.get("website"),
+		"phone": details.get("phone"),
+		"tripadvisor_url": details.get("web_url") or best.get("web_url"),
+		"address": details.get("address_obj") or best.get("address_obj") or {},
+		"ranking_data": details.get("ranking_data") or {},
+	}
 
 
 def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -179,6 +333,13 @@ def _google_place_details(place_id: str, api_key: str, timeout: int = 20) -> Opt
 
 
 def _google_photo_download(photo_reference: str, api_key: str, max_width: int = 1200, timeout: int = 25) -> tuple[Optional[bytes], Optional[str]]:
+	try:
+		configured = int(os.getenv("GOOGLE_IMAGE_MAX_WIDTH", "800"))
+		if configured >= 320:
+			max_width = configured
+	except Exception:
+		pass
+
 	params = {"maxwidth": max_width, "photo_reference": photo_reference, "key": api_key}
 	response = requests.get(PHOTO_URL, params=params, timeout=timeout, allow_redirects=True)
 	if response.status_code != 200:
@@ -418,6 +579,20 @@ def populate_new_place(
 
 	for rank, candidate in enumerate(candidates, start=1):
 		try:
+			place_hint = f"{city}, {country}" if country else city
+			google_reviews_payload = fetch_google_reviews_payload(
+				attraction_name=candidate.name,
+				place_hint=place_hint,
+				city=candidate.city or city,
+				country=country,
+				force_refresh=False,
+			)
+			tripadvisor_payload = fetch_tripadvisor_payload(
+				attraction_name=candidate.name,
+				city=candidate.city or city,
+				country=country,
+			)
+
 			search = None
 			details = {}
 			if google_maps_key:
@@ -432,7 +607,26 @@ def populate_new_place(
 
 			effective_rating = details.get("rating", (search or {}).get("rating"))
 			effective_count = details.get("user_ratings_total", (search or {}).get("user_ratings_total"))
-			review_summary = _summarize_google_reviews(details.get("reviews") or [])
+			review_summary_parts: list[str] = []
+			google_reviews_summary = _summarize_google_reviews(details.get("reviews") or [])
+			if google_reviews_payload and google_reviews_payload.get("google_reviews_summary"):
+				google_reviews_summary = google_reviews_payload.get("google_reviews_summary")
+			if google_reviews_summary:
+				review_summary_parts.append(google_reviews_summary)
+			if tripadvisor_payload and tripadvisor_payload.get("description"):
+				review_summary_parts.append(str(tripadvisor_payload.get("description"))[:500])
+			review_summary = " | ".join([p for p in review_summary_parts if p]).strip()
+
+			if google_reviews_payload:
+				if google_reviews_payload.get("google_rating") is not None:
+					effective_rating = google_reviews_payload.get("google_rating")
+				if google_reviews_payload.get("google_user_ratings_total") is not None:
+					effective_count = google_reviews_payload.get("google_user_ratings_total")
+
+			if (effective_rating is None) and tripadvisor_payload and tripadvisor_payload.get("rating") is not None:
+				effective_rating = tripadvisor_payload.get("rating")
+			if (not effective_count) and tripadvisor_payload and tripadvisor_payload.get("num_reviews") is not None:
+				effective_count = tripadvisor_payload.get("num_reviews")
 
 			price_level = details.get("price_level")
 			if price_level is None:
@@ -445,6 +639,9 @@ def populate_new_place(
 			if isinstance(g_location, dict):
 				lat = g_location.get("lat")
 				lon = g_location.get("lng")
+			if (lat is None or lon is None) and tripadvisor_payload:
+				lat = tripadvisor_payload.get("latitude")
+				lon = tripadvisor_payload.get("longitude")
 
 			normalized_rating = None
 			if effective_rating is not None:
@@ -469,12 +666,18 @@ def populate_new_place(
 				"category": candidate.category,
 				"why_popular": candidate.why_popular,
 				"recommended_visit_minutes": candidate.recommended_visit_minutes,
+				"google_reviews_payload": google_reviews_payload,
+				"tripadvisor_payload": tripadvisor_payload,
 			}
 
 			embedding_text = (
 				f"{candidate.name}: {candidate.short_summary} "
 				f"Popular for: {candidate.why_popular}. Keywords: {', '.join(candidate.popularity_keywords)}"
 			)
+			if google_reviews_payload and google_reviews_payload.get("google_reviews_summary"):
+				embedding_text += f" GoogleReviews: {google_reviews_payload.get('google_reviews_summary')}"
+			if tripadvisor_payload and tripadvisor_payload.get("description"):
+				embedding_text += f" TripAdvisor: {tripadvisor_payload.get('description')}"
 			embedding = generate_embedding(openai_client, embedding_text)
 
 			canonical_id = get_next_canonical_id(supabase)
@@ -518,6 +721,16 @@ def populate_new_place(
 
 			photos = (details.get("photos") if isinstance(details, dict) else None) or ((search or {}).get("photos") if isinstance(search, dict) else None) or []
 			if not photos or not images_bucket or not google_maps_key or not attraction_id:
+				continue
+
+			existing_image = (
+				supabase.table("images")
+				.select("image_url")
+				.eq("attraction_id", attraction_id)
+				.limit(1)
+				.execute()
+			)
+			if existing_image.data:
 				continue
 
 			photo_reference = photos[0].get("photo_reference")
