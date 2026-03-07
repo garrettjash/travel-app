@@ -37,6 +37,7 @@ type CollabSessionResponse =
       attractions: AttractionItem[];
       isExpired?: boolean;
       results?: SessionAttractionResult[];
+      itineraryPath?: string;
     }
   | { error: string };
 
@@ -233,7 +234,7 @@ export default async function handler(
 
       const sessionResult = await supabase
         .from("collab_session")
-        .select("collab_session_id, collab_place_id, created_at")
+        .select("collab_session_id, collab_place_id, created_at, itinerary_id")
         .eq("collab_session_id", sessionId)
         .limit(1)
         .maybeSingle();
@@ -442,7 +443,76 @@ export default async function handler(
           return leftPos - rightPos;
         });
 
-      res.status(200).json({ sessionId, placeId, place, attractions, isExpired, results });
+      let itineraryPath: string | undefined;
+
+      if (isExpired && results.length > 0) {
+        const existingItineraryId = (sessionResult.data as { itinerary_id?: string | null } | null)?.itinerary_id;
+        if (existingItineraryId) {
+          itineraryPath = `/saved-trips/${encodeURIComponent(existingItineraryId)}?fromCollab=1`;
+        } else {
+          const votedIds = results
+            .filter((r) => r.yesVotes > r.noVotes)
+            .sort((a, b) => b.yesVotes - b.noVotes - (a.yesVotes - a.noVotes))
+            .map((r) => r.attractionId);
+
+          const votedAttractions = votedIds
+            .map((id) => attractions.find((a) => a.id === id))
+            .filter((a): a is AttractionItem => Boolean(a));
+
+          if (votedAttractions.length > 0) {
+            const itineraryId = crypto.randomUUID();
+            const today = new Date();
+            const startDate = today.toISOString().slice(0, 10);
+            const endDate = new Date(today.getTime() + 1000 * 60 * 60 * 24).toISOString().slice(0, 10);
+
+            const unscheduled = votedAttractions.map((a) => ({
+              id: a.id,
+              name: a.name,
+              city: a.city,
+              stateProvince: "",
+              country: a.country,
+              latitude: null,
+              longitude: null,
+              distanceFromPlace: null,
+              summary: a.summary,
+              vibe: a.vibe,
+              rating: a.rating,
+              totalCountRatings: null,
+              credibilityTier: null,
+              reviewsSummary: "",
+              priceLevel: a.priceLevel,
+              popularityScore: null,
+              rawData: "",
+              lastRefreshed: "",
+              categories: a.categories,
+              imageUrl: a.imageUrl,
+              imageUrls: a.imageUrls ?? []
+            }));
+
+            const { error: insertErr } = await supabase.from("itinerary").insert({
+              itinerary_id: itineraryId,
+              trip_name: `Collab: ${place}`,
+              place_id: placeId,
+              start_date: startDate,
+              end_date: endDate,
+              pace: "balanced",
+              notes: "",
+              days: [],
+              unscheduled
+            });
+
+            if (!insertErr) {
+              await supabase
+                .from("collab_session")
+                .update({ itinerary_id: itineraryId })
+                .eq("collab_session_id", sessionId);
+              itineraryPath = `/saved-trips/${encodeURIComponent(itineraryId)}?fromCollab=1`;
+            }
+          }
+        }
+      }
+
+      res.status(200).json({ sessionId, placeId, place, attractions, isExpired, results, itineraryPath });
       return;
     }
 

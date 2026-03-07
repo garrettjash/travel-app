@@ -778,7 +778,7 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
             </article>
           </section>
 
-          {selectedPlace && (
+          {selectedPlace && !router.query.fromCollab && (
             <section className="saved-suggested-section" aria-labelledby="suggested-heading">
               <h2 id="suggested-heading">Suggested in {selectedPlace.label}</h2>
               <p className="saved-suggested-intro">Click + to add a place to your itinerary.</p>

@@ -33,6 +33,7 @@ type SessionPayload = {
   attractions: Attraction[];
   isExpired?: boolean;
   results?: SessionAttractionResult[];
+  itineraryPath?: string;
   error?: string;
 };
 
@@ -218,6 +219,10 @@ export default function CollaborateSessionPage() {
           Object.fromEntries((payload.results ?? []).map((item) => [item.attractionId, item]))
         );
         setCurrentIndex(0);
+        if (payload.isExpired && payload.itineraryPath) {
+          router.replace(payload.itineraryPath);
+          return;
+        }
       } catch (loadError) {
         if (!isActive) return;
         setAttractions([]);
