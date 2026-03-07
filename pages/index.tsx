@@ -1,6 +1,5 @@
-import { useState } from "react";
 import { useRouter } from "next/router";
-import LoginNoticeModal from "../components/LoginNoticeModal";
+import { useState } from "react";
 
 const heroImage =
   "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&q=80";
@@ -8,7 +7,6 @@ const heroImage =
 export default function LandingPage() {
   const router = useRouter();
   const [destination, setDestination] = useState("");
-  const [isLoginNoticeOpen, setIsLoginNoticeOpen] = useState(false);
 
   return (
     <main className="landing-shell">
@@ -20,9 +18,11 @@ export default function LandingPage() {
         >
           TravelApp
         </button>
-        <button type="button" className="destinations-login" onClick={() => setIsLoginNoticeOpen(true)}>
-          Login
-        </button>
+        <div className="landing-topbar-actions">
+          <button type="button" className="destinations-login" onClick={() => router.push("/planning-options")}>
+            New Version
+          </button>
+        </div>
       </header>
       <section className="landing-hero" style={{ backgroundImage: `url(${heroImage})` }}>
         <div className="landing-overlay" />
@@ -69,7 +69,6 @@ export default function LandingPage() {
           </button>
         </div>
       </section>
-      <LoginNoticeModal isOpen={isLoginNoticeOpen} onClose={() => setIsLoginNoticeOpen(false)} />
     </main>
   );
 }
