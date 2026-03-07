@@ -1,0 +1,47 @@
+name: AI Populator Nightly
+
+on:
+  schedule:
+    - cron: "30 3 * * *"
+  workflow_dispatch:
+    inputs:
+      place_limit:
+        type: string
+        description: "Override NIGHTLY_PLACE_LIMIT for this run"
+        required: false
+        default: ""
+
+jobs:
+  ai_populator:
+    environment: production
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip && pip install -r requirements.txt
+
+      - name: Run ai_populator from seed list
+        env:
+          S3_IMG_BUCKET_NAME: ${{ secrets.S3_IMG_BUCKET_NAME }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+          NIGHTLY_PLACE_LIMIT: ${{ github.event.inputs.place_limit || vars.NIGHTLY_PLACE_LIMIT || '10' }}
+        run: |
+          set -e
+          echo "NIGHTLY_PLACE_LIMIT=${NIGHTLY_PLACE_LIMIT}"
+          python -u "ai_database/1. ai_populator.py" --from-seed --seed-file "data/TripAdvisor/seed_places.json" --seed-limit "${NIGHTLY_PLACE_LIMIT}"

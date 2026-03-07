@@ -782,7 +782,7 @@ def resolve_geo_cached(query, ref_lat=None, ref_lon=None, country_hint=None):
                         "country": addr.get('country'),
                         "dist": dist
                     }
-            
+
             # Save to Cache immediately
             with CACHE_LOCK:
                 GEO_CACHE[query] = result
