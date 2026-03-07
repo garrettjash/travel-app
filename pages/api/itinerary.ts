@@ -60,6 +60,7 @@ type SavedItineraryPayload = {
   userId?: string;
   tripName: string;
   tripPlace?: string;
+  placeId?: number;
   startDate: string;
   endDate: string;
   pace: Pace;
@@ -212,11 +213,11 @@ export default async function handler(
       const { data, error } = await supabase
         .from("itinerary")
         .select(
-          "itinerary_id, trip_name, start_date, end_date, pace, notes, days, unscheduled, created_at, updated_at"
+          "itinerary_id, trip_name, place_id, start_date, end_date, pace, notes, days, unscheduled, created_at, updated_at"
         )
         .eq("itinerary_id", itineraryId)
         .limit(1)
-        .maybeSingle<ItineraryRow>();
+        .maybeSingle<ItineraryRow & { place_id?: number | null }>();
 
       if (error) {
         response.status(500).json({ error: error.message });
@@ -228,9 +229,25 @@ export default async function handler(
         return;
       }
 
+      let tripPlace = "";
+      const rawPlaceId = (data as { place_id?: number | null }).place_id;
+      if (rawPlaceId && Number.isFinite(Number(rawPlaceId))) {
+        const placeRes = await supabase
+          .from("place")
+          .select("place_city, place_countryregion")
+          .eq("place_id", rawPlaceId)
+          .maybeSingle();
+        if (!placeRes.error && placeRes.data) {
+          const city = normalizeText(placeRes.data.place_city) || "";
+          const country = normalizeText(placeRes.data.place_countryregion) || "";
+          tripPlace = city && country ? `${city}, ${country}` : city || country;
+        }
+      }
+
       const itinerary = {
         itineraryId: data.itinerary_id,
         tripName: normalizeText(data.trip_name) || "Untitled Trip",
+        tripPlace: tripPlace || undefined,
         startDate: normalizeText(data.start_date) || "",
         endDate: normalizeText(data.end_date) || "",
         pace: (normalizeText(data.pace) as Pace) || "balanced",
@@ -275,22 +292,58 @@ export default async function handler(
           ? rawUserId
           : null;
 
+      const rawPlaceId = body.placeId;
+      const providedPlaceId =
+        typeof rawPlaceId === "number" && Number.isFinite(rawPlaceId) && rawPlaceId > 0
+          ? rawPlaceId
+          : null;
+
       let placeId: number | null = null;
-      if (tripPlace) {
-        const placeQuery = supabase
+      if (providedPlaceId) {
+        const check = await supabase
           .from("place")
-          .select("place_id, place_city, place_countryregion")
-          .limit(1);
-
-        const placeResult = await placeQuery
-          .or(`place_city.ilike.${tripPlace},place_countryregion.ilike.${tripPlace}`)
+          .select("place_id")
+          .eq("place_id", providedPlaceId)
           .maybeSingle();
+        if (!check.error && check.data) {
+          placeId = providedPlaceId;
+        }
+      }
+      if (!placeId && tripPlace) {
+        const parts = tripPlace.split(",").map((s) => s.trim()).filter(Boolean);
+        const cityPart = parts[0] ?? "";
+        const countryPart = parts.slice(1).join(", ").trim() || "";
+        let placeResult: { data?: { place_id: number } | null; error: unknown } | null = null;
 
-        if (!placeResult.error && placeResult.data) {
-          const rawPlaceId = Number(placeResult.data.place_id);
-          if (Number.isFinite(rawPlaceId) && rawPlaceId > 0) {
-            placeId = rawPlaceId;
-          }
+        if (cityPart && countryPart) {
+          placeResult = await supabase
+            .from("place")
+            .select("place_id")
+            .ilike("place_city", cityPart)
+            .ilike("place_countryregion", countryPart)
+            .limit(1)
+            .maybeSingle();
+        }
+        if ((!placeResult?.data || placeResult.error) && cityPart) {
+          placeResult = await supabase
+            .from("place")
+            .select("place_id")
+            .ilike("place_city", cityPart)
+            .limit(1)
+            .maybeSingle();
+        }
+        if ((!placeResult?.data || placeResult.error) && tripPlace) {
+          const safe = tripPlace.replace(/\\/g, "\\\\").replace(/\*/g, "\\*");
+          placeResult = await supabase
+            .from("place")
+            .select("place_id")
+            .or(`place_city.ilike.*${safe}*,place_countryregion.ilike.*${safe}*`)
+            .limit(1)
+            .maybeSingle();
+        }
+        if (!placeResult?.error && placeResult?.data) {
+          const id = Number(placeResult.data.place_id);
+          if (Number.isFinite(id) && id > 0) placeId = id;
         }
       }
 

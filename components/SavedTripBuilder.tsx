@@ -489,6 +489,7 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
       userId: user?.id ?? undefined,
       tripName: activeTripName,
       tripPlace: tripPlace.trim(),
+      placeId: selectedPlace?.id ?? undefined,
       startDate,
       endDate,
       pace,

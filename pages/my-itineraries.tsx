@@ -135,8 +135,9 @@ export default function MyItinerariesPage() {
             ) : error ? (
               <p className="login-page-error">{error}</p>
             ) : itineraries.length === 0 ? (
-              <p>You haven&apos;t saved any itineraries yet. Create one from the Itinerary page or Solo Planner.</p>
-              <button
+              <>
+                <p>You haven&apos;t saved any itineraries yet. Create one from the Itinerary page or Solo Planner.</p>
+                <button
                 type="button"
                 className="saved-trips-button saved-trips-button-primary"
                 style={{ marginTop: 12 }}
@@ -144,6 +145,7 @@ export default function MyItinerariesPage() {
               >
                 Start planning
               </button>
+              </>
             ) : (
               <ul className="my-itineraries-list">
                 {itineraries.map((item) => (
