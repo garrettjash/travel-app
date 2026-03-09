@@ -306,15 +306,19 @@ export default function SavedTripBuilder({
   }, [initialItinerary?.tripPlace, initialTripPlace, placeInputValue]);
 
   useEffect(() => {
-    if (!initialItinerary?.tripPlace || placesOptions.length === 0) return;
+    const toMatch = initialItinerary?.tripPlace ?? initialTripPlace ?? "";
+    if (!toMatch || placesOptions.length === 0) return;
     const match = placesOptions.find(
-      (p) => p.label === initialItinerary.tripPlace || p.label.startsWith(initialItinerary.tripPlace ?? "")
+      (p) =>
+        p.label === toMatch ||
+        p.label.toLowerCase() === toMatch.toLowerCase() ||
+        p.label.toLowerCase().startsWith(toMatch.toLowerCase())
     );
     if (match) {
       setSelectedPlace(match);
       setPlaceInputValue(match.label);
     }
-  }, [initialItinerary?.tripPlace, placesOptions]);
+  }, [initialItinerary?.tripPlace, initialTripPlace, placesOptions]);
 
   const filteredPlaces = useMemo(() => placesOptions.slice(0, 50), [placesOptions]);
 
@@ -916,7 +920,13 @@ export default function SavedTripBuilder({
                             removeFromItinerary(attraction.id);
                           }}
                         >
-                          🗑
+                          <img
+                            src="https://img.icons8.com/fluent-systems-regular/24/FA5252/trash.png"
+                            alt=""
+                            width={18}
+                            height={18}
+                            className="saved-schedule-card-remove-icon"
+                          />
                         </button>
                       </div>
                     ))}
@@ -983,7 +993,13 @@ export default function SavedTripBuilder({
                                 removeFromItinerary(stop.attraction.id);
                               }}
                             >
-                              🗑
+                              <img
+                                src="https://img.icons8.com/fluent-systems-regular/24/FA5252/trash.png"
+                                alt=""
+                                width={18}
+                                height={18}
+                                className="saved-schedule-card-remove-icon"
+                              />
                             </button>
                           </div>
                         ))}

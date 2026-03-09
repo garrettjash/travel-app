@@ -1683,9 +1683,16 @@ body {
   background: transparent;
   cursor: pointer;
   padding: 4px;
-  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   opacity: 0.9;
-  pointer-events: auto;
+}
+
+.saved-schedule-card-remove-icon {
+  display: block;
+  width: 18px;
+  height: 18px;
 }
 
 .saved-schedule-card-remove:hover {
