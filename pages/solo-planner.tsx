@@ -60,31 +60,22 @@ function renderFormattedMessage(content: string): ReactNode {
   return parts.length > 0 ? parts : content;
 }
 
+function formatLocation(city: string, stateProvince: string, country: string) {
+  return [city, stateProvince, country].filter(Boolean).join(", ") || "Location unavailable";
+}
+
 export default function SoloPlannerPage() {
   const { user } = useAuth();
   const router = useRouter();
   const placeQuery = router.query.place;
   const initialPlace = Array.isArray(placeQuery) ? placeQuery[0] : placeQuery;
 
-<<<<<<< HEAD
-  const { attractions, addAttraction, removeAttraction, clearAttractions, isInItinerary } = useItinerary();
-
-  const [panelOpen, setPanelOpen] = useState(true);
-  const [suggestedAttractions, setSuggestedAttractions] = useState<FavoriteAttraction[]>([]);
-  const [isLoadingSuggested, setIsLoadingSuggested] = useState(false);
-=======
-<<<<<<< Updated upstream
-  const [panelOpen, setPanelOpen] = useState(false);
-  const [isChatCollapsed, setIsChatCollapsed] = useState(false);
-=======
   const { attractions, addAttraction, removeAttraction, clearAttractions, isInItinerary } = useItinerary();
 
   const [panelOpen, setPanelOpen] = useState(true);
   const [isChatCollapsed, setIsChatCollapsed] = useState(false);
   const [suggestedAttractions, setSuggestedAttractions] = useState<FavoriteAttraction[]>([]);
   const [isLoadingSuggested, setIsLoadingSuggested] = useState(false);
->>>>>>> Stashed changes
->>>>>>> 48b7bdb (Vercel)
 
   const [sessionId, setSessionId] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
