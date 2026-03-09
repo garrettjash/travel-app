@@ -66,11 +66,25 @@ export default function SoloPlannerPage() {
   const placeQuery = router.query.place;
   const initialPlace = Array.isArray(placeQuery) ? placeQuery[0] : placeQuery;
 
+<<<<<<< HEAD
   const { attractions, addAttraction, removeAttraction, clearAttractions, isInItinerary } = useItinerary();
 
   const [panelOpen, setPanelOpen] = useState(true);
   const [suggestedAttractions, setSuggestedAttractions] = useState<FavoriteAttraction[]>([]);
   const [isLoadingSuggested, setIsLoadingSuggested] = useState(false);
+=======
+<<<<<<< Updated upstream
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [isChatCollapsed, setIsChatCollapsed] = useState(false);
+=======
+  const { attractions, addAttraction, removeAttraction, clearAttractions, isInItinerary } = useItinerary();
+
+  const [panelOpen, setPanelOpen] = useState(true);
+  const [isChatCollapsed, setIsChatCollapsed] = useState(false);
+  const [suggestedAttractions, setSuggestedAttractions] = useState<FavoriteAttraction[]>([]);
+  const [isLoadingSuggested, setIsLoadingSuggested] = useState(false);
+>>>>>>> Stashed changes
+>>>>>>> 48b7bdb (Vercel)
 
   const [sessionId, setSessionId] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -116,6 +130,11 @@ export default function SoloPlannerPage() {
     setChatError(null);
     setSessionId(crypto.randomUUID());
   }, []);
+
+  useEffect(() => {
+    if (panelOpen) return;
+    setIsChatCollapsed(false);
+  }, [panelOpen]);
 
   useEffect(() => {
     if (!sessionId) return;
