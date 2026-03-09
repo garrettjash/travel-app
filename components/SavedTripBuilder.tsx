@@ -287,7 +287,13 @@ export default function SavedTripBuilder({
         if (selectedPlace?.city) {
           params.set("city", selectedPlace.city);
         } else {
-          params.set("search", effectiveLocation);
+          const [rawCity] = effectiveLocation.split(",");
+          const cityLike = (rawCity ?? "").trim();
+          if (cityLike) {
+            params.set("city", cityLike);
+          } else {
+            params.set("search", effectiveLocation);
+          }
         }
         const res = await fetch(`/api/attractions?${params.toString()}`);
         const json = (await res.json()) as { data?: ApiAttraction[]; error?: string };
