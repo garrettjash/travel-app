@@ -1,8 +1,9 @@
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import AuthButton from "./AuthButton";
+import AttractionDetailsModal from "./AttractionDetailsModal";
 import { useAuth } from "../lib/auth-context";
-import { FavoriteAttraction } from "../lib/favorites-context";
+import { FavoriteAttraction, useFavorites } from "../lib/favorites-context";
 import { useItinerary } from "../lib/itinerary-context";
 
 type Pace = "relaxed" | "balanced" | "packed";
@@ -169,7 +170,10 @@ export default function SavedTripBuilder({
 }: SavedTripBuilderProps) {
   const router = useRouter();
   const { user } = useAuth();
+  const { toggleFavorite, isFavorite } = useFavorites();
   const { attractions, addAttraction, removeAttraction, clearAttractions, isInItinerary } = useItinerary();
+
+  const [selectedAttraction, setSelectedAttraction] = useState<FavoriteAttraction | null>(null);
 
   const today = new Date();
   const defaultStart = today.toISOString().slice(0, 10);
@@ -778,7 +782,19 @@ export default function SavedTripBuilder({
                   {suggestedAttractions.map((attraction) => {
                     const added = isInItinerary(attraction.id);
                     return (
-                      <article className="saved-suggested-card" key={attraction.id}>
+                      <article
+                        className="saved-suggested-card saved-suggested-card-clickable"
+                        key={attraction.id}
+                        onClick={() => setSelectedAttraction(attraction)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            setSelectedAttraction(attraction);
+                          }
+                        }}
+                      >
                         {attraction.imageUrl ? (
                           <img
                             src={attraction.imageUrl}
@@ -806,7 +822,8 @@ export default function SavedTripBuilder({
                             type="button"
                             className={`saved-suggested-add ${added ? "saved-suggested-added" : ""}`}
                             aria-label={added ? `Remove ${attraction.name} from itinerary` : `Add ${attraction.name} to itinerary`}
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation();
                               if (added) {
                                 removeFromItinerary(attraction.id);
                               } else {
@@ -859,8 +876,9 @@ export default function SavedTripBuilder({
                     {unscheduled.map((attraction, idx) => (
                       <div
                         key={attraction.id}
-                        className={`saved-schedule-card ${dragSource?.type === "unscheduled" && dragSource.index === idx ? "saved-schedule-card-dragging" : ""}`}
+                        className={`saved-schedule-card saved-schedule-card-clickable ${dragSource?.type === "unscheduled" && dragSource.index === idx ? "saved-schedule-card-dragging" : ""}`}
                         draggable
+                        onClick={() => setSelectedAttraction(attraction)}
                         onDragStart={() => setDragSource({ type: "unscheduled", index: idx })}
                         onDragEnd={() => setDragSource(null)}
                         onDragOver={(e) => {
@@ -925,8 +943,9 @@ export default function SavedTripBuilder({
                         {day.stops.map((stop, slotIndex) => (
                           <div
                             key={`${day.dayNumber}-${stop.attraction.id}-${stop.slot}`}
-                            className={`saved-schedule-card saved-schedule-card-in-day ${dragSource?.type === "day" && dragSource.dayIndex === dayIndex && dragSource.slotIndex === slotIndex ? "saved-schedule-card-dragging" : ""}`}
+                            className={`saved-schedule-card saved-schedule-card-in-day saved-schedule-card-clickable ${dragSource?.type === "day" && dragSource.dayIndex === dayIndex && dragSource.slotIndex === slotIndex ? "saved-schedule-card-dragging" : ""}`}
                             draggable
+                            onClick={() => setSelectedAttraction(stop.attraction)}
                             onDragStart={() => setDragSource({ type: "day", dayIndex, slotIndex })}
                             onDragEnd={() => setDragSource(null)}
                             onDragOver={(e) => {
@@ -1009,6 +1028,12 @@ export default function SavedTripBuilder({
               </p>
             )}
           </section>
+      <AttractionDetailsModal
+        attraction={selectedAttraction}
+        isFavorited={selectedAttraction ? isFavorite(selectedAttraction.id) : false}
+        onToggleFavorite={toggleFavorite}
+        onClose={() => setSelectedAttraction(null)}
+      />
     </>
   );
 

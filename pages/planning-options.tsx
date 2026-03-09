@@ -1,6 +1,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/router";
 import AuthButton from "../components/AuthButton";
+import PlaceSearchInput from "../components/PlaceSearchInput";
 
 const heroImage =
   "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&q=80";
@@ -102,12 +103,11 @@ export default function PlanningOptionsPage() {
                     Enter destination
                   </label>
                   <div className="planning-solo-input-row">
-                    <input
+                    <PlaceSearchInput
                       id="group-destination"
-                      className="planning-solo-input"
                       value={groupDestination}
-                      onChange={(event) => setGroupDestination(event.target.value)}
-                      placeholder="City or country"
+                      onChange={setGroupDestination}
+                      placeholder="Type to search destinations…"
                       required
                     />
                     <button type="submit" className="planning-solo-next">
@@ -135,12 +135,11 @@ export default function PlanningOptionsPage() {
                     Enter destination
                   </label>
                   <div className="planning-solo-input-row">
-                    <input
+                    <PlaceSearchInput
                       id="solo-destination"
-                      className="planning-solo-input"
                       value={destination}
-                      onChange={(event) => setDestination(event.target.value)}
-                      placeholder="City or country"
+                      onChange={setDestination}
+                      placeholder="Type to search destinations…"
                       required
                     />
                     <button type="submit" className="planning-solo-next">

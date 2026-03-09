@@ -1027,6 +1027,21 @@ body {
   gap: 10px;
 }
 
+.planning-place-search-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.planning-place-search-wrapper .planning-solo-input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.planning-place-listbox {
+  min-width: 100%;
+}
+
 .planning-solo-input {
   flex: 1;
   border: 1px solid #c4d8eb;
@@ -2230,6 +2245,15 @@ body {
 
 .attraction-card-clickable {
   cursor: pointer;
+}
+
+.saved-suggested-card-clickable,
+.saved-schedule-card-clickable {
+  cursor: pointer;
+}
+
+.saved-schedule-card-clickable:hover .saved-schedule-card-body h3 {
+  color: #0f3f67;
 }
 
 .attraction-card-image,
