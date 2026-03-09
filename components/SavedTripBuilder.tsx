@@ -264,11 +264,19 @@ export default function SavedTripBuilder({
     };
   }, [placeInputValue]);
 
+  /** Effective trip location: from dropdown selection, input, or saved/prop value */
+  const effectiveLocation = useMemo(
+    () =>
+      (selectedPlace?.label ?? placeInputValue.trim() ?? tripPlace.trim() ?? initialTripPlace ?? "").trim(),
+    [selectedPlace?.label, placeInputValue, tripPlace, initialTripPlace]
+  );
+
   useEffect(() => {
-    if (!selectedPlace?.city && !selectedPlace?.countryRegion) {
+    if (!effectiveLocation) {
       setSuggestedAttractions([]);
       return;
     }
+
     let cancelled = false;
     setLoadingSuggested(true);
     (async () => {
@@ -276,8 +284,11 @@ export default function SavedTripBuilder({
         const params = new URLSearchParams();
         params.set("limit", String(SUGGESTED_LIMIT));
         params.set("offset", "0");
-        // Filter by city only so we match DB (e.g. "United States" vs "USA")
-        if (selectedPlace.city) params.set("city", selectedPlace.city);
+        if (selectedPlace?.city) {
+          params.set("city", selectedPlace.city);
+        } else {
+          params.set("search", effectiveLocation);
+        }
         const res = await fetch(`/api/attractions?${params.toString()}`);
         const json = (await res.json()) as { data?: ApiAttraction[]; error?: string };
         if (!cancelled && json.data) {
@@ -294,7 +305,7 @@ export default function SavedTripBuilder({
     return () => {
       cancelled = true;
     };
-  }, [selectedPlace?.id]);
+  }, [effectiveLocation, selectedPlace?.id, selectedPlace?.city]);
 
   useEffect(() => {
     const fallback = initialTripPlace ?? "";
@@ -775,9 +786,9 @@ export default function SavedTripBuilder({
             />
           </section>
 
-          {selectedPlace && !router.query.fromCollab && (
+          {!router.query.fromCollab && effectiveLocation && (
             <section className="saved-suggested-section" aria-labelledby="suggested-heading">
-              <h2 id="suggested-heading">Suggested in {selectedPlace.label}</h2>
+              <h2 id="suggested-heading">Suggested in {effectiveLocation}</h2>
               <p className="saved-suggested-intro">Click + to add a place to your itinerary.</p>
               {loadingSuggested ? (
                 <p className="saved-suggested-loading">Loading suggestions…</p>
