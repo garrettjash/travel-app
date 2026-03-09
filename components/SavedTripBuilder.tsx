@@ -93,6 +93,10 @@ export type SavedItinerary = {
 type SavedTripBuilderProps = {
   initialItinerary?: SavedItinerary | null;
   itineraryIdFromRoute?: string | null;
+  /** When true, render only the inner itinerary UI without the global header/sidebar chrome. */
+  embedded?: boolean;
+  /** Optional starting location when no initialItinerary is provided (e.g. from solo-planner place query). */
+  initialTripPlace?: string;
 };
 
 const slotOrder: Slot[] = ["Morning", "Afternoon", "Evening"];
@@ -157,7 +161,12 @@ function sanitizeItineraryId(raw: string | null | undefined) {
 
 const SUGGESTED_LIMIT = 24;
 
-export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRoute }: SavedTripBuilderProps) {
+export default function SavedTripBuilder({
+  initialItinerary,
+  itineraryIdFromRoute,
+  embedded,
+  initialTripPlace
+}: SavedTripBuilderProps) {
   const router = useRouter();
   const { user } = useAuth();
   const { attractions, addAttraction, removeAttraction, clearAttractions, isInItinerary } = useItinerary();
@@ -174,7 +183,7 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
   const [suggestedAttractions, setSuggestedAttractions] = useState<FavoriteAttraction[]>([]);
   const [loadingSuggested, setLoadingSuggested] = useState(false);
   const [tripName, setTripName] = useState(initialItinerary?.tripName ?? "My Weekend Escape");
-  const [tripPlace, setTripPlace] = useState(initialItinerary?.tripPlace ?? "");
+  const [tripPlace, setTripPlace] = useState(initialItinerary?.tripPlace ?? initialTripPlace ?? "");
   const [startDate, setStartDate] = useState(initialItinerary?.startDate ?? defaultStart);
   const [endDate, setEndDate] = useState(initialItinerary?.endDate ?? defaultEnd);
   const [pace, setPace] = useState<Pace>(initialItinerary?.pace ?? "balanced");
@@ -284,10 +293,13 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
   }, [selectedPlace?.id]);
 
   useEffect(() => {
-    if (initialItinerary?.tripPlace && !placeInputValue) {
-      setPlaceInputValue(initialItinerary.tripPlace);
+    const fallback = initialTripPlace ?? "";
+    const sourcePlace = initialItinerary?.tripPlace ?? fallback;
+    if (sourcePlace && !placeInputValue) {
+      setPlaceInputValue(sourcePlace);
+      setTripPlace(sourcePlace);
     }
-  }, [initialItinerary?.tripPlace, placeInputValue]);
+  }, [initialItinerary?.tripPlace, initialTripPlace, placeInputValue]);
 
   useEffect(() => {
     if (!initialItinerary?.tripPlace || placesOptions.length === 0) return;
@@ -552,48 +564,8 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
     }
   }
 
-  return (
-    <main className="destinations-page">
-      <header className="destinations-topbar">
-        <button
-          type="button"
-          className="destinations-brand destinations-brand-button"
-          onClick={() => router.push("/")}
-        >
-          TravelApp
-        </button>
-        <AuthButton />
-      </header>
-
-      <section className="destinations-layout">
-        <nav className="destinations-sidebar" aria-label="Main navigation">
-          <button type="button" className="destinations-tab" onClick={() => router.push("/home")}>
-            <span aria-hidden="true">🗺️</span>
-            <span>Destinations</span>
-          </button>
-          <button type="button" className="destinations-tab destinations-tab-active">
-            <span aria-hidden="true">💾</span>
-            <span>Itinerary</span>
-          </button>
-          <button type="button" className="destinations-tab" onClick={() => router.push("/favorites")}>
-            <span aria-hidden="true">❤</span>
-            <span>Favorites</span>
-          </button>
-          <button type="button" className="destinations-tab" onClick={() => router.push("/collaborate")}>
-            <span aria-hidden="true">👥</span>
-            <span>Collaborate</span>
-          </button>
-          <button type="button" className="destinations-tab" onClick={() => router.push("/ai-chatbot")}>
-            <span aria-hidden="true">✨</span>
-            <span>AI Chatbot</span>
-          </button>
-          <button type="button" className="destinations-tab" onClick={() => router.push("/about")}>
-            <span aria-hidden="true">ℹ️</span>
-            <span>About</span>
-          </button>
-        </nav>
-
-        <div className="destinations-content">
+  const body = (
+    <>
           <section className="saved-trips-header">
             <h1>Itinerary</h1>
             <p>Turn your favorites into a ready-to-go itinerary in one click and save it with a shareable link.</p>
@@ -784,6 +756,17 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
             </article>
           </section>
 
+          <section className="saved-trips-notes">
+            <label htmlFor="trip-notes">Trip Notes</label>
+            <textarea
+              id="trip-notes"
+              value={notes}
+              onChange={(event) => setNotes(event.target.value)}
+              placeholder="Add reminders: reservations, neighborhood plans, must-eat spots..."
+              rows={3}
+            />
+          </section>
+
           {selectedPlace && !router.query.fromCollab && (
             <section className="saved-suggested-section" aria-labelledby="suggested-heading">
               <h2 id="suggested-heading">Suggested in {selectedPlace.label}</h2>
@@ -842,17 +825,6 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
               )}
             </section>
           )}
-
-          <section className="saved-trips-notes">
-            <label htmlFor="trip-notes">Trip Notes</label>
-            <textarea
-              id="trip-notes"
-              value={notes}
-              onChange={(event) => setNotes(event.target.value)}
-              placeholder="Add reminders: reservations, neighborhood plans, must-eat spots..."
-              rows={3}
-            />
-          </section>
 
           {(unscheduled.length === 0 && !dayPlans.some((d) => d.stops.length > 0)) ? (
             <section className="saved-trips-empty">
@@ -1037,7 +1009,55 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
               </p>
             )}
           </section>
-        </div>
+    </>
+  );
+
+  if (embedded) {
+    return <>{body}</>;
+  }
+
+  return (
+    <main className="destinations-page">
+      <header className="destinations-topbar">
+        <button
+          type="button"
+          className="destinations-brand destinations-brand-button"
+          onClick={() => router.push("/")}
+        >
+          TravelApp
+        </button>
+        <AuthButton />
+      </header>
+
+      <section className="destinations-layout">
+        <nav className="destinations-sidebar" aria-label="Main navigation">
+          <button type="button" className="destinations-tab" onClick={() => router.push("/home")}>
+            <span aria-hidden="true">🗺️</span>
+            <span>Destinations</span>
+          </button>
+          <button type="button" className="destinations-tab destinations-tab-active">
+            <span aria-hidden="true">💾</span>
+            <span>Itinerary</span>
+          </button>
+          <button type="button" className="destinations-tab" onClick={() => router.push("/favorites")}>
+            <span aria-hidden="true">❤</span>
+            <span>Favorites</span>
+          </button>
+          <button type="button" className="destinations-tab" onClick={() => router.push("/collaborate")}>
+            <span aria-hidden="true">👥</span>
+            <span>Collaborate</span>
+          </button>
+          <button type="button" className="destinations-tab" onClick={() => router.push("/ai-chatbot")}>
+            <span aria-hidden="true">✨</span>
+            <span>AI Chatbot</span>
+          </button>
+          <button type="button" className="destinations-tab" onClick={() => router.push("/about")}>
+            <span aria-hidden="true">ℹ️</span>
+            <span>About</span>
+          </button>
+        </nav>
+
+        <div className="destinations-content">{body}</div>
       </section>
     </main>
   );
