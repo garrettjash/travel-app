@@ -38,6 +38,7 @@ type DayPlan = {
 type ItineraryRow = {
   itinerary_id: string;
   trip_name: string | null;
+  place_id: number | null;
   start_date: string | null;
   end_date: string | null;
   pace: string | null;
@@ -48,10 +49,18 @@ type ItineraryRow = {
   updated_at: string | null;
 };
 
+type ItineraryListItem = {
+  itineraryId: string;
+  tripName: string;
+  location: string;
+};
+
 type SavedItineraryPayload = {
   itineraryId?: string;
+  userId?: string;
   tripName: string;
   tripPlace?: string;
+  placeId?: number;
   startDate: string;
   endDate: string;
   pace: Pace;
@@ -78,6 +87,7 @@ type ItineraryResponse =
         createdAt?: string;
         updatedAt?: string;
       };
+      itineraries?: ItineraryListItem[];
       error?: string;
     }
   | { error: string };
@@ -137,24 +147,77 @@ export default async function handler(
 
   try {
     if (request.method === "GET") {
+      const rawUserId = request.query.userId;
+      const userId =
+        typeof rawUserId === "string" &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawUserId)
+          ? rawUserId
+          : null;
+
+      if (userId) {
+        const { data: rows, error } = await supabase
+          .from("itinerary")
+          .select("itinerary_id, trip_name, place_id")
+          .eq("user_id", userId)
+          .order("updated_at", { ascending: false });
+
+        if (error) {
+          response.status(500).json({ error: error.message });
+          return;
+        }
+
+        const placeIds = [...new Set((rows ?? []).map((r) => r.place_id).filter(Boolean))];
+        let placeMap: Record<number, { city: string; country: string }> = {};
+        if (placeIds.length > 0) {
+          const { data: places } = await supabase
+            .from("place")
+            .select("place_id, place_city, place_countryregion")
+            .in("place_id", placeIds);
+          for (const p of places ?? []) {
+            const id = Number(p.place_id);
+            placeMap[id] = {
+              city: normalizeText(p.place_city) || "",
+              country: normalizeText(p.place_countryregion) || ""
+            };
+          }
+        }
+
+        const itineraries: ItineraryListItem[] = (rows ?? []).map((r) => {
+          const tripName = normalizeText(r.trip_name) || "Untitled Trip";
+          let location = "";
+          if (r.place_id && placeMap[r.place_id]) {
+            const { city, country } = placeMap[r.place_id];
+            location = city && country ? `${city}, ${country}` : city || country;
+          }
+          return {
+            itineraryId: r.itinerary_id,
+            tripName,
+            location
+          };
+        });
+
+        response.status(200).json({ itineraries });
+        return;
+      }
+
       const rawId = request.query.itineraryId;
       const itineraryId = sanitizeItineraryId(
         Array.isArray(rawId) ? rawId[0] : rawId ?? ""
       );
 
       if (!itineraryId) {
-        response.status(400).json({ error: "itineraryId is required." });
+        response.status(400).json({ error: "itineraryId or userId is required." });
         return;
       }
 
       const { data, error } = await supabase
         .from("itinerary")
         .select(
-          "itinerary_id, trip_name, start_date, end_date, pace, notes, days, unscheduled, created_at, updated_at"
+          "itinerary_id, trip_name, place_id, start_date, end_date, pace, notes, days, unscheduled, created_at, updated_at"
         )
         .eq("itinerary_id", itineraryId)
         .limit(1)
-        .maybeSingle<ItineraryRow>();
+        .maybeSingle<ItineraryRow & { place_id?: number | null }>();
 
       if (error) {
         response.status(500).json({ error: error.message });
@@ -166,9 +229,25 @@ export default async function handler(
         return;
       }
 
+      let tripPlace = "";
+      const rawPlaceId = (data as { place_id?: number | null }).place_id;
+      if (rawPlaceId && Number.isFinite(Number(rawPlaceId))) {
+        const placeRes = await supabase
+          .from("place")
+          .select("place_city, place_countryregion")
+          .eq("place_id", rawPlaceId)
+          .maybeSingle();
+        if (!placeRes.error && placeRes.data) {
+          const city = normalizeText(placeRes.data.place_city) || "";
+          const country = normalizeText(placeRes.data.place_countryregion) || "";
+          tripPlace = city && country ? `${city}, ${country}` : city || country;
+        }
+      }
+
       const itinerary = {
         itineraryId: data.itinerary_id,
         tripName: normalizeText(data.trip_name) || "Untitled Trip",
+        tripPlace: tripPlace || undefined,
         startDate: normalizeText(data.start_date) || "",
         endDate: normalizeText(data.end_date) || "",
         pace: (normalizeText(data.pace) as Pace) || "balanced",
@@ -207,23 +286,64 @@ export default async function handler(
       const notes = normalizeText(body.notes);
       const days = Array.isArray(body.days) ? body.days : [];
       const unscheduled = Array.isArray(body.unscheduled) ? body.unscheduled : [];
+      const rawUserId = body.userId;
+      const userId =
+        typeof rawUserId === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawUserId)
+          ? rawUserId
+          : null;
+
+      const rawPlaceId = body.placeId;
+      const providedPlaceId =
+        typeof rawPlaceId === "number" && Number.isFinite(rawPlaceId) && rawPlaceId > 0
+          ? rawPlaceId
+          : null;
 
       let placeId: number | null = null;
-      if (tripPlace) {
-        const placeQuery = supabase
+      if (providedPlaceId) {
+        const check = await supabase
           .from("place")
-          .select("place_id, place_city, place_countryregion")
-          .limit(1);
-
-        const placeResult = await placeQuery
-          .or(`place_city.ilike.${tripPlace},place_countryregion.ilike.${tripPlace}`)
+          .select("place_id")
+          .eq("place_id", providedPlaceId)
           .maybeSingle();
+        if (!check.error && check.data) {
+          placeId = providedPlaceId;
+        }
+      }
+      if (!placeId && tripPlace) {
+        const parts = tripPlace.split(",").map((s) => s.trim()).filter(Boolean);
+        const cityPart = parts[0] ?? "";
+        const countryPart = parts.slice(1).join(", ").trim() || "";
+        let placeResult: { data?: { place_id: number } | null; error: unknown } | null = null;
 
-        if (!placeResult.error && placeResult.data) {
-          const rawPlaceId = Number(placeResult.data.place_id);
-          if (Number.isFinite(rawPlaceId) && rawPlaceId > 0) {
-            placeId = rawPlaceId;
-          }
+        if (cityPart && countryPart) {
+          placeResult = await supabase
+            .from("place")
+            .select("place_id")
+            .ilike("place_city", cityPart)
+            .ilike("place_countryregion", countryPart)
+            .limit(1)
+            .maybeSingle();
+        }
+        if ((!placeResult?.data || placeResult.error) && cityPart) {
+          placeResult = await supabase
+            .from("place")
+            .select("place_id")
+            .ilike("place_city", cityPart)
+            .limit(1)
+            .maybeSingle();
+        }
+        if ((!placeResult?.data || placeResult.error) && tripPlace) {
+          const safe = tripPlace.replace(/\\/g, "\\\\").replace(/\*/g, "\\*");
+          placeResult = await supabase
+            .from("place")
+            .select("place_id")
+            .or(`place_city.ilike.*${safe}*,place_countryregion.ilike.*${safe}*`)
+            .limit(1)
+            .maybeSingle();
+        }
+        if (!placeResult?.error && placeResult?.data) {
+          const id = Number(placeResult.data.place_id);
+          if (Number.isFinite(id) && id > 0) placeId = id;
         }
       }
 
@@ -233,7 +353,7 @@ export default async function handler(
       }
 
       if (request.method === "POST") {
-        const { error } = await supabase.from("itinerary").insert({
+        const insertRow: Record<string, unknown> = {
           itinerary_id: itineraryId,
           trip_name: tripName,
           place_id: placeId,
@@ -243,7 +363,9 @@ export default async function handler(
           notes,
           days,
           unscheduled
-        });
+        };
+        if (userId) insertRow.user_id = userId;
+        const { error } = await supabase.from("itinerary").insert(insertRow);
 
         if (error) {
           const isDuplicate = error.code === "23505";

@@ -1,6 +1,7 @@
 import { FormEvent, ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
-import LoginNoticeModal from "../components/LoginNoticeModal";
+import AuthButton from "../components/AuthButton";
+import { useAuth } from "../lib/auth-context";
 
 type ChatMessage = {
   message_id: string;
@@ -59,13 +60,13 @@ function renderFormattedMessage(content: string): ReactNode {
 
 export default function AiChatbotPage() {
   const router = useRouter();
+  const { user } = useAuth();
 
   const [sessionId, setSessionId] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isLoginNoticeOpen, setIsLoginNoticeOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const previousMessageCountRef = useRef(0);
 
@@ -148,7 +149,7 @@ export default function AiChatbotPage() {
       const agentResponse = await fetch("/api/agent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: content, session_id: sessionId })
+        body: JSON.stringify({ prompt: content, session_id: sessionId, user_id: user?.id ?? undefined })
       });
 
       const agentData = await agentResponse.json();
@@ -182,9 +183,7 @@ export default function AiChatbotPage() {
         >
           TravelApp
         </button>
-        <button type="button" className="destinations-login" onClick={() => setIsLoginNoticeOpen(true)}>
-          Login
-        </button>
+        <AuthButton />
       </header>
 
       <section className="destinations-layout">
@@ -278,7 +277,6 @@ export default function AiChatbotPage() {
           </section>
         </div>
       </section>
-      <LoginNoticeModal isOpen={isLoginNoticeOpen} onClose={() => setIsLoginNoticeOpen(false)} />
     </main>
   );
 }

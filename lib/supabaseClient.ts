@@ -10,7 +10,10 @@ export const supabaseEnv = {
   hasAnonKey: Boolean(supabaseAnonKey)
 };
 
-export const supabase =
-  supabaseUrl && supabaseAnonKey
-    ? createClient(supabaseUrl, supabaseAnonKey)
-    : null;
+function createSupabaseClient() {
+  if (typeof window === "undefined") return null;
+  if (!supabaseUrl || !supabaseAnonKey) return null;
+  return createClient(supabaseUrl, supabaseAnonKey);
+}
+
+export const supabase = createSupabaseClient();

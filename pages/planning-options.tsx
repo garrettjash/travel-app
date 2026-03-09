@@ -1,5 +1,6 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/router";
+import AuthButton from "../components/AuthButton";
 
 const heroImage =
   "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&q=80";
@@ -51,6 +52,7 @@ export default function PlanningOptionsPage() {
         >
           TravelApp
         </button>
+        <AuthButton />
       </header>
 
       <section className="planning-options-shell" style={{ backgroundImage: `url(${heroImage})` }}>

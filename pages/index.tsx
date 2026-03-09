@@ -1,5 +1,6 @@
 import { useRouter } from "next/router";
 import { useState } from "react";
+import AuthButton from "../components/AuthButton";
 
 const heroImage =
   "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&q=80";
@@ -19,6 +20,7 @@ export default function LandingPage() {
           TravelApp
         </button>
         <div className="landing-topbar-actions">
+          <AuthButton />
           <button type="button" className="destinations-login" onClick={() => router.push("/planning-options")}>
             New Version
           </button>
