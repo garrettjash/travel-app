@@ -1,0 +1,85 @@
+name: AI Backfill (One-Time Manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      place:
+        type: string
+        description: "Optional exact place_city (e.g. Shanghai). Leave blank for all places."
+        required: false
+        default: ""
+      limit_places:
+        type: string
+        description: "Optional max number of places to process (blank = no limit)."
+        required: false
+        default: ""
+      max_runtime_minutes:
+        type: string
+        description: "Optional runtime cap in minutes (blank/0 = no cap)."
+        required: false
+        default: ""
+      dry_run:
+        type: boolean
+        description: "Preview only; no DB/S3 writes"
+        required: false
+        default: false
+
+jobs:
+  ai_backfill:
+    environment: production
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip && pip install -r requirements.txt
+
+      - name: Run ai_backfill (manual one-time)
+        env:
+          S3_IMG_BUCKET_NAME: ${{ secrets.S3_IMG_BUCKET_NAME }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+          TA_API_KEY: ${{ secrets.TA_API_KEY }}
+          GOOGLE_IMAGE_MAX_WIDTH: ${{ vars.GOOGLE_IMAGE_MAX_WIDTH || '800' }}
+          PLACE: ${{ github.event.inputs.place }}
+          LIMIT_PLACES: ${{ github.event.inputs.limit_places }}
+          MAX_RUNTIME_MINUTES: ${{ github.event.inputs.max_runtime_minutes || vars.BACKFILL_MAX_RUNTIME_MINUTES || '0' }}
+          DRY_RUN: ${{ github.event.inputs.dry_run }}
+        run: |
+          set -e
+
+          ARGS=()
+
+          if [ -n "${PLACE}" ]; then
+            ARGS+=(--place "${PLACE}")
+          fi
+
+          if [ -n "${LIMIT_PLACES}" ]; then
+            ARGS+=(--limit-places "${LIMIT_PLACES}")
+          fi
+
+          if [ -n "${MAX_RUNTIME_MINUTES}" ] && [ "${MAX_RUNTIME_MINUTES}" != "0" ]; then
+            ARGS+=(--max-runtime-minutes "${MAX_RUNTIME_MINUTES}")
+          fi
+
+          if [ "${DRY_RUN}" = "true" ]; then
+            ARGS+=(--dry-run)
+          fi
+
+          echo "GOOGLE_IMAGE_MAX_WIDTH=${GOOGLE_IMAGE_MAX_WIDTH}"
+          echo "Running: python -u ai_database/2. ai_backfill.py ${ARGS[*]}"
+          python -u "ai_database/2. ai_backfill.py" "${ARGS[@]}"

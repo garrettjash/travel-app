@@ -1062,4 +1062,3 @@ export default function SavedTripBuilder({
     </main>
   );
 }
-

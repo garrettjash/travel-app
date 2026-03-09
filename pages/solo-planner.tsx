@@ -13,8 +13,6 @@ type ChatMessage = {
   createdAt: string;
 };
 
-type ApiAttraction = FavoriteAttraction;
-
 function formatTimestamp(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "Unknown time";
@@ -62,10 +60,6 @@ function renderFormattedMessage(content: string): ReactNode {
   return parts.length > 0 ? parts : content;
 }
 
-function formatLocation(city: string, stateProvince: string, country: string) {
-  return [city, stateProvince, country].filter(Boolean).join(", ") || "Location unavailable";
-}
-
 export default function SoloPlannerPage() {
   const { user } = useAuth();
   const router = useRouter();
@@ -87,6 +81,11 @@ export default function SoloPlannerPage() {
   const previousMessageCountRef = useRef(0);
 
   const canSend = useMemo(() => draft.trim().length > 0 && !isSending, [draft, isSending]);
+
+  useEffect(() => {
+    if (panelOpen) return;
+    setIsChatCollapsed(false);
+  }, [panelOpen]);
 
   const fetchMessages = async (activeSessionId: string) => {
     try {
@@ -145,40 +144,6 @@ export default function SoloPlannerPage() {
     setDraft(`Show me the best things to do in ${initialPlace}`);
   }, [initialPlace, sessionId]);
 
-  useEffect(() => {
-    if (!initialPlace) {
-      setSuggestedAttractions([]);
-      return;
-    }
-
-    let cancelled = false;
-    setIsLoadingSuggested(true);
-    (async () => {
-      try {
-        const params = new URLSearchParams();
-        params.set("limit", "20");
-        params.set("offset", "0");
-        params.set("search", initialPlace);
-
-        const res = await fetch(`/api/attractions?${params.toString()}`);
-        const data = (await res.json()) as { data?: ApiAttraction[]; error?: string };
-        if (!cancelled && data.data) {
-          setSuggestedAttractions(data.data);
-        } else if (!cancelled) {
-          setSuggestedAttractions([]);
-        }
-      } catch {
-        if (!cancelled) setSuggestedAttractions([]);
-      } finally {
-        if (!cancelled) setIsLoadingSuggested(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [initialPlace]);
-
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const content = draft.trim();
@@ -221,7 +186,11 @@ export default function SoloPlannerPage() {
   };
 
   return (
-    <main className={`solo-planner-page ${panelOpen ? "solo-planner-page-panel-open" : ""}`}>
+    <main
+      className={`solo-planner-page ${panelOpen ? "solo-planner-page-panel-open" : ""} ${
+        isChatCollapsed ? "solo-planner-page-chat-collapsed" : ""
+      }`}
+    >
       <header className="solo-planner-topbar">
         <button type="button" className="solo-back-button" onClick={() => router.push("/planning-options")}>
           ← Back
@@ -302,6 +271,13 @@ export default function SoloPlannerPage() {
       <aside className={`solo-itinerary-panel ${panelOpen ? "solo-itinerary-panel-open" : ""}`}>
         <div className="solo-itinerary-panel-inner">
           <div className="solo-itinerary-panel-header">
+            <button
+              type="button"
+              className="solo-itinerary-collapse"
+              onClick={() => setIsChatCollapsed((collapsed) => !collapsed)}
+            >
+              {isChatCollapsed ? "Show Chatbot" : "Collapse Chatbot"}
+            </button>
             <button type="button" className="solo-itinerary-collapse" onClick={() => setPanelOpen(false)}>
               Collapse
             </button>

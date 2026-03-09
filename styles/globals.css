@@ -536,6 +536,17 @@ body {
   margin-left: 60%;
 }
 
+.solo-planner-page-panel-open.solo-planner-page-chat-collapsed .solo-chat-area {
+  width: 0;
+  margin-left: 100%;
+  padding: 0;
+  pointer-events: none;
+}
+
+.solo-planner-page-panel-open.solo-planner-page-chat-collapsed .solo-itinerary-panel {
+  width: 100%;
+}
+
 .solo-itinerary-panel-inner {
   height: 100%;
   overflow-y: auto;
@@ -545,6 +556,7 @@ body {
 .solo-itinerary-panel-header {
   display: flex;
   justify-content: flex-end;
+  gap: 8px;
   margin-bottom: 8px;
 }
 
@@ -712,6 +724,17 @@ body {
   margin-right: 50%;
 }
 
+.collab-planner-page-chat-open.collab-planner-page-main-collapsed .collab-planner-main {
+  width: 0;
+  margin-right: 100%;
+  padding: 0;
+  pointer-events: none;
+}
+
+.collab-planner-page-chat-open.collab-planner-page-main-collapsed .collab-chat-panel {
+  width: 100%;
+}
+
 .collab-chat-panel-header {
   display: flex;
   justify-content: flex-end;
@@ -731,6 +754,22 @@ body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+}
+
+.saved-trips-embedded-page {
+  min-height: 0;
+  height: auto;
+  background: transparent;
+  color: inherit;
+}
+
+.saved-trips-embedded-layout {
+  min-height: 0;
+  display: block;
+}
+
+.saved-trips-embedded-content {
+  padding: 0;
 }
 
 @keyframes chatSpin {
@@ -784,6 +823,11 @@ body {
     margin-left: 0;
   }
 
+  .solo-planner-page-panel-open.solo-planner-page-chat-collapsed .solo-chat-area {
+    width: 0;
+    margin-left: 100%;
+  }
+
   .solo-itinerary-field-row {
     grid-template-columns: 1fr;
   }
@@ -801,6 +845,15 @@ body {
   .collab-planner-page-chat-open .collab-planner-main {
     width: 100%;
     margin-right: 0;
+  }
+
+  .collab-planner-page-chat-open.collab-planner-page-main-collapsed .collab-planner-main {
+    width: 0;
+    margin-right: 100%;
+  }
+
+  .collab-planner-page-chat-open.collab-planner-page-main-collapsed .collab-chat-panel {
+    width: 100vw;
   }
 }
 

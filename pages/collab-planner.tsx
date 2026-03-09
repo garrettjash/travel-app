@@ -114,6 +114,7 @@ export default function CollabPlannerPage() {
   const router = useRouter();
   const { user } = useAuth();
   const placeQuery = router.query.place;
+  const chatQuery = router.query.chat;
   const initialPlace = sanitizePlainText(Array.isArray(placeQuery) ? placeQuery[0] ?? "" : placeQuery ?? "");
 
   const [places, setPlaces] = useState<Array<{ id: number; label: string }>>([]);
@@ -129,6 +130,7 @@ export default function CollabPlannerPage() {
   const [joinLinkInput, setJoinLinkInput] = useState("");
   const [joinLinkError, setJoinLinkError] = useState<string | null>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isCollaborateCollapsed, setIsCollaborateCollapsed] = useState(false);
 
   const [sessionId, setSessionId] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -139,6 +141,17 @@ export default function CollabPlannerPage() {
   const previousMessageCountRef = useRef(0);
 
   const canSend = useMemo(() => draft.trim().length > 0 && !isSending, [draft, isSending]);
+
+  useEffect(() => {
+    if (isChatOpen) return;
+    setIsCollaborateCollapsed(false);
+  }, [isChatOpen]);
+
+  useEffect(() => {
+    if (!router.isReady) return;
+    const chatMode = Array.isArray(chatQuery) ? chatQuery[0] : chatQuery;
+    setIsChatOpen(chatMode === "open");
+  }, [chatQuery, router.isReady]);
 
   useEffect(() => {
     let isActive = true;
@@ -402,7 +415,11 @@ export default function CollabPlannerPage() {
   };
 
   return (
-    <main className={`collab-planner-page ${isChatOpen ? "collab-planner-page-chat-open" : ""}`}>
+    <main
+      className={`collab-planner-page ${isChatOpen ? "collab-planner-page-chat-open" : ""} ${
+        isCollaborateCollapsed ? "collab-planner-page-main-collapsed" : ""
+      }`}
+    >
       <header className="collab-planner-topbar">
         <button type="button" className="solo-back-button" onClick={() => router.push("/planning-options")}>
           ← Back
@@ -410,7 +427,13 @@ export default function CollabPlannerPage() {
         <button
           type="button"
           className="collab-chat-toggle"
-          onClick={() => setIsChatOpen((open) => !open)}
+          onClick={() =>
+            setIsChatOpen((open) => {
+              const next = !open;
+              if (!next) setIsCollaborateCollapsed(false);
+              return next;
+            })
+          }
           aria-expanded={isChatOpen}
         >
           {isChatOpen ? "Hide AI Chatbot" : "Expand AI Chatbot"}
@@ -528,6 +551,15 @@ export default function CollabPlannerPage() {
 
       <aside className={`collab-chat-panel ${isChatOpen ? "collab-chat-panel-open" : ""}`}>
         <div className="collab-chat-panel-header">
+          {isChatOpen && (
+            <button
+              type="button"
+              className="solo-itinerary-collapse"
+              onClick={() => setIsCollaborateCollapsed((collapsed) => !collapsed)}
+            >
+              {isCollaborateCollapsed ? "Show Collaborate" : "Collapse Collaborate"}
+            </button>
+          )}
           <button type="button" className="solo-itinerary-collapse" onClick={() => setIsChatOpen(false)}>
             Collapse
           </button>

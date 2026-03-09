@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-02-27T07:12:57.307800+00:00",
+  "updated_at": "2026-03-07T23:46:32.583534+00:00",
   "items": {
     "downtown bozeman::bozeman": {
       "attraction_name": "Downtown Bozeman",
@@ -7229,6 +7229,906 @@
         }
       ],
       "fetched_at": "2026-02-27T07:12:57.307771+00:00"
+    },
+    "shanghai disneyland park::shanghai china": {
+      "attraction_name": "Shanghai Disneyland Park",
+      "query": "Shanghai Disneyland Park, Shanghai, China, China",
+      "google_place_id": "ChIJeTeSUGiHrTURrNSkfYkOFGo",
+      "google_name": "Shanghai Disneyland Park",
+      "google_formatted_address": "4MV5+945, Pudong, Shanghai, China, 201205",
+      "google_rating": 4.5,
+      "google_user_ratings_total": 3097,
+      "google_maps_url": "https://maps.google.com/?cid=7643750451235837100",
+      "google_reviews_summary": "Christopher Malonda (5/5): This Disneyland park is notably the most expansive we have encountered. The selection of attractions is exceptional, ranging from Tron to the immersive Pirates of the Caribbean. Our children particularly enjoyed the Zootopia theme park. Numerous photo opportunities are available, and the Hot Pursuit ride offers a truly remarkable experience. We advise guests to be aware of potential wait times. Nevertheless, a visit to this park is highly recommended if you are in Shanghai. | Amos Chen (5/5): Visiting Shanghai Disneyland honestly exceeded my expectations. The park feels bigger and more open than I imagined, and the castle is stunning both during the day and at night — especially once it’s lit up.\n\nWhat stood out to me most was how immersive everything felt. The details in each area are very well done, and even just walking around felt enjoyable. The rides are a good mix of fun and impressive, not just for kids but for adults as well. Compared to other Disney parks I’ve been to, this one feels newer and more spacious.\n\nCrowds were manageable when I went, and the overall experience felt smooth and well organized. Definitely worth a full day, and I’d recommend staying until nighttime to see the park in a completely different atmosphere. | Chan Wai, 陈柃汐 (5/5): We visited Shanghai Disneyland in mid-November and it exceeded all my expectations. The weather was very cold, and we queued for about an hour before the official park opening. To our surprise, the park opened earlier than the stated time, which was a great start to the day. Because of that, we managed to ride TRON Lightcycle Power Run with almost no wait — and it was absolutely the best ride I’ve ever experienced. Truly next level.\n\nMy second favourite ride was Seven Dwarfs Mine Train — fun, smooth, and beautifully themed. Overall, the park operations were impressive. People generally queued patiently, everyone was polite, and we didn’t experience any queue cutting, which made the experience very pleasant.\n\nWe spent two full days in the park and were able to cover most of the rides without feeling too rushed. The park is well designed, immersive, and magical in its own way.\n\nWe loved it so much and will definitely be back again. Highly recommended! ✨🎢",
+      "google_reviews_raw": [
+        {
+          "author_name": "Christopher Malonda",
+          "author_url": "https://www.google.com/maps/contrib/114010539540989883641/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjXWuCOExs1-EWViqviRAMqINqx5EVV5Gb2xWnwBrfDkfJ4rh0f2NQ=s128-c0x00000000-cc-rp-mo-ba4",
+          "rating": 5,
+          "relative_time_description": "3 weeks ago",
+          "text": "This Disneyland park is notably the most expansive we have encountered. The selection of attractions is exceptional, ranging from Tron to the immersive Pirates of the Caribbean. Our children particularly enjoyed the Zootopia theme park. Numerous photo opportunities are available, and the Hot Pursuit ride offers a truly remarkable experience. We advise guests to be aware of potential wait times. Nevertheless, a visit to this park is highly recommended if you are in Shanghai.",
+          "time": 1770595751,
+          "translated": false
+        },
+        {
+          "author_name": "Amos Chen",
+          "author_url": "https://www.google.com/maps/contrib/102451492904428440564/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjVMfmLPXUm1xnauCi839PGNpPKOmFSRPMzGFfhNlbNfz8p4tyQ=s128-c0x00000000-cc-rp-mo-ba5",
+          "rating": 5,
+          "relative_time_description": "3 weeks ago",
+          "text": "Visiting Shanghai Disneyland honestly exceeded my expectations. The park feels bigger and more open than I imagined, and the castle is stunning both during the day and at night — especially once it’s lit up.\n\nWhat stood out to me most was how immersive everything felt. The details in each area are very well done, and even just walking around felt enjoyable. The rides are a good mix of fun and impressive, not just for kids but for adults as well. Compared to other Disney parks I’ve been to, this one feels newer and more spacious.\n\nCrowds were manageable when I went, and the overall experience felt smooth and well organized. Definitely worth a full day, and I’d recommend staying until nighttime to see the park in a completely different atmosphere.",
+          "time": 1770663946,
+          "translated": false
+        },
+        {
+          "author_name": "Chan Wai, 陈柃汐",
+          "author_url": "https://www.google.com/maps/contrib/100289457793824033886/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjWWEFHmQzzLX3w7OEYXBl9dFKcigvfzaRgtJ_7mRgcG802Rvo0f=s128-c0x00000000-cc-rp-mo-ba6",
+          "rating": 5,
+          "relative_time_description": "2 months ago",
+          "text": "We visited Shanghai Disneyland in mid-November and it exceeded all my expectations. The weather was very cold, and we queued for about an hour before the official park opening. To our surprise, the park opened earlier than the stated time, which was a great start to the day. Because of that, we managed to ride TRON Lightcycle Power Run with almost no wait — and it was absolutely the best ride I’ve ever experienced. Truly next level.\n\nMy second favourite ride was Seven Dwarfs Mine Train — fun, smooth, and beautifully themed. Overall, the park operations were impressive. People generally queued patiently, everyone was polite, and we didn’t experience any queue cutting, which made the experience very pleasant.\n\nWe spent two full days in the park and were able to cover most of the rides without feeling too rushed. The park is well designed, immersive, and magical in its own way.\n\nWe loved it so much and will definitely be back again. Highly recommended! ✨🎢",
+          "time": 1767155669,
+          "translated": false
+        }
+      ],
+      "fetched_at": "2026-03-07T23:43:40.348655+00:00"
+    },
+    "shanghai ocean aquarium::shanghai china": {
+      "attraction_name": "Shanghai Ocean Aquarium",
+      "query": "Shanghai Ocean Aquarium, Shanghai, China, China",
+      "google_place_id": "ChIJI2iVuvxwsjURD7ZBxDOEujY",
+      "google_name": "Shanghai Ocean Aquarium",
+      "google_formatted_address": "1388 Lu Jia Zui Huan Lu, Lujiazui, Pu Dong Xin Qu, Shang Hai Shi, China, 200031",
+      "google_rating": 4.1,
+      "google_user_ratings_total": 484,
+      "google_maps_url": "https://maps.google.com/?cid=3943609781587129871",
+      "google_reviews_summary": "Udara Rathnayake (5/5): My visit to the Shanghai Ocean Aquarium was nothing short of spectacular and stands out as one of the most impressive aquatic experiences I've had worldwide. From the moment we entered the sleek, modern building in the heart of the Lujiazui financial district, we were transported into a mesmerizing undersea realm.\n\nThe layout is masterfully designed, taking you on a fascinating journey through the world's most distinct water zones, including China, the Amazon, Australia, and the icy Antarctic. The thematic sections are not only educational but incredibly immersive. The interactive displays and clear, multilingual information panels made learning about the diverse ecosystems and conservation efforts both engaging and accessible for all ages.\n\nHowever, the absolute showstopper is the breathtaking underwater tunnel – one of the longest in the world. The sensation of being surrounded by majestic rays, stealthy sharks, and shimmering schools of fish as they glide effortlessly overhead is truly awe-inspiring and humbling. We spent nearly an hour just in this section, mesmerized by the serene beauty and the graceful dance of these magnificent creatures. The moment a massive sawfish or a gentle sea turtle cruised by just inches away was unforgettable.\n\nSpecial mention must go to the enchanting jellyfish gallery. Lit with dramatic, cycling colors, these ethereal creatures floated like living art, creating a moment of pure tranquility and wonder. It was a photographer’s dream.\n\nFacilities throughout are top-notch: impeccably clean, well-maintained tanks, spacious walkways, and helpful, friendly staff. While it can get busy, the crowd flow is managed efficiently. The gift shop at the end offers a lovely array of souvenirs, and the location is incredibly convenient, easily accessible via metro.\n\nIn summary, the Shanghai Ocean Aquarium is a flawless blend of entertainment, education, and conservation. It offers a profound appreciation for our planet's aquatic life and is an absolute essential experience for families, couples, or solo travelers visiting Shanghai. | Naga Pavan Kumar (5/5): Shanghai Ocean Park is an amazing place to visit! The entire park is beautifully maintained and very well organized. The variety of marine life is impressive — from colorful tropical fish to huge sharks and playful penguins. The underwater tunnel is absolutely stunning and gives a real “wow” experience.\n\nIt’s a great place for families, couples, or anyone who loves nature and the ocean. The staff are friendly, the facilities are clean, and the shows are entertaining. You can easily spend half a day here just exploring and taking photos.\n\nTruly one of the most beautiful attractions in Shanghai — worth every minute! 🌊🐠🐧 | yuri cardozo (5/5): This is a must go place. I have been visiting the aquarium for 15 years and it’s always a beautiful experience. The place is well kept and clean. Lovely for the little ones.",
+      "google_reviews_raw": [
+        {
+          "author_name": "Udara Rathnayake",
+          "author_url": "https://www.google.com/maps/contrib/105441833963916148876/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjUte-jrqVLU8Hu1RoWnfbgpMcfF4EXoGE68miqFiYQR0mHSxPsY=s128-c0x00000000-cc-rp-mo-ba6",
+          "rating": 5,
+          "relative_time_description": "a month ago",
+          "text": "My visit to the Shanghai Ocean Aquarium was nothing short of spectacular and stands out as one of the most impressive aquatic experiences I've had worldwide. From the moment we entered the sleek, modern building in the heart of the Lujiazui financial district, we were transported into a mesmerizing undersea realm.\n\nThe layout is masterfully designed, taking you on a fascinating journey through the world's most distinct water zones, including China, the Amazon, Australia, and the icy Antarctic. The thematic sections are not only educational but incredibly immersive. The interactive displays and clear, multilingual information panels made learning about the diverse ecosystems and conservation efforts both engaging and accessible for all ages.\n\nHowever, the absolute showstopper is the breathtaking underwater tunnel – one of the longest in the world. The sensation of being surrounded by majestic rays, stealthy sharks, and shimmering schools of fish as they glide effortlessly overhead is truly awe-inspiring and humbling. We spent nearly an hour just in this section, mesmerized by the serene beauty and the graceful dance of these magnificent creatures. The moment a massive sawfish or a gentle sea turtle cruised by just inches away was unforgettable.\n\nSpecial mention must go to the enchanting jellyfish gallery. Lit with dramatic, cycling colors, these ethereal creatures floated like living art, creating a moment of pure tranquility and wonder. It was a photographer’s dream.\n\nFacilities throughout are top-notch: impeccably clean, well-maintained tanks, spacious walkways, and helpful, friendly staff. While it can get busy, the crowd flow is managed efficiently. The gift shop at the end offers a lovely array of souvenirs, and the location is incredibly convenient, easily accessible via metro.\n\nIn summary, the Shanghai Ocean Aquarium is a flawless blend of entertainment, education, and conservation. It offers a profound appreciation for our planet's aquatic life and is an absolute essential experience for families, couples, or solo travelers visiting Shanghai.",
+          "time": 1768744090,
+          "translated": false
+        },
+        {
+          "author_name": "Naga Pavan Kumar",
+          "author_url": "https://www.google.com/maps/contrib/114072177175900710261/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjXCCoUT5FB0OXl-HHvnya0aPclW7Y5n-P1_-_aqW8zy7jQnZ0Dr=s128-c0x00000000-cc-rp-mo-ba2",
+          "rating": 5,
+          "relative_time_description": "4 months ago",
+          "text": "Shanghai Ocean Park is an amazing place to visit! The entire park is beautifully maintained and very well organized. The variety of marine life is impressive — from colorful tropical fish to huge sharks and playful penguins. The underwater tunnel is absolutely stunning and gives a real “wow” experience.\n\nIt’s a great place for families, couples, or anyone who loves nature and the ocean. The staff are friendly, the facilities are clean, and the shows are entertaining. You can easily spend half a day here just exploring and taking photos.\n\nTruly one of the most beautiful attractions in Shanghai — worth every minute! 🌊🐠🐧",
+          "time": 1761464625,
+          "translated": false
+        },
+        {
+          "author_name": "yuri cardozo",
+          "author_url": "https://www.google.com/maps/contrib/105317849753710645898/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a/ACg8ocJl39aHcfLJCjrThryTqJE652K7CMrAGg3-dguYgBy8epWevg=s128-c0x00000000-cc-rp-mo-ba3",
+          "rating": 5,
+          "relative_time_description": "2 months ago",
+          "text": "This is a must go place. I have been visiting the aquarium for 15 years and it’s always a beautiful experience. The place is well kept and clean. Lovely for the little ones.",
+          "time": 1767073627,
+          "translated": false
+        }
+      ],
+      "fetched_at": "2026-03-07T23:43:44.878513+00:00"
+    },
+    "qibao ancient town::shanghai china": {
+      "attraction_name": "Qibao Ancient Town",
+      "query": "Qibao Ancient Town, Shanghai, China",
+      "google_place_id": "ChIJh4X6LFZhsjURb_9EMhv-BeA",
+      "google_name": "Qibao Ancient Town",
+      "google_formatted_address": "China, Shang Hai Shi, Min Hang Qu, 青年路步行街5933+JGJ 邮政编码: 201101",
+      "google_rating": 4.1,
+      "google_user_ratings_total": 696,
+      "google_maps_url": "https://maps.google.com/?cid=16142587832140365679",
+      "google_reviews_summary": "Chanaporn Yamjinda (4/5): A Peaceful Escape to Qibao Ancient Town\n\n​If you are looking for a break from the busy skyscrapers of Shanghai, Qibao Ancient Town is a hidden gem that feels worlds apart. Unlike some of the more famous (and overcrowded) water towns, Qibao offers a lovely, authentic \"old town\" atmosphere with significantly fewer tourists, making it a perfect spot for a relaxed afternoon.\n\n​Getting There\nOne of the best parts about Qibao is how accessible it is. You don't need to book a long bus tour; you can simply take the Metro Line 9 to Qibao Station. From there, it is just a short, pleasant walk to the entrance of the ancient town.\n\n​The Atmosphere\nAs you walk through the main gates, you are greeted by traditional architecture that transports you back in time. The town is incredibly picturesque, featuring iconic Chinese pagodas and historic buildings. One of the highlights is standing on the stone bridges to look out over the canal—the view of the tea houses with red lanterns hanging over the water is beautiful. It is a very photogenic spot, especially on a sunny day.\n\n​Food and Culture\nFor food lovers, the Old Street is a must-visit. It is packed with street food stalls offering local snacks. You can wander through the narrow alleys, trying everything from sticky rice cakes to fresh snacks, all while soaking in the lively but manageable crowd. There are also cultural spots to explore, such as the Zhang Chongren Memorial Hall, which adds a nice touch of history to your visit. | A P (4/5): Nice to see lots of beautiful wood craft, a lot of them are hand made, lots of food stand, I had an old ladies deep fried shredded mooli cake. It was a bit greasy but tasty. | David Lee (4/5): Qibao Old Street delivers a lively, compact experience of a traditional Jiangnan water town (south of the Yangtze River) without requiring a long journey from central Shanghai. The old town is visually charming, featuring classic … More",
+      "google_reviews_raw": [
+        {
+          "author_name": "Chanaporn Yamjinda",
+          "author_url": "https://www.google.com/maps/contrib/109730505613902624232/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjXMp8W00NRh2rDPMMTV5cDJ7cW0THMJn2LsEhxcpFzbzUzuRec=s128-c0x00000000-cc-rp-mo-ba5",
+          "rating": 4,
+          "relative_time_description": "2 months ago",
+          "text": "A Peaceful Escape to Qibao Ancient Town\n\n​If you are looking for a break from the busy skyscrapers of Shanghai, Qibao Ancient Town is a hidden gem that feels worlds apart. Unlike some of the more famous (and overcrowded) water towns, Qibao offers a lovely, authentic \"old town\" atmosphere with significantly fewer tourists, making it a perfect spot for a relaxed afternoon.\n\n​Getting There\nOne of the best parts about Qibao is how accessible it is. You don't need to book a long bus tour; you can simply take the Metro Line 9 to Qibao Station. From there, it is just a short, pleasant walk to the entrance of the ancient town.\n\n​The Atmosphere\nAs you walk through the main gates, you are greeted by traditional architecture that transports you back in time. The town is incredibly picturesque, featuring iconic Chinese pagodas and historic buildings. One of the highlights is standing on the stone bridges to look out over the canal—the view of the tea houses with red lanterns hanging over the water is beautiful. It is a very photogenic spot, especially on a sunny day.\n\n​Food and Culture\nFor food lovers, the Old Street is a must-visit. It is packed with street food stalls offering local snacks. You can wander through the narrow alleys, trying everything from sticky rice cakes to fresh snacks, all while soaking in the lively but manageable crowd. There are also cultural spots to explore, such as the Zhang Chongren Memorial Hall, which adds a nice touch of history to your visit.",
+          "time": 1765289204,
+          "translated": false
+        },
+        {
+          "author_name": "A P",
+          "author_url": "https://www.google.com/maps/contrib/114447024449736847963/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a/ACg8ocKtzpJFNVpACyYpY6VXhbRFo1701O4-FkJtFHWCDXnPCd8MPA=s128-c0x00000000-cc-rp-mo-ba3",
+          "rating": 4,
+          "relative_time_description": "2 months ago",
+          "text": "Nice to see lots of beautiful wood craft, a lot of them are hand made, lots of food stand, I had an old ladies deep fried shredded mooli cake. It was a bit greasy but tasty.",
+          "time": 1766655014,
+          "translated": false
+        },
+        {
+          "author_name": "David Lee",
+          "author_url": "https://www.google.com/maps/contrib/118189120962645425435/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjUar1hpW-nB-RUkD7IVEqsx_8O2YPrj8jqXJu8FQtYlfWtKGg80=s128-c0x00000000-cc-rp-mo-ba7",
+          "rating": 4,
+          "relative_time_description": "5 months ago",
+          "text": "Qibao Old Street delivers a lively, compact experience of a traditional Jiangnan water town (south of the Yangtze River) without requiring a long journey from central Shanghai. The old town is visually charming, featuring classic … More",
+          "time": 1759285464,
+          "translated": false
+        }
+      ],
+      "fetched_at": "2026-03-07T23:43:48.542256+00:00"
+    },
+    "shanghai propaganda poster art centre::shanghai china": {
+      "attraction_name": "Shanghai Propaganda Poster Art Centre",
+      "query": "Shanghai Propaganda Poster Art Centre, Shanghai, China, China",
+      "google_place_id": "ChIJY1m5yFFlsjUR5f2tnuV-u9E",
+      "google_name": "上海宣传画艺术中心",
+      "google_formatted_address": "Yan, 726 An Xi Lu, Chang Ning Qu, Shang Hai Shi, China, 200031",
+      "google_rating": 4.6,
+      "google_user_ratings_total": 158,
+      "google_maps_url": "https://maps.google.com/?cid=15112812499246644709",
+      "google_reviews_summary": "Mia Cumberland (5/5): I'm studying abroad in Shanghai this summer, so I took a free rainy day to go check out this museum. It was very cool! Not too hard to find, and I'll include instructions at the end for how to get there. There were a bunch of posters running from the early 1900s to the 80s. They had little info blurbs around groups of posters talking about the era and circumstances. At the end there was a gift shop where I got my own propaganda poster! My ticket was only 25 yuan, I bought it in person upon arrival, and the people there were very nice. I tried practicing the Chinese I spent 3 1/2 semesters learning, but they kept responding in English so no worries for those who don't speak Chinese ;)\n\nAs for getting there, a couple of these reviews are right about the new address. You can plug in 726 West Yan'an Road or the name listed (上海宣传画艺术中心) into Google Maps or Baidu. It will drop you in front of two tall buildings connected in the middle. Facing the buildings, you will see building 726 (the building the museum is in) on the right, and 728 on the left. I walked in to the building that connected them, turned right to the elevators, and rode to the 7th floor. When the elevators open, there is signage pointing to the museum. Have fun! | Jennifer Xu (5/5): I visited in April 2025, as other reviews have said, it's in a non-descript office building. The security guards are aware of the museum, you can ask them for directions if needed.\n\nI met the curator the day I went! He was nice, with interesting stories. The museum is his personal collection, and he mentioned he's still trying to source more posters. Cannot recommend visiting enough, it's an informative look into the different pieces of propaganda over the last couple decades. The gift shop is well stocked at reasonable prices. Looking forward to going back! | Dustin Johnson (5/5): The location of this place can be found in Gaode maps and I hear Baidu now has English too. Google address is wrong. It is just NW up the street from the google location past the major street intersection in a huge multipurpose hotel office building on the 7th floor. This was perhaps my fave museum in Shanghai, because I've seen so many artifacts at this point. They have nice summary of the different movements and decades that was just the right amount of information. Make sure you move through in the right direction -counter clockwise. They do sell some prints, books and other little goodies, unfortunately they were out of the ones I wanted and the fellow there was pretty strange about me asking about them. Whatever. It was 60 Yen in  May 2025. If you are in Shanghai in May or June go see the Soyarama show at the Nanzuka Art center next to Shanghai East Museum.",
+      "google_reviews_raw": [
+        {
+          "author_name": "Mia Cumberland",
+          "author_url": "https://www.google.com/maps/contrib/109666779882030678881/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjVfFZ5qiwCCCahA4L10d3qDk5LOlpPkVwcWleJWsuE1D6BlXMpo=s128-c0x00000000-cc-rp-mo",
+          "rating": 5,
+          "relative_time_description": "7 months ago",
+          "text": "I'm studying abroad in Shanghai this summer, so I took a free rainy day to go check out this museum. It was very cool! Not too hard to find, and I'll include instructions at the end for how to get there. There were a bunch of posters running from the early 1900s to the 80s. They had little info blurbs around groups of posters talking about the era and circumstances. At the end there was a gift shop where I got my own propaganda poster! My ticket was only 25 yuan, I bought it in person upon arrival, and the people there were very nice. I tried practicing the Chinese I spent 3 1/2 semesters learning, but they kept responding in English so no worries for those who don't speak Chinese ;)\n\nAs for getting there, a couple of these reviews are right about the new address. You can plug in 726 West Yan'an Road or the name listed (上海宣传画艺术中心) into Google Maps or Baidu. It will drop you in front of two tall buildings connected in the middle. Facing the buildings, you will see building 726 (the building the museum is in) on the right, and 728 on the left. I walked in to the building that connected them, turned right to the elevators, and rode to the 7th floor. When the elevators open, there is signage pointing to the museum. Have fun!",
+          "time": 1752232094,
+          "translated": false
+        },
+        {
+          "author_name": "Jennifer Xu",
+          "author_url": "https://www.google.com/maps/contrib/112412522957190672169/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjXu_MDHbemfV4IEk8w5QQgzH1PXnPrEi355eoVkTiLo6gUmOTbu=s128-c0x00000000-cc-rp-mo-ba3",
+          "rating": 5,
+          "relative_time_description": "2 months ago",
+          "text": "I visited in April 2025, as other reviews have said, it's in a non-descript office building. The security guards are aware of the museum, you can ask them for directions if needed.\n\nI met the curator the day I went! He was nice, with interesting stories. The museum is his personal collection, and he mentioned he's still trying to source more posters. Cannot recommend visiting enough, it's an informative look into the different pieces of propaganda over the last couple decades. The gift shop is well stocked at reasonable prices. Looking forward to going back!",
+          "time": 1766074479,
+          "translated": false
+        },
+        {
+          "author_name": "Dustin Johnson",
+          "author_url": "https://www.google.com/maps/contrib/109884755716740002233/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjVgosedFrlOPCkqmSutq_wc2X5Esp2OUz41g5sT-ZSqBseM9oU=s128-c0x00000000-cc-rp-mo-ba4",
+          "rating": 5,
+          "relative_time_description": "9 months ago",
+          "text": "The location of this place can be found in Gaode maps and I hear Baidu now has English too. Google address is wrong. It is just NW up the street from the google location past the major street intersection in a huge multipurpose hotel office building on the 7th floor. This was perhaps my fave museum in Shanghai, because I've seen so many artifacts at this point. They have nice summary of the different movements and decades that was just the right amount of information. Make sure you move through in the right direction -counter clockwise. They do sell some prints, books and other little goodies, unfortunately they were out of the ones I wanted and the fellow there was pretty strange about me asking about them. Whatever. It was 60 Yen in  May 2025. If you are in Shanghai in May or June go see the Soyarama show at the Nanzuka Art center next to Shanghai East Museum.",
+          "time": 1747530069,
+          "translated": false
+        }
+      ],
+      "fetched_at": "2026-03-07T23:43:52.117091+00:00"
+    },
+    "tianzifang::shanghai china": {
+      "attraction_name": "Tianzifang",
+      "query": "Tianzifang, Shanghai, China",
+      "google_place_id": "ChIJ2-UI76F6sjURj_HAeG5PMhE",
+      "google_name": "Tianzifang",
+      "google_formatted_address": "210弄 Tai Kang Lu, Huang Pu Qu, China, 200023",
+      "google_rating": 4.2,
+      "google_user_ratings_total": 1915,
+      "google_maps_url": "https://maps.google.com/?cid=1239140183371215247",
+      "google_reviews_summary": "Wilfred Spykerman (5/5): Small lanes with retail and cafes lining the area. We went in the afternoon and it was cool as it was cloudy today.\n\nThere is a large mall with plenty of restaurants to pick from also.\n\nThere are public toilets in the area and if you cant find it, ask the vendors for  directions or spot the lime green signage | Paul Leong (3/5): Tianzifang feels more like a checklist stop than a genuine highlight. While it’s often described as a charming arts-and-crafts quarter, the reality is fairly average: narrow, enclosed lanes that limit views, creating a sense of congestion rather than discovery. The layout makes it hard to linger comfortably, and the overall experience feels more compressed than atmospheric.\n\nThe food and shops are similarly so-so, with limited variety and a strong sense of repetition from stall to stall. Nothing is particularly bad, but very little stands out either, especially when compared to other parts of Shanghai that offer better design, stronger curation, or more breathing space. If time is tight, Tianzifang is an easy place to skip without much regret. | Deadpool (4/5): Too many people (China Public holiday cum Weekends). There souvenirs, pubs and food here. Prices is rasonable too except clothing :) Its gonna be hot, so wear appropriately",
+      "google_reviews_raw": [
+        {
+          "author_name": "Wilfred Spykerman",
+          "author_url": "https://www.google.com/maps/contrib/108239202475432156987/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a/ACg8ocKSIddbtSz8AOrzsIUb695qA6xq_xCzw371Ppii1chNCfPbRQ=s128-c0x00000000-cc-rp-mo-ba6",
+          "rating": 5,
+          "relative_time_description": "4 months ago",
+          "text": "Small lanes with retail and cafes lining the area. We went in the afternoon and it was cool as it was cloudy today.\n\nThere is a large mall with plenty of restaurants to pick from also.\n\nThere are public toilets in the area and if you cant find it, ask the vendors for  directions or spot the lime green signage",
+          "time": 1760452443,
+          "translated": false
+        },
+        {
+          "author_name": "Paul Leong",
+          "author_url": "https://www.google.com/maps/contrib/107174367799723961278/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjX561u2CEGNbpLBtmMmWh9uAPbNXm8zfeEZB2IcsaOpDZHUO3zz=s128-c0x00000000-cc-rp-mo-ba6",
+          "rating": 3,
+          "relative_time_description": "2 months ago",
+          "text": "Tianzifang feels more like a checklist stop than a genuine highlight. While it’s often described as a charming arts-and-crafts quarter, the reality is fairly average: narrow, enclosed lanes that limit views, creating a sense of congestion rather than discovery. The layout makes it hard to linger comfortably, and the overall experience feels more compressed than atmospheric.\n\nThe food and shops are similarly so-so, with limited variety and a strong sense of repetition from stall to stall. Nothing is particularly bad, but very little stands out either, especially when compared to other parts of Shanghai that offer better design, stronger curation, or more breathing space. If time is tight, Tianzifang is an easy place to skip without much regret.",
+          "time": 1765872361,
+          "translated": false
+        },
+        {
+          "author_name": "Deadpool",
+          "author_url": "https://www.google.com/maps/contrib/103143593859092893670/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjVpHyR5kSutFUyJo9vXDAiXdk2y5il0iV5zEEGWbo2f-TGQHCGM=s128-c0x00000000-cc-rp-mo-ba6",
+          "rating": 4,
+          "relative_time_description": "5 months ago",
+          "text": "Too many people (China Public holiday cum Weekends). There souvenirs, pubs and food here. Prices is rasonable too except clothing :) Its gonna be hot, so wear appropriately",
+          "time": 1759572624,
+          "translated": false
+        }
+      ],
+      "fetched_at": "2026-03-07T23:43:55.761341+00:00"
+    },
+    "shanghai natural history museum::shanghai china": {
+      "attraction_name": "Shanghai Natural History Museum",
+      "query": "Shanghai Natural History Museum, Shanghai, China, China",
+      "google_place_id": "ChIJgWteABZwsjURUzPDZ8N90Mw",
+      "google_name": "Shanghai Natural History Museum.",
+      "google_formatted_address": "Jing'An, China, 200041",
+      "google_rating": 4.6,
+      "google_user_ratings_total": 536,
+      "google_maps_url": "https://maps.google.com/?cid=14758434257106056019",
+      "google_reviews_summary": "Turan Budagov (5/5): Shanghai Natural History Museum is an amazing place to visit. You can explore everything related to ancient history, nature, and the evolution of life, from dinosaurs to early human civilization. The exhibitions are very well designed, informative, and visually impressive. The dinosaur skeletons and historical displays are especially fascinating. It’s a perfect place for both learning and enjoyment. Definitely a must-see spot in Shanghai. Highly recommended! | Lila Syukurilla (5/5): I came here on December 31st. I bought the tickets on the spot since I failed to buy it by WeChat. The Museum display the comprehensive information about life: its origin, the big bang theory, cosmological phenomena, human evolution, kingdom classifications, the animal survival, minerals, and many more. | Nuero KonG (5/5): This place you need to buy tickets, you will earn most of experience to know our World.\n\nRecommended to spent time this place once you travel to Shanghai",
+      "google_reviews_raw": [
+        {
+          "author_name": "Turan Budagov",
+          "author_url": "https://www.google.com/maps/contrib/112528366180559176924/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjX3_SlIkABafR1O7XwkRKDtacePBgJozA9juzRbHuczDd7_-Ps=s128-c0x00000000-cc-rp-mo-ba2",
+          "rating": 5,
+          "relative_time_description": "a month ago",
+          "text": "Shanghai Natural History Museum is an amazing place to visit. You can explore everything related to ancient history, nature, and the evolution of life, from dinosaurs to early human civilization. The exhibitions are very well designed, informative, and visually impressive. The dinosaur skeletons and historical displays are especially fascinating. It’s a perfect place for both learning and enjoyment. Definitely a must-see spot in Shanghai. Highly recommended!",
+          "time": 1770060496,
+          "translated": false
+        },
+        {
+          "author_name": "Lila Syukurilla",
+          "author_url": "https://www.google.com/maps/contrib/109073051973074274338/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a/ACg8ocIevDNtg211xB7MFnmkaRCLv8SOkV_nDg9CjNuRyVRmBevJ2g=s128-c0x00000000-cc-rp-mo-ba3",
+          "rating": 5,
+          "relative_time_description": "a month ago",
+          "text": "I came here on December 31st. I bought the tickets on the spot since I failed to buy it by WeChat. The Museum display the comprehensive information about life: its origin, the big bang theory, cosmological phenomena, human evolution, kingdom classifications, the animal survival, minerals, and many more.",
+          "time": 1768011871,
+          "translated": false
+        },
+        {
+          "author_name": "Nuero KonG",
+          "author_url": "https://www.google.com/maps/contrib/114295061791202706296/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjXrTRWvFNzVztj33o_Q0XluH_bPeMpIXt_rqVchDRfesUigTPDCHQ=s128-c0x00000000-cc-rp-mo-ba4",
+          "rating": 5,
+          "relative_time_description": "a month ago",
+          "text": "This place you need to buy tickets, you will earn most of experience to know our World.\n\nRecommended to spent time this place once you travel to Shanghai",
+          "time": 1768456274,
+          "translated": false
+        }
+      ],
+      "fetched_at": "2026-03-07T23:43:59.400143+00:00"
+    },
+    "longhua temple::shanghai china": {
+      "attraction_name": "Longhua Temple",
+      "query": "Longhua Temple, Shanghai, China",
+      "google_place_id": "ChIJ33XthSl7sjURtfalYd9mk60",
+      "google_name": "Longhua Temple",
+      "google_formatted_address": "2853 Long Hua Lu, Xu Hui Qu, Shang Hai Shi, China, 200232",
+      "google_rating": 4.7,
+      "google_user_ratings_total": 234,
+      "google_maps_url": "https://maps.google.com/?cid=12507453699740006069",
+      "google_reviews_summary": "Jan Whitehead (5/5): A nice temple to visit in Shanghai. Just close to the underground station.\nQuite busy at the weekend but definitely worth a visit.\nSome cats and dogs in the temple area.\nAlso the park just next to the temple is very nice.\nPlan for at least 1 hour. | Gina (5/5): I had to queue for hours to buy the lucky bracelet I wanted. The temple is beautiful and sacred. I paid respects to all the deities and Buddha images. Entering the temple to pray doesn't require queuing; the only queue was when buying the bracelet. | Soudamini Mohapatra (5/5): Longhua Temple with Longhua Pagoda is the largest and oldest temple in Shanghai. The temple was built in the 3rd century, which was damaged and renovated over the centuries. The temple has a history of 1700 years and various dynasties have added their own style of architectural structure in the temple complex.\n\nIt has many as other Buddhist temples in the complex, such as Maitreya Hall, Mahavir Hall, Devaraja Hall, the Bell tower and Drum tower etc. The Bell Tower has a large bronze Bell of 2 meter in height.\nThe seven-storied Longhua Pagoda is located in front of the Longhua temple. It's a distinctive feature of the temple complex.\n\nThe temple complex is  huge, require half a day to visit it properly. There is a large collection of Bonsai plants in the complex.\nVisiting this temple was a very fulfilling experience for me. In my opinion this is the best temple in Shanghai,  not to be missed",
+      "google_reviews_raw": [
+        {
+          "author_name": "Jan Whitehead",
+          "author_url": "https://www.google.com/maps/contrib/104802376462594691820/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjWjmgkrDHoSin9mtG1Ut5_RzphiTVQg5sQlDSD9Qs02h1z8HChh=s128-c0x00000000-cc-rp-mo-ba4",
+          "rating": 5,
+          "relative_time_description": "4 weeks ago",
+          "text": "A nice temple to visit in Shanghai. Just close to the underground station.\nQuite busy at the weekend but definitely worth a visit.\nSome cats and dogs in the temple area.\nAlso the park just next to the temple is very nice.\nPlan for at least 1 hour.",
+          "time": 1770473145,
+          "translated": false
+        },
+        {
+          "author_name": "Gina",
+          "author_url": "https://www.google.com/maps/contrib/101474382678621496199/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjWvZhezFOSJ1Kzqy_9bgLtX9jWezjqtUZZfnppSzEALEfG0rz2W=s128-c0x00000000-cc-rp-mo-ba3",
+          "rating": 5,
+          "relative_time_description": "a month ago",
+          "text": "I had to queue for hours to buy the lucky bracelet I wanted. The temple is beautiful and sacred. I paid respects to all the deities and Buddha images. Entering the temple to pray doesn't require queuing; the only queue was when buying the bracelet.",
+          "time": 1768738654,
+          "translated": false
+        },
+        {
+          "author_name": "Soudamini Mohapatra",
+          "author_url": "https://www.google.com/maps/contrib/104125158935712265893/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjXAANRYZRnZ5PD_fC0WnX09PzhdfeFkiogVJSvJYxOHGIJVblw79A=s128-c0x00000000-cc-rp-mo-ba8",
+          "rating": 5,
+          "relative_time_description": "4 months ago",
+          "text": "Longhua Temple with Longhua Pagoda is the largest and oldest temple in Shanghai. The temple was built in the 3rd century, which was damaged and renovated over the centuries. The temple has a history of 1700 years and various dynasties have added their own style of architectural structure in the temple complex.\n\nIt has many as other Buddhist temples in the complex, such as Maitreya Hall, Mahavir Hall, Devaraja Hall, the Bell tower and Drum tower etc. The Bell Tower has a large bronze Bell of 2 meter in height.\nThe seven-storied Longhua Pagoda is located in front of the Longhua temple. It's a distinctive feature of the temple complex.\n\nThe temple complex is  huge, require half a day to visit it properly. There is a large collection of Bonsai plants in the complex.\nVisiting this temple was a very fulfilling experience for me. In my opinion this is the best temple in Shanghai,  not to be missed",
+          "time": 1760407669,
+          "translated": false
+        }
+      ],
+      "fetched_at": "2026-03-07T23:44:03.384349+00:00"
+    },
+    "oriental pearl tv tower s observation deck::shanghai china": {
+      "attraction_name": "Oriental Pearl TV Tower's Observation Deck",
+      "query": "Oriental Pearl TV Tower's Observation Deck, Shanghai, China",
+      "google_place_id": "ChIJ29SwJftwsjURZYXg4jufPhY",
+      "google_name": "Oriental Pearl TV Tower",
+      "google_formatted_address": "1 Shi Ji Da Dao, Lujiazui, Pu Dong Xin Qu, Shang Hai Shi, China, 200120",
+      "google_rating": 4.6,
+      "google_user_ratings_total": 7317,
+      "google_maps_url": "https://maps.google.com/?cid=1602893596948727141",
+      "google_reviews_summary": "Zhang Qingye (5/5): Visited the Oriental Pearl TV Tower in October 2024, and it’s easily one of Shanghai’s most iconic landmarks. Even if you don’t go up, the tower itself is impressive to see up close, especially at night when it’s fully lit and reflected along the Huangpu River.\n\nI went up to the observation decks, and the panoramic view of Pudong and the Bund is amazing. On a clear day, you can really appreciate how massive and modern Shanghai is. The glass floor section is a fun (and slightly scary) experience and worth trying at least once. | A D (5/5): The iconic building is a feature of the Shanghai skyline from the Bund. Looks mesmerizing in the evening with glittering lights. There are observation decks if you want to visit it. We loved looking at from land from the Bund promonade, from water during our evening river cruise and from air from the top of Shanghai tower. | Danish Khan (5/5): Iconic skyline & photo ops\nThe area around the Oriental Pearl Tower is the heart of Shanghai’s financial district, with futuristic skyscrapers, the Huangpu River, and landmarks like Shanghai Tower, Jin Mao Tower, and the Shanghai World Financial Center. Perfect for photos, especially during sunset or at night when the buildings are lit up.",
+      "google_reviews_raw": [
+        {
+          "author_name": "Zhang Qingye",
+          "author_url": "https://www.google.com/maps/contrib/109176833677357095370/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a/ACg8ocI1GBnwaeIRVdhZ3q5Kj_OZQkz7UVUcYUV8PZYtAWuJgYRCV8E=s128-c0x00000000-cc-rp-mo-ba5",
+          "rating": 5,
+          "relative_time_description": "a month ago",
+          "text": "Visited the Oriental Pearl TV Tower in October 2024, and it’s easily one of Shanghai’s most iconic landmarks. Even if you don’t go up, the tower itself is impressive to see up close, especially at night when it’s fully lit and reflected along the Huangpu River.\n\nI went up to the observation decks, and the panoramic view of Pudong and the Bund is amazing. On a clear day, you can really appreciate how massive and modern Shanghai is. The glass floor section is a fun (and slightly scary) experience and worth trying at least once.",
+          "time": 1769417851,
+          "translated": false
+        },
+        {
+          "author_name": "A D",
+          "author_url": "https://www.google.com/maps/contrib/104477820331582802808/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjX_HypPRZMx_Hxp_Aa3gIYKIeUlw8katsDXvxvRYUDdwHUlSuA=s128-c0x00000000-cc-rp-mo-ba6",
+          "rating": 5,
+          "relative_time_description": "a month ago",
+          "text": "The iconic building is a feature of the Shanghai skyline from the Bund. Looks mesmerizing in the evening with glittering lights. There are observation decks if you want to visit it. We loved looking at from land from the Bund promonade, from water during our evening river cruise and from air from the top of Shanghai tower.",
+          "time": 1770066564,
+          "translated": false
+        },
+        {
+          "author_name": "Danish Khan",
+          "author_url": "https://www.google.com/maps/contrib/113747933307966471931/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjXui7XFFaZNuT37ywHJAtG7HKDUb_RPcHhwFQwj7CGjjGIRPiK_=s128-c0x00000000-cc-rp-mo-ba6",
+          "rating": 5,
+          "relative_time_description": "a month ago",
+          "text": "Iconic skyline & photo ops\nThe area around the Oriental Pearl Tower is the heart of Shanghai’s financial district, with futuristic skyscrapers, the Huangpu River, and landmarks like Shanghai Tower, Jin Mao Tower, and the Shanghai World Financial Center. Perfect for photos, especially during sunset or at night when the buildings are lit up.",
+          "time": 1768308689,
+          "translated": false
+        }
+      ],
+      "fetched_at": "2026-03-07T23:44:07.195968+00:00"
+    },
+    "shanghai circus world::shanghai china": {
+      "attraction_name": "Shanghai Circus World",
+      "query": "Shanghai Circus World, Shanghai, China, China",
+      "google_place_id": "ChIJod1XLgdysjURK8vwJfZQYe8",
+      "google_name": "Shanghai Circus World",
+      "google_formatted_address": "2266 Gong He Xin Lu, Zhabei Qu, Shang Hai Shi, China, 200072",
+      "google_rating": 4.4,
+      "google_user_ratings_total": 165,
+      "google_maps_url": "https://maps.google.com/?cid=17249157065934424875",
+      "google_reviews_summary": "Zila Ibrahim (5/5): Shanghai Circus World is not a traditional theme park or a zoo; it is a premier, state-of-the-art venue built for one of the most spectacular and technologically advanced acrobatic shows in the world. If you are expecting animal acts or a carnival atmosphere, you will be disappointed. If you want to see human artistry, breathtaking skill, and stunning multimedia design pushed to its absolute limit, it is an absolute must-see in Shanghai.\n\nThe Highlights:\n\nMind-Blowing Acrobatics: The skill level is simply off the charts. Key acts include:\n\n· The Motorcycle Sphere of Death: The grand finale. 8+ riders zooming inside a giant steel globe. It's loud, visceral, and heart-stopping.\n\n· Aerial Silks & Bungee: Beautiful, graceful, and performed with incredible height and synchronization.\n\n· Technology & Stagecraft: This is what sets it apart from traditional circuses. The stage is a marvel of engineering—sections rise, lower, and rotate. The use of water features (for a \"rain\" scene) is particularly memorable. The LED backdrop and lighting are integral to the storytelling, not just decoration. | Michael Kesuma (5/5): Shanghai Circus World (上海马戏城) is an incredible place to experience world-class acrobatics and performances. The shows are breathtaking, combining traditional Chinese acrobatics with modern stage effects, music, and storytelling.\n\nEvery act is full of energy, precision, and artistry that keeps the audience amazed from start to finish. The performers are highly skilled, and their dedication shines through in every moment.\n\nThe theater itself is comfortable with great visibility from all seats, making it a perfect venue for families, tourists, and anyone looking to enjoy a unique cultural experience. Watching a show here is unforgettable and a true highlight of visiting Shanghai. | GIRUBA BEULAH SE (5/5): Must watch! Bikers stole the show. Never seen such risky bike stunts earlier. All the other acts were cute, lovely and very artistic showing the practice, hardwork and perseverance to get the act right!",
+      "google_reviews_raw": [
+        {
+          "author_name": "Zila Ibrahim",
+          "author_url": "https://www.google.com/maps/contrib/111495678927086565477/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjWaZ3yqeEicBzCigzTc_koqm077IFW217CUpMvX2sY8VEt3ol5I=s128-c0x00000000-cc-rp-mo-ba4",
+          "rating": 5,
+          "relative_time_description": "3 months ago",
+          "text": "Shanghai Circus World is not a traditional theme park or a zoo; it is a premier, state-of-the-art venue built for one of the most spectacular and technologically advanced acrobatic shows in the world. If you are expecting animal acts or a carnival atmosphere, you will be disappointed. If you want to see human artistry, breathtaking skill, and stunning multimedia design pushed to its absolute limit, it is an absolute must-see in Shanghai.\n\nThe Highlights:\n\nMind-Blowing Acrobatics: The skill level is simply off the charts. Key acts include:\n\n· The Motorcycle Sphere of Death: The grand finale. 8+ riders zooming inside a giant steel globe. It's loud, visceral, and heart-stopping.\n\n· Aerial Silks & Bungee: Beautiful, graceful, and performed with incredible height and synchronization.\n\n· Technology & Stagecraft: This is what sets it apart from traditional circuses. The stage is a marvel of engineering—sections rise, lower, and rotate. The use of water features (for a \"rain\" scene) is particularly memorable. The LED backdrop and lighting are integral to the storytelling, not just decoration.",
+          "time": 1764676847,
+          "translated": false
+        },
+        {
+          "author_name": "Michael Kesuma",
+          "author_url": "https://www.google.com/maps/contrib/105575066973687322067/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjUYJj9TXn5a3MQawvxhxoMveuvFK5a8ia6fRu9U8Gb-GPObpqJU1Q=s128-c0x00000000-cc-rp-mo-ba6",
+          "rating": 5,
+          "relative_time_description": "5 months ago",
+          "text": "Shanghai Circus World (上海马戏城) is an incredible place to experience world-class acrobatics and performances. The shows are breathtaking, combining traditional Chinese acrobatics with modern stage effects, music, and storytelling.\n\nEvery act is full of energy, precision, and artistry that keeps the audience amazed from start to finish. The performers are highly skilled, and their dedication shines through in every moment.\n\nThe theater itself is comfortable with great visibility from all seats, making it a perfect venue for families, tourists, and anyone looking to enjoy a unique cultural experience. Watching a show here is unforgettable and a true highlight of visiting Shanghai.",
+          "time": 1759564152,
+          "translated": false
+        },
+        {
+          "author_name": "GIRUBA BEULAH SE",
+          "author_url": "https://www.google.com/maps/contrib/102957178787056932356/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjWlMoO5pHcpUauy1w-7LWeOV-iqaiZeNynLJmKRFwzimcvw7oAyOQ=s128-c0x00000000-cc-rp-mo-ba6",
+          "rating": 5,
+          "relative_time_description": "5 months ago",
+          "text": "Must watch! Bikers stole the show. Never seen such risky bike stunts earlier. All the other acts were cute, lovely and very artistic showing the practice, hardwork and perseverance to get the act right!",
+          "time": 1758642982,
+          "translated": false
+        }
+      ],
+      "fetched_at": "2026-03-07T23:44:10.902277+00:00"
+    },
+    "century park::shanghai china": {
+      "attraction_name": "Century Park",
+      "query": "Century Park, Shanghai, China",
+      "google_place_id": "ChIJuccQ7El3sjURFulj6_8THUg",
+      "google_name": "Century Park",
+      "google_formatted_address": "409 Hua Mu Lu, Pu Dong Xin Qu, Shang Hai Shi, China, 201204",
+      "google_rating": 4.4,
+      "google_user_ratings_total": 1577,
+      "google_maps_url": "https://maps.google.com/?cid=5196331534942202134",
+      "google_reviews_summary": "wayer (4/5): Beautiful park accessible via metro line 2. Has lots of themes within the park, including an amusement themepark. Coffee shops also available within the park so you can have your coffee moments while watching the birds at the lake. And the entrance is free! Most locals set up their tents during this autumn foliage. | Shalini Gupta (5/5): Century Park is the largest urban park in Shanghai, offering a peaceful escape with lakes, forests, open lawns, and walking and cycling paths. It’s easily accessible by metro and popular for boating, picnicking, and outdoor relaxation. The park is especially enjoyable on sunny days, though it can get crowded on weekends. Ideal for families, couples, or anyone needing a break from the busy city, Century Park is a green oasis worth visiting if you have a few hours to spare. | Alvaro Lau (5/5): Century Park in Shanghai is a lush, expansive green space that offers a peaceful retreat from the city's hustle and bustle. Beloved by locals, the park features vast lawns, serene lakes, and diverse gardens, providing an ideal setting for picnics, leisurely strolls, and various recreational activities. Its well-maintained pathways and scenic spots make it a favorite among residents seeking relaxation and a connection with nature.",
+      "google_reviews_raw": [
+        {
+          "author_name": "wayer",
+          "author_url": "https://www.google.com/maps/contrib/112658511072776469757/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjWhGuxW0Efn1Lie6i9p2zpfSfOHaPonB6jXOwmyAQyNBnUgOFJ3=s128-c0x00000000-cc-rp-mo-ba5",
+          "rating": 4,
+          "relative_time_description": "3 months ago",
+          "text": "Beautiful park accessible via metro line 2. Has lots of themes within the park, including an amusement themepark. Coffee shops also available within the park so you can have your coffee moments while watching the birds at the lake. And the entrance is free! Most locals set up their tents during this autumn foliage.",
+          "time": 1765031630,
+          "translated": false
+        },
+        {
+          "author_name": "Shalini Gupta",
+          "author_url": "https://www.google.com/maps/contrib/117178658668836127302/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjWf6dlILILx8rDAE4EdleHHF03NsEKJDtKZvAMnmElDmdl3apSJog=s128-c0x00000000-cc-rp-mo-ba3",
+          "rating": 5,
+          "relative_time_description": "4 months ago",
+          "text": "Century Park is the largest urban park in Shanghai, offering a peaceful escape with lakes, forests, open lawns, and walking and cycling paths. It’s easily accessible by metro and popular for boating, picnicking, and outdoor relaxation. The park is especially enjoyable on sunny days, though it can get crowded on weekends. Ideal for families, couples, or anyone needing a break from the busy city, Century Park is a green oasis worth visiting if you have a few hours to spare.",
+          "time": 1761123656,
+          "translated": false
+        },
+        {
+          "author_name": "Alvaro Lau",
+          "author_url": "https://www.google.com/maps/contrib/114620785951686160253/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjVk-McainW4_8Y5dOrwxo40kd4dtP8bf21PHRahS3p_rf3KSDP8YQ=s128-c0x00000000-cc-rp-mo-ba7",
+          "rating": 5,
+          "relative_time_description": "11 months ago",
+          "text": "Century Park in Shanghai is a lush, expansive green space that offers a peaceful retreat from the city's hustle and bustle. Beloved by locals, the park features vast lawns, serene lakes, and diverse gardens, providing an ideal setting for picnics, leisurely strolls, and various recreational activities. Its well-maintained pathways and scenic spots make it a favorite among residents seeking relaxation and a connection with nature.",
+          "time": 1744208018,
+          "translated": false
+        }
+      ],
+      "fetched_at": "2026-03-07T23:44:14.576107+00:00"
+    },
+    "shanghai disney resort::shanghai china": {
+      "attraction_name": "Shanghai Disney Resort",
+      "query": "Shanghai Disney Resort, Shanghai, China, China",
+      "google_place_id": "ChIJqz-X18eHrTURVpL3I4kzbxE",
+      "google_name": "上海迪士尼度假区",
+      "google_formatted_address": "China, 上海市浦东新区川沙新镇4MR6+MX2 邮政编码: 201205",
+      "google_rating": 4.5,
+      "google_user_ratings_total": 340,
+      "google_maps_url": "https://maps.google.com/?cid=1256279485166621270",
+      "google_reviews_summary": "Shen Jiayi (Ahs) (5/5): The roller coasters there was so fun!!! Although there were really a lot of people, I still enjoyed the trip with my friends at Shanghai Disney!!! Everyone that enjoys roller coasters and amusement parks can explore there! You will have a lot of fun!! But remember not to go on public holidays, because it will be flooded with people | Klarissa Irish Nogoy (5/5): Went to Disneyland in August and it was so hot. We got the tickets from Klook and you only need to scan the qr code. We did not buy any fastpass so we had to queue in all the rides and we only finished 5 rides. My favorite was Tron! We have also purchased the Disney PhotoPass and it did not disappoint, we got cute pictures of the castle. The fireworks show, even though in Chinese, is still 🔥. We watched both showtimes. I am still at awe that they ask the ones in front to sit down, but it was the best section to see it without a hassle after a long day of walking. Thank you Shanghai! I will to try to be back, but definitely not in summer. 😅 | Christie Lawless (5/5): Wonderful park! Remember to bring your passport if you're not a Chinese citizen. Tons to do and the park is huge!",
+      "google_reviews_raw": [
+        {
+          "author_name": "Shen Jiayi (Ahs)",
+          "author_url": "https://www.google.com/maps/contrib/108387483681809958672/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a/ACg8ocKyx1jo7g0nTmB1WNGv7k2fe9-Zlsntj_HaH22ynP6YMCLoQg=s128-c0x00000000-cc-rp-mo",
+          "rating": 5,
+          "relative_time_description": "a month ago",
+          "text": "The roller coasters there was so fun!!! Although there were really a lot of people, I still enjoyed the trip with my friends at Shanghai Disney!!! Everyone that enjoys roller coasters and amusement parks can explore there! You will have a lot of fun!! But remember not to go on public holidays, because it will be flooded with people",
+          "time": 1768662377,
+          "translated": false
+        },
+        {
+          "author_name": "Klarissa Irish Nogoy",
+          "author_url": "https://www.google.com/maps/contrib/100728678508422394491/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a/ACg8ocKMoDl9YLT9kRGlBbLAIjmk_pdmWwSpFLlowpcoww-wAeEQIw=s128-c0x00000000-cc-rp-mo-ba3",
+          "rating": 5,
+          "relative_time_description": "5 months ago",
+          "text": "Went to Disneyland in August and it was so hot. We got the tickets from Klook and you only need to scan the qr code. We did not buy any fastpass so we had to queue in all the rides and we only finished 5 rides. My favorite was Tron! We have also purchased the Disney PhotoPass and it did not disappoint, we got cute pictures of the castle. The fireworks show, even though in Chinese, is still 🔥. We watched both showtimes. I am still at awe that they ask the ones in front to sit down, but it was the best section to see it without a hassle after a long day of walking. Thank you Shanghai! I will to try to be back, but definitely not in summer. 😅",
+          "time": 1757980459,
+          "translated": false
+        },
+        {
+          "author_name": "Christie Lawless",
+          "author_url": "https://www.google.com/maps/contrib/107923789679220690615/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjXqbabJQz48jx4mi-DP1uhs--4_1kl194bTPjK9LjnNLvVwYFpyHw=s128-c0x00000000-cc-rp-mo-ba3",
+          "rating": 5,
+          "relative_time_description": "4 months ago",
+          "text": "Wonderful park! Remember to bring your passport if you're not a Chinese citizen. Tons to do and the park is huge!",
+          "time": 1759976210,
+          "translated": false
+        }
+      ],
+      "fetched_at": "2026-03-07T23:46:00.520132+00:00"
+    },
+    "wuxi s taihu lake::shanghai china": {
+      "attraction_name": "Wuxi's Taihu Lake",
+      "query": "Wuxi's Taihu Lake, Shanghai, China",
+      "google_place_id": "ChIJCxqVrWN7szURnJFlGskvyAY",
+      "google_name": "Taihu Lake",
+      "google_formatted_address": "Taihu Lake, China",
+      "google_rating": 4.4,
+      "google_user_ratings_total": 123,
+      "google_maps_url": "https://maps.google.com/?cid=488693100347494812",
+      "google_reviews_summary": "朱伯駿 (4/5): Taihu (太湖) is a pretty famous lake, which was described in many China history stories. There are many beautiful scenic spots around this area. The natural views like beautiful sunset, the infinity lake, the astonish small islands spreading in Taihu and countless green plants waited for discovering. You can enjoy the view by going by the lake or taking the boat on the lake. There are also many historic gardens and architecture worthing to visit.\n\nThese nice sites might take a lot of time to visit. When I got there, I just spent one day visiting and I felt that it was not really enough. REALLY!! | Bernd Krohn (5/5): Tai Hu Lake . Relaxing environment. Pure nature . Shanghai far away . And Taiping Street of Suzhou | Xi Ling (5/5): Vast, like the sea.",
+      "google_reviews_raw": [
+        {
+          "author_name": "朱伯駿",
+          "author_url": "https://www.google.com/maps/contrib/104135869162957480361/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a/ACg8ocLR7KUuJJrrIvlgXPvC8fJgd1mYKQaTnsv3ERz5Uf4Uua-Ugw=s128-c0x00000000-cc-rp-mo-ba6",
+          "rating": 4,
+          "relative_time_description": "6 years ago",
+          "text": "Taihu (太湖) is a pretty famous lake, which was described in many China history stories. There are many beautiful scenic spots around this area. The natural views like beautiful sunset, the infinity lake, the astonish small islands spreading in Taihu and countless green plants waited for discovering. You can enjoy the view by going by the lake or taking the boat on the lake. There are also many historic gardens and architecture worthing to visit.\n\nThese nice sites might take a lot of time to visit. When I got there, I just spent one day visiting and I felt that it was not really enough. REALLY!!",
+          "time": 1564071822,
+          "translated": false
+        },
+        {
+          "author_name": "Bernd Krohn",
+          "author_url": "https://www.google.com/maps/contrib/110419473549352531173/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjWkoV7AMNML7ud0KekVOV9H9U5wnvUeqpSEmHpS_dlG3wXZq1sOFA=s128-c0x00000000-cc-rp-mo-ba8",
+          "rating": 5,
+          "relative_time_description": "6 years ago",
+          "text": "Tai Hu Lake . Relaxing environment. Pure nature . Shanghai far away . And Taiping Street of Suzhou",
+          "time": 1574357264,
+          "translated": false
+        },
+        {
+          "author_name": "Xi Ling",
+          "author_url": "https://www.google.com/maps/contrib/103368825103448750642/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjVMf9t1eI4byxl9ppn7KIcSf05ZFe27pUAV5qxE40kdiZ_CsLM5kQ=s128-c0x00000000-cc-rp-mo-ba6",
+          "rating": 5,
+          "relative_time_description": "2 months ago",
+          "text": "Vast, like the sea.",
+          "time": 1765893746,
+          "translated": false
+        }
+      ],
+      "fetched_at": "2026-03-07T23:46:04.830737+00:00"
+    },
+    "shanghai urban planning exhibition center::shanghai china": {
+      "attraction_name": "Shanghai Urban Planning Exhibition Center",
+      "query": "Shanghai Urban Planning Exhibition Center, Shanghai, China, China",
+      "google_place_id": "ChIJ55ol4WlwsjURpJ-32hKzuFY",
+      "google_name": "Shanghai Urban Planning Exhibition Center",
+      "google_formatted_address": "100 Ren Min Da Dao, People's Square, Huang Pu Qu, Shang Hai Shi, China, 200003",
+      "google_rating": 4.3,
+      "google_user_ratings_total": 299,
+      "google_maps_url": "https://maps.google.com/?cid=6248941376536813476",
+      "google_reviews_summary": "6 7 (5/5): Loved it. It was really cool seeing shanghai from those models and all the plans they have for 2035 and 2050  and on one of the floors they had a massive moving picture that was 2 floors high. Another thing I liked was how it was free admission so you didn't have to pay. Overall it was a really fun and futuristic place and I would recommend trying it out | Sheila Flood (5/5): This museum is extraordinary! It was spacious, beautiful, very imaginatively designed and outlined the philosophy and planning for the city of Shanghai using scale models,  panels, colourful LED displays and an incredible 5-minute video that took the space of an entire room to tell the story in 3D. It would be inspirational for anyone but especially anybody who's involved in urban planning or city governance.\nSince many websites say that it is closed on Mondays like other museums and it is actually closed on WEDNESDAY we almost had the entire space to ourselves on the Monday that we went! | Zeno Casti (5/5): The Shanghai Urban Planning Exhibition Center is a fascinating spot to learn about the city’s incredible growth and future plans. When I visited recently, it was quiet and very well-organized, making it easy to explore at my own pace. Entry was free—just head to the ticket booth with your passport to grab a ticket.\n\nThe highlight for me was the detailed scale models of Shanghai’s buildings and neighborhoods—they’re absolutely stunning and give you a real sense of the city’s development. It’s also a great place to pick up ideas for other places to visit in Shanghai. My only suggestion would be to include more English translations, but it’s still easy to enjoy even if you don’t read Chinese.\n\nPerfect for architecture enthusiasts, urban planners, or anyone curious about Shanghai’s evolution. I’d recommend visiting early in your trip—it’s a great way to plan your itinerary and understand the city better!",
+      "google_reviews_raw": [
+        {
+          "author_name": "6 7",
+          "author_url": "https://www.google.com/maps/contrib/112998351179116367223/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a/ACg8ocLs8saRk08N0VyRhgrpbSE0CWZyuGBOfpmC8cFMwOwd7kRmZcs=s128-c0x00000000-cc-rp-mo-ba3",
+          "rating": 5,
+          "relative_time_description": "7 months ago",
+          "text": "Loved it. It was really cool seeing shanghai from those models and all the plans they have for 2035 and 2050  and on one of the floors they had a massive moving picture that was 2 floors high. Another thing I liked was how it was free admission so you didn't have to pay. Overall it was a really fun and futuristic place and I would recommend trying it out",
+          "time": 1754385593,
+          "translated": false
+        },
+        {
+          "author_name": "Sheila Flood",
+          "author_url": "https://www.google.com/maps/contrib/108681855640653068655/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjUwvC-WQ4tY_3ALSZLGepS1yDSJ-w_wy2FUmmSno8xEABHMazEs2Q=s128-c0x00000000-cc-rp-mo-ba6",
+          "rating": 5,
+          "relative_time_description": "10 months ago",
+          "text": "This museum is extraordinary! It was spacious, beautiful, very imaginatively designed and outlined the philosophy and planning for the city of Shanghai using scale models,  panels, colourful LED displays and an incredible 5-minute video that took the space of an entire room to tell the story in 3D. It would be inspirational for anyone but especially anybody who's involved in urban planning or city governance.\nSince many websites say that it is closed on Mondays like other museums and it is actually closed on WEDNESDAY we almost had the entire space to ourselves on the Monday that we went!",
+          "time": 1745214858,
+          "translated": false
+        },
+        {
+          "author_name": "Zeno Casti",
+          "author_url": "https://www.google.com/maps/contrib/117421346718922838293/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjULocdjyEO1Tye5tvZHr2AgMh1pNbShiumMMfUkHDHv7SllrYOv=s128-c0x00000000-cc-rp-mo-ba6",
+          "rating": 5,
+          "relative_time_description": "a year ago",
+          "text": "The Shanghai Urban Planning Exhibition Center is a fascinating spot to learn about the city’s incredible growth and future plans. When I visited recently, it was quiet and very well-organized, making it easy to explore at my own pace. Entry was free—just head to the ticket booth with your passport to grab a ticket.\n\nThe highlight for me was the detailed scale models of Shanghai’s buildings and neighborhoods—they’re absolutely stunning and give you a real sense of the city’s development. It’s also a great place to pick up ideas for other places to visit in Shanghai. My only suggestion would be to include more English translations, but it’s still easy to enjoy even if you don’t read Chinese.\n\nPerfect for architecture enthusiasts, urban planners, or anyone curious about Shanghai’s evolution. I’d recommend visiting early in your trip—it’s a great way to plan your itinerary and understand the city better!",
+          "time": 1737137571,
+          "translated": false
+        }
+      ],
+      "fetched_at": "2026-03-07T23:46:09.208449+00:00"
+    },
+    "luijiazui skyline::shanghai china": {
+      "attraction_name": "Luijiazui Skyline",
+      "query": "Luijiazui Skyline, Shanghai, China",
+      "google_place_id": "ChIJcT52JmpwsjURKKp8uyIQKjU",
+      "google_name": "Shanghai Tower",
+      "google_formatted_address": "501 Yin Cheng Zhong Lu, Lujiazui, Pu Dong Xin Qu, Shang Hai Shi, China, 200120",
+      "google_rating": 4.6,
+      "google_user_ratings_total": 2958,
+      "google_maps_url": "https://maps.google.com/?cid=3830892174392470056",
+      "google_reviews_summary": "Alejandro Enrique Sanchez Vazquez (5/5): Standing at the base of the Shanghai Tower, you truly feel the scale of this engineering masterpiece: it is a vertical city that redefines the modern skyline! The experience begins as you board the world’s fastest elevator, whisking you up to the 118th and 119th floors in a matter of seconds. It is a seamless, high-performance feat of technology that sets the stage for the breathtaking views waiting at the Top of Shanghai Observatory.\n\nOnce you step out, the 360-degree panorama is absolutely mind-blowing. Seeing the massive Jin Mao Tower and the World Financial Center from above makes you realize just how high you really are. The perspective of the Huangpu River winding through the city is cinematic, especially as the clouds drift past the windows. It’s an immersive, high-impact experience that perfectly captures the futuristic, cosmopolitan energy of Shanghai. | Amos Chen (5/5): Standing at the top of Shanghai Tower really puts the scale of the city into perspective. The elevator ride itself is an experience — incredibly fast and smooth — and within seconds you’re looking down at a completely different version of Shanghai.\n\nThe observation deck offers a unique view compared to other skyscrapers nearby. Instead of just wide-open scenery, you get this layered, vertical cityscape with surrounding towers almost at eye level, which feels both futuristic and slightly surreal, especially at night.\n\nThe interior design is modern and spacious, and the whole visit feels well organized without being rushed. It’s not just about the height — it’s about how the building makes you feel small while the city feels endless. If you want to truly understand Shanghai’s scale and ambition, this is the place to do it. | A D (5/5): Tallest building in Shanghai looks wonderful both from outside and from the observation deck inside on the 118 floor. We loved it from the Bund, evening cruise and city sightseeing tour bus. Its called the egg beater by locals because of its shape. We enjoyed the 360 degree view from the top deck in the twilight time, daylight fading out and all the glittering lights switching on. We booked our combo ticket at the Bund sightseeing tunnel, there was no queue. The elevator was super smooth, shooting to the top in few seconds. It is a very popular place, always crowded. Easily accessed via public transport, metro station adjacent.",
+      "google_reviews_raw": [
+        {
+          "author_name": "Alejandro Enrique Sanchez Vazquez",
+          "author_url": "https://www.google.com/maps/contrib/101280057005007795170/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjU7uL2ylF5xnN6mEWBcmt8xj6ubJ500Txrn6GzGpMwHhCKZ_TI-Dg=s128-c0x00000000-cc-rp-mo-ba3",
+          "rating": 5,
+          "relative_time_description": "3 weeks ago",
+          "text": "Standing at the base of the Shanghai Tower, you truly feel the scale of this engineering masterpiece: it is a vertical city that redefines the modern skyline! The experience begins as you board the world’s fastest elevator, whisking you up to the 118th and 119th floors in a matter of seconds. It is a seamless, high-performance feat of technology that sets the stage for the breathtaking views waiting at the Top of Shanghai Observatory.\n\nOnce you step out, the 360-degree panorama is absolutely mind-blowing. Seeing the massive Jin Mao Tower and the World Financial Center from above makes you realize just how high you really are. The perspective of the Huangpu River winding through the city is cinematic, especially as the clouds drift past the windows. It’s an immersive, high-impact experience that perfectly captures the futuristic, cosmopolitan energy of Shanghai.",
+          "time": 1770688666,
+          "translated": false
+        },
+        {
+          "author_name": "Amos Chen",
+          "author_url": "https://www.google.com/maps/contrib/102451492904428440564/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjVMfmLPXUm1xnauCi839PGNpPKOmFSRPMzGFfhNlbNfz8p4tyQ=s128-c0x00000000-cc-rp-mo-ba5",
+          "rating": 5,
+          "relative_time_description": "3 weeks ago",
+          "text": "Standing at the top of Shanghai Tower really puts the scale of the city into perspective. The elevator ride itself is an experience — incredibly fast and smooth — and within seconds you’re looking down at a completely different version of Shanghai.\n\nThe observation deck offers a unique view compared to other skyscrapers nearby. Instead of just wide-open scenery, you get this layered, vertical cityscape with surrounding towers almost at eye level, which feels both futuristic and slightly surreal, especially at night.\n\nThe interior design is modern and spacious, and the whole visit feels well organized without being rushed. It’s not just about the height — it’s about how the building makes you feel small while the city feels endless. If you want to truly understand Shanghai’s scale and ambition, this is the place to do it.",
+          "time": 1770616318,
+          "translated": false
+        },
+        {
+          "author_name": "A D",
+          "author_url": "https://www.google.com/maps/contrib/104477820331582802808/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjX_HypPRZMx_Hxp_Aa3gIYKIeUlw8katsDXvxvRYUDdwHUlSuA=s128-c0x00000000-cc-rp-mo-ba6",
+          "rating": 5,
+          "relative_time_description": "a month ago",
+          "text": "Tallest building in Shanghai looks wonderful both from outside and from the observation deck inside on the 118 floor. We loved it from the Bund, evening cruise and city sightseeing tour bus. Its called the egg beater by locals because of its shape. We enjoyed the 360 degree view from the top deck in the twilight time, daylight fading out and all the glittering lights switching on. We booked our combo ticket at the Bund sightseeing tunnel, there was no queue. The elevator was super smooth, shooting to the top in few seconds. It is a very popular place, always crowded. Easily accessed via public transport, metro station adjacent.",
+          "time": 1770068280,
+          "translated": false
+        }
+      ],
+      "fetched_at": "2026-03-07T23:46:13.572359+00:00"
+    },
+    "propaganda poster art centre::shanghai china": {
+      "attraction_name": "Propaganda Poster Art Centre",
+      "query": "Propaganda Poster Art Centre, Shanghai, China",
+      "google_place_id": "ChIJY1m5yFFlsjUR5f2tnuV-u9E",
+      "google_name": "上海宣传画艺术中心",
+      "google_formatted_address": "Yan, 726 An Xi Lu, Chang Ning Qu, Shang Hai Shi, China, 200031",
+      "google_rating": 4.6,
+      "google_user_ratings_total": 158,
+      "google_maps_url": "https://maps.google.com/?cid=15112812499246644709",
+      "google_reviews_summary": "Mia Cumberland (5/5): I'm studying abroad in Shanghai this summer, so I took a free rainy day to go check out this museum. It was very cool! Not too hard to find, and I'll include instructions at the end for how to get there. There were a bunch of posters running from the early 1900s to the 80s. They had little info blurbs around groups of posters talking about the era and circumstances. At the end there was a gift shop where I got my own propaganda poster! My ticket was only 25 yuan, I bought it in person upon arrival, and the people there were very nice. I tried practicing the Chinese I spent 3 1/2 semesters learning, but they kept responding in English so no worries for those who don't speak Chinese ;)\n\nAs for getting there, a couple of these reviews are right about the new address. You can plug in 726 West Yan'an Road or the name listed (上海宣传画艺术中心) into Google Maps or Baidu. It will drop you in front of two tall buildings connected in the middle. Facing the buildings, you will see building 726 (the building the museum is in) on the right, and 728 on the left. I walked in to the building that connected them, turned right to the elevators, and rode to the 7th floor. When the elevators open, there is signage pointing to the museum. Have fun! | Jennifer Xu (5/5): I visited in April 2025, as other reviews have said, it's in a non-descript office building. The security guards are aware of the museum, you can ask them for directions if needed.\n\nI met the curator the day I went! He was nice, with interesting stories. The museum is his personal collection, and he mentioned he's still trying to source more posters. Cannot recommend visiting enough, it's an informative look into the different pieces of propaganda over the last couple decades. The gift shop is well stocked at reasonable prices. Looking forward to going back! | Dustin Johnson (5/5): The location of this place can be found in Gaode maps and I hear Baidu now has English too. Google address is wrong. It is just NW up the street from the google location past the major street intersection in a huge multipurpose hotel office building on the 7th floor. This was perhaps my fave museum in Shanghai, because I've seen so many artifacts at this point. They have nice summary of the different movements and decades that was just the right amount of information. Make sure you move through in the right direction -counter clockwise. They do sell some prints, books and other little goodies, unfortunately they were out of the ones I wanted and the fellow there was pretty strange about me asking about them. Whatever. It was 60 Yen in  May 2025. If you are in Shanghai in May or June go see the Soyarama show at the Nanzuka Art center next to Shanghai East Museum.",
+      "google_reviews_raw": [
+        {
+          "author_name": "Mia Cumberland",
+          "author_url": "https://www.google.com/maps/contrib/109666779882030678881/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjVfFZ5qiwCCCahA4L10d3qDk5LOlpPkVwcWleJWsuE1D6BlXMpo=s128-c0x00000000-cc-rp-mo",
+          "rating": 5,
+          "relative_time_description": "7 months ago",
+          "text": "I'm studying abroad in Shanghai this summer, so I took a free rainy day to go check out this museum. It was very cool! Not too hard to find, and I'll include instructions at the end for how to get there. There were a bunch of posters running from the early 1900s to the 80s. They had little info blurbs around groups of posters talking about the era and circumstances. At the end there was a gift shop where I got my own propaganda poster! My ticket was only 25 yuan, I bought it in person upon arrival, and the people there were very nice. I tried practicing the Chinese I spent 3 1/2 semesters learning, but they kept responding in English so no worries for those who don't speak Chinese ;)\n\nAs for getting there, a couple of these reviews are right about the new address. You can plug in 726 West Yan'an Road or the name listed (上海宣传画艺术中心) into Google Maps or Baidu. It will drop you in front of two tall buildings connected in the middle. Facing the buildings, you will see building 726 (the building the museum is in) on the right, and 728 on the left. I walked in to the building that connected them, turned right to the elevators, and rode to the 7th floor. When the elevators open, there is signage pointing to the museum. Have fun!",
+          "time": 1752232094,
+          "translated": false
+        },
+        {
+          "author_name": "Jennifer Xu",
+          "author_url": "https://www.google.com/maps/contrib/112412522957190672169/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjXu_MDHbemfV4IEk8w5QQgzH1PXnPrEi355eoVkTiLo6gUmOTbu=s128-c0x00000000-cc-rp-mo-ba3",
+          "rating": 5,
+          "relative_time_description": "2 months ago",
+          "text": "I visited in April 2025, as other reviews have said, it's in a non-descript office building. The security guards are aware of the museum, you can ask them for directions if needed.\n\nI met the curator the day I went! He was nice, with interesting stories. The museum is his personal collection, and he mentioned he's still trying to source more posters. Cannot recommend visiting enough, it's an informative look into the different pieces of propaganda over the last couple decades. The gift shop is well stocked at reasonable prices. Looking forward to going back!",
+          "time": 1766074479,
+          "translated": false
+        },
+        {
+          "author_name": "Dustin Johnson",
+          "author_url": "https://www.google.com/maps/contrib/109884755716740002233/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjVgosedFrlOPCkqmSutq_wc2X5Esp2OUz41g5sT-ZSqBseM9oU=s128-c0x00000000-cc-rp-mo-ba4",
+          "rating": 5,
+          "relative_time_description": "9 months ago",
+          "text": "The location of this place can be found in Gaode maps and I hear Baidu now has English too. Google address is wrong. It is just NW up the street from the google location past the major street intersection in a huge multipurpose hotel office building on the 7th floor. This was perhaps my fave museum in Shanghai, because I've seen so many artifacts at this point. They have nice summary of the different movements and decades that was just the right amount of information. Make sure you move through in the right direction -counter clockwise. They do sell some prints, books and other little goodies, unfortunately they were out of the ones I wanted and the fellow there was pretty strange about me asking about them. Whatever. It was 60 Yen in  May 2025. If you are in Shanghai in May or June go see the Soyarama show at the Nanzuka Art center next to Shanghai East Museum.",
+          "time": 1747530069,
+          "translated": false
+        }
+      ],
+      "fetched_at": "2026-03-07T23:46:20.676864+00:00"
+    },
+    "fuxing park::shanghai china": {
+      "attraction_name": "Fuxing Park",
+      "query": "Fuxing Park, Shanghai, China",
+      "google_place_id": "ChIJG66k73RwsjUREw5sPBxvjYw",
+      "google_name": "Fuxing Park",
+      "google_formatted_address": "516 Fu Xing Zhong Lu, Huang Pu Qu, Shang Hai Shi, China, 200025",
+      "google_rating": 4.4,
+      "google_user_ratings_total": 355,
+      "google_maps_url": "https://maps.google.com/?cid=10127873304089595411",
+      "google_reviews_summary": "Scott Chan (5/5): Fuxing Park was established in 1909 and was originally known as the French Concession Park, bearing witness to the dramatic transformations of modern Shanghai. It preserves a classic French-style geometric garden layout, where lawns and sculptures complement each other. Now open to the public free of charge, it has become a daily gathering place for recreation, exercise, and social life—serving as a shared memory for generations of Shanghainese. | Steve Bintley (4/5): This is a really well kept retreat in the busy city and a perfect place to spend either a few minutes or a number of hours relaxing. There’s loads of seating and a good mix of grass areas and flower beds with a number of statues giving plenty to admire. It’s a busy area during the day and offers lots of opportunities for people watching - groups of youngsters playing card games on the paths, couples singing by the water feature, and collections of locals practising on their varying musical instruments; it’s certainly a varied mix of local culture. | Genta (5/5): Daytime cities are charming, but there's a special chaos and blurred charm in the early AM – especially when surrounded by the wild memories of Shanghai's nightlife, spun from a 7-story club plunked in the middle of a literal park. They even have a wild gay club, CULTURE (4th fl), but my heart still beats for the Techno Club on the 6th. Had so much fun, it snowed when I stepped out. Planning a reunion with this nocturnal playground on my next Shanghai stint. Lol! 🌃❄️ #ShanghaiNights #ClubChronicles",
+      "google_reviews_raw": [
+        {
+          "author_name": "Scott Chan",
+          "author_url": "https://www.google.com/maps/contrib/105445237455512911409/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjX3R7VIH3-yBZipap1MxfpJ9keW1yO2BkukgBSiXSXEKAyPIk0=s128-c0x00000000-cc-rp-mo-ba4",
+          "rating": 5,
+          "relative_time_description": "a week ago",
+          "text": "Fuxing Park was established in 1909 and was originally known as the French Concession Park, bearing witness to the dramatic transformations of modern Shanghai. It preserves a classic French-style geometric garden layout, where lawns and sculptures complement each other. Now open to the public free of charge, it has become a daily gathering place for recreation, exercise, and social life—serving as a shared memory for generations of Shanghainese.",
+          "time": 1771732334,
+          "translated": false
+        },
+        {
+          "author_name": "Steve Bintley",
+          "author_url": "https://www.google.com/maps/contrib/108010780340305730878/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjUz91tVXj2WT6I7ulfH4Gp5APOIk3cPC3KNiD2RZ0AT-lIBXQFCDg=s128-c0x00000000-cc-rp-mo-ba7",
+          "rating": 4,
+          "relative_time_description": "6 years ago",
+          "text": "This is a really well kept retreat in the busy city and a perfect place to spend either a few minutes or a number of hours relaxing. There’s loads of seating and a good mix of grass areas and flower beds with a number of statues giving plenty to admire. It’s a busy area during the day and offers lots of opportunities for people watching - groups of youngsters playing card games on the paths, couples singing by the water feature, and collections of locals practising on their varying musical instruments; it’s certainly a varied mix of local culture.",
+          "time": 1561806791,
+          "translated": false
+        },
+        {
+          "author_name": "Genta",
+          "author_url": "https://www.google.com/maps/contrib/117016178934992842533/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjW8t7xK4a_YghQKADughmJgcm50hVTbRIIDhSYIjd8eAi5Jcaxkwg=s128-c0x00000000-cc-rp-mo-ba8",
+          "rating": 5,
+          "relative_time_description": "2 years ago",
+          "text": "Daytime cities are charming, but there's a special chaos and blurred charm in the early AM – especially when surrounded by the wild memories of Shanghai's nightlife, spun from a 7-story club plunked in the middle of a literal park. They even have a wild gay club, CULTURE (4th fl), but my heart still beats for the Techno Club on the 6th. Had so much fun, it snowed when I stepped out. Planning a reunion with this nocturnal playground on my next Shanghai stint. Lol! 🌃❄️ #ShanghaiNights #ClubChronicles",
+          "time": 1704505389,
+          "translated": false
+        }
+      ],
+      "fetched_at": "2026-03-07T23:46:24.671902+00:00"
+    },
+    "shanghai acrobatics troupe::shanghai china": {
+      "attraction_name": "Shanghai Acrobatics Troupe",
+      "query": "Shanghai Acrobatics Troupe, Shanghai, China, China",
+      "google_place_id": "ChIJod1XLgdysjURK8vwJfZQYe8",
+      "google_name": "Shanghai Circus World",
+      "google_formatted_address": "2266 Gong He Xin Lu, Zhabei Qu, Shang Hai Shi, China, 200072",
+      "google_rating": 4.4,
+      "google_user_ratings_total": 165,
+      "google_maps_url": "https://maps.google.com/?cid=17249157065934424875",
+      "google_reviews_summary": "Zila Ibrahim (5/5): Shanghai Circus World is not a traditional theme park or a zoo; it is a premier, state-of-the-art venue built for one of the most spectacular and technologically advanced acrobatic shows in the world. If you are expecting animal acts or a carnival atmosphere, you will be disappointed. If you want to see human artistry, breathtaking skill, and stunning multimedia design pushed to its absolute limit, it is an absolute must-see in Shanghai.\n\nThe Highlights:\n\nMind-Blowing Acrobatics: The skill level is simply off the charts. Key acts include:\n\n· The Motorcycle Sphere of Death: The grand finale. 8+ riders zooming inside a giant steel globe. It's loud, visceral, and heart-stopping.\n\n· Aerial Silks & Bungee: Beautiful, graceful, and performed with incredible height and synchronization.\n\n· Technology & Stagecraft: This is what sets it apart from traditional circuses. The stage is a marvel of engineering—sections rise, lower, and rotate. The use of water features (for a \"rain\" scene) is particularly memorable. The LED backdrop and lighting are integral to the storytelling, not just decoration. | Michael Kesuma (5/5): Shanghai Circus World (上海马戏城) is an incredible place to experience world-class acrobatics and performances. The shows are breathtaking, combining traditional Chinese acrobatics with modern stage effects, music, and storytelling.\n\nEvery act is full of energy, precision, and artistry that keeps the audience amazed from start to finish. The performers are highly skilled, and their dedication shines through in every moment.\n\nThe theater itself is comfortable with great visibility from all seats, making it a perfect venue for families, tourists, and anyone looking to enjoy a unique cultural experience. Watching a show here is unforgettable and a true highlight of visiting Shanghai. | GIRUBA BEULAH SE (5/5): Must watch! Bikers stole the show. Never seen such risky bike stunts earlier. All the other acts were cute, lovely and very artistic showing the practice, hardwork and perseverance to get the act right!",
+      "google_reviews_raw": [
+        {
+          "author_name": "Zila Ibrahim",
+          "author_url": "https://www.google.com/maps/contrib/111495678927086565477/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjWaZ3yqeEicBzCigzTc_koqm077IFW217CUpMvX2sY8VEt3ol5I=s128-c0x00000000-cc-rp-mo-ba4",
+          "rating": 5,
+          "relative_time_description": "3 months ago",
+          "text": "Shanghai Circus World is not a traditional theme park or a zoo; it is a premier, state-of-the-art venue built for one of the most spectacular and technologically advanced acrobatic shows in the world. If you are expecting animal acts or a carnival atmosphere, you will be disappointed. If you want to see human artistry, breathtaking skill, and stunning multimedia design pushed to its absolute limit, it is an absolute must-see in Shanghai.\n\nThe Highlights:\n\nMind-Blowing Acrobatics: The skill level is simply off the charts. Key acts include:\n\n· The Motorcycle Sphere of Death: The grand finale. 8+ riders zooming inside a giant steel globe. It's loud, visceral, and heart-stopping.\n\n· Aerial Silks & Bungee: Beautiful, graceful, and performed with incredible height and synchronization.\n\n· Technology & Stagecraft: This is what sets it apart from traditional circuses. The stage is a marvel of engineering—sections rise, lower, and rotate. The use of water features (for a \"rain\" scene) is particularly memorable. The LED backdrop and lighting are integral to the storytelling, not just decoration.",
+          "time": 1764676847,
+          "translated": false
+        },
+        {
+          "author_name": "Michael Kesuma",
+          "author_url": "https://www.google.com/maps/contrib/105575066973687322067/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjUYJj9TXn5a3MQawvxhxoMveuvFK5a8ia6fRu9U8Gb-GPObpqJU1Q=s128-c0x00000000-cc-rp-mo-ba6",
+          "rating": 5,
+          "relative_time_description": "5 months ago",
+          "text": "Shanghai Circus World (上海马戏城) is an incredible place to experience world-class acrobatics and performances. The shows are breathtaking, combining traditional Chinese acrobatics with modern stage effects, music, and storytelling.\n\nEvery act is full of energy, precision, and artistry that keeps the audience amazed from start to finish. The performers are highly skilled, and their dedication shines through in every moment.\n\nThe theater itself is comfortable with great visibility from all seats, making it a perfect venue for families, tourists, and anyone looking to enjoy a unique cultural experience. Watching a show here is unforgettable and a true highlight of visiting Shanghai.",
+          "time": 1759564152,
+          "translated": false
+        },
+        {
+          "author_name": "GIRUBA BEULAH SE",
+          "author_url": "https://www.google.com/maps/contrib/102957178787056932356/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjWlMoO5pHcpUauy1w-7LWeOV-iqaiZeNynLJmKRFwzimcvw7oAyOQ=s128-c0x00000000-cc-rp-mo-ba6",
+          "rating": 5,
+          "relative_time_description": "5 months ago",
+          "text": "Must watch! Bikers stole the show. Never seen such risky bike stunts earlier. All the other acts were cute, lovely and very artistic showing the practice, hardwork and perseverance to get the act right!",
+          "time": 1758642982,
+          "translated": false
+        }
+      ],
+      "fetched_at": "2026-03-07T23:46:28.969749+00:00"
+    },
+    "jing an temple::shanghai china": {
+      "attraction_name": "Jing'an Temple",
+      "query": "Jing'an Temple, Shanghai, China",
+      "google_place_id": "ChIJVV1KHv5vsjURQgiHHZfGW3o",
+      "google_name": "Jing'an Temple",
+      "google_formatted_address": "1686 Nan Jing Xi Lu, 久光 Jing An Qu, Shang Hai Shi, China, 200040",
+      "google_rating": 4.5,
+      "google_user_ratings_total": 1125,
+      "google_maps_url": "https://maps.google.com/?cid=8816859047845627970",
+      "google_reviews_summary": "jay mastagi (5/5): this was a truly stunning temple, both by size and beauty. this huge temple is unique as it sits in the middle of one of shanghai’s central business districts, jing’an. the architecture is beautiful throughout the temple and will leave you awestruck. the statues are also beautifully crafted. highly recommend | Joe (5/5): I last visited Jing'an Temple must be nearly twenty years ago.  It used to be a quiet slightly run down temple in a quiet tradition residential area but the area had changed so much.  It is now very modern with smart malls and business high rises, restaurants and coffeeshops.  The temple has also been thoroughly renovated and now by ticketed entry !  The most astonishing transformation was the temple roofs are now mostly gold gilded, quite a sight glittering in the sun. | Soudamini Mohapatra (5/5): Jing'an Temple is one of the most famous temples in Shanghai, which is located right in the city centre. Originally built in 247 CE, it has been moved and rebuilt multiple times. It's stunning traditional architecture is surrounded by skyscrapers if Shanghai. The prominent features of the temple are ornate halls, a large jade Buddha statue, and a bronze bell from the Ming Dynasty. Also the features a beautiful golden pagoda with intricate designs. A truly magnificent structure,  should not be missed.",
+      "google_reviews_raw": [
+        {
+          "author_name": "jay mastagi",
+          "author_url": "https://www.google.com/maps/contrib/109468976775095785033/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a/ACg8ocJZgYKHg0HNdm7KjklphaXKyGnVlLBR_R3PlgaYB96KzWTjeA=s128-c0x00000000-cc-rp-mo-ba4",
+          "rating": 5,
+          "relative_time_description": "2 months ago",
+          "text": "this was a truly stunning temple, both by size and beauty. this huge temple is unique as it sits in the middle of one of shanghai’s central business districts, jing’an. the architecture is beautiful throughout the temple and will leave you awestruck. the statues are also beautifully crafted. highly recommend",
+          "time": 1766351950,
+          "translated": false
+        },
+        {
+          "author_name": "Joe",
+          "author_url": "https://www.google.com/maps/contrib/100866946402515829088/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a/ACg8ocIyTe6OI8PXjvN2Us5SuFa8x9IQWiAsHNcxPwB-CNIguPRF4KM=s128-c0x00000000-cc-rp-mo-ba5",
+          "rating": 5,
+          "relative_time_description": "3 months ago",
+          "text": "I last visited Jing'an Temple must be nearly twenty years ago.  It used to be a quiet slightly run down temple in a quiet tradition residential area but the area had changed so much.  It is now very modern with smart malls and business high rises, restaurants and coffeeshops.  The temple has also been thoroughly renovated and now by ticketed entry !  The most astonishing transformation was the temple roofs are now mostly gold gilded, quite a sight glittering in the sun.",
+          "time": 1764487698,
+          "translated": false
+        },
+        {
+          "author_name": "Soudamini Mohapatra",
+          "author_url": "https://www.google.com/maps/contrib/104125158935712265893/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjXAANRYZRnZ5PD_fC0WnX09PzhdfeFkiogVJSvJYxOHGIJVblw79A=s128-c0x00000000-cc-rp-mo-ba8",
+          "rating": 5,
+          "relative_time_description": "4 months ago",
+          "text": "Jing'an Temple is one of the most famous temples in Shanghai, which is located right in the city centre. Originally built in 247 CE, it has been moved and rebuilt multiple times. It's stunning traditional architecture is surrounded by skyscrapers if Shanghai. The prominent features of the temple are ornate halls, a large jade Buddha statue, and a bronze bell from the Ming Dynasty. Also the features a beautiful golden pagoda with intricate designs. A truly magnificent structure,  should not be missed.",
+          "time": 1761234582,
+          "translated": false
+        }
+      ],
+      "fetched_at": "2026-03-07T23:46:32.583521+00:00"
     }
   }
 }
