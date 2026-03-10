@@ -1,10 +1,8 @@
-import { useState } from "react";
 import { useRouter } from "next/router";
-import LoginNoticeModal from "../components/LoginNoticeModal";
+import AuthButton from "../components/AuthButton";
 
 export default function AboutPage() {
   const router = useRouter();
-  const [isLoginNoticeOpen, setIsLoginNoticeOpen] = useState(false);
 
   return (
     <main className="destinations-page">
@@ -16,9 +14,7 @@ export default function AboutPage() {
         >
           TravelApp
         </button>
-        <button type="button" className="destinations-login" onClick={() => setIsLoginNoticeOpen(true)}>
-          Login
-        </button>
+        <AuthButton />
       </header>
 
       <section className="destinations-layout">
@@ -94,7 +90,6 @@ export default function AboutPage() {
           </section>
         </div>
       </section>
-      <LoginNoticeModal isOpen={isLoginNoticeOpen} onClose={() => setIsLoginNoticeOpen(false)} />
     </main>
   );
 }

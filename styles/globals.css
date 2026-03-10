@@ -518,7 +518,7 @@ body {
 .solo-itinerary-panel {
   position: absolute;
   inset: 56px auto 0 0;
-  width: 50%;
+  width: 60%;
   background: rgba(255, 255, 255, 0.97);
   border-right: 1px solid #d4e1ef;
   box-shadow: 20px 0 40px rgba(15, 23, 42, 0.14);
@@ -532,8 +532,8 @@ body {
 }
 
 .solo-planner-page-panel-open .solo-chat-area {
-  width: 50%;
-  margin-left: 50%;
+  width: 40%;
+  margin-left: 60%;
 }
 
 .solo-planner-page-panel-open.solo-planner-page-chat-collapsed .solo-chat-area {
@@ -1027,6 +1027,21 @@ body {
   gap: 10px;
 }
 
+.planning-place-search-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.planning-place-search-wrapper .planning-solo-input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.planning-place-listbox {
+  min-width: 100%;
+}
+
 .planning-solo-input {
   flex: 1;
   border: 1px solid #c4d8eb;
@@ -1287,6 +1302,15 @@ body {
   display: grid;
   gap: 12px;
   grid-template-columns: repeat(4, minmax(120px, 1fr));
+}
+
+/* Make embedded itinerary (e.g., solo planner) use a denser but readable grid */
+.solo-itinerary-panel .saved-trips-builder {
+  grid-template-columns: repeat(2, minmax(160px, 1fr));
+}
+
+.solo-itinerary-panel .saved-trips-stats {
+  grid-template-columns: repeat(2, minmax(140px, 1fr));
 }
 
 .saved-trips-field {
@@ -1659,9 +1683,16 @@ body {
   background: transparent;
   cursor: pointer;
   padding: 4px;
-  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   opacity: 0.9;
-  pointer-events: auto;
+}
+
+.saved-schedule-card-remove-icon {
+  display: block;
+  width: 18px;
+  height: 18px;
 }
 
 .saved-schedule-card-remove:hover {
@@ -2223,6 +2254,15 @@ body {
   cursor: pointer;
 }
 
+.saved-suggested-card-clickable,
+.saved-schedule-card-clickable {
+  cursor: pointer;
+}
+
+.saved-schedule-card-clickable:hover .saved-schedule-card-body h3 {
+  color: #0f3f67;
+}
+
 .attraction-card-image,
 .attraction-card-image-fallback {
   width: 100%;
@@ -2413,6 +2453,192 @@ body {
 .login-notice-content p {
   margin: 0;
   color: #48617b;
+}
+
+/* Login page */
+.login-page-shell {
+  min-height: 100vh;
+  background: #f4f6fb;
+}
+.login-page-header {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  border-bottom: 1px solid #d4e1ef;
+  background: rgba(255, 255, 255, 0.9);
+}
+.login-page-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 64px);
+  padding: 24px;
+}
+.login-page-card {
+  width: min(400px, 100%);
+  background: #fff;
+  border: 1px solid #d5e3f1;
+  border-radius: 18px;
+  box-shadow: 0 22px 48px rgba(15, 34, 57, 0.12);
+  padding: 24px;
+}
+.login-page-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #e0e9f2;
+}
+.login-page-tab {
+  border: none;
+  background: none;
+  padding: 10px 16px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #4d6883;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.login-page-tab:hover {
+  color: #11385b;
+}
+.login-page-tab-active {
+  color: #11385b;
+  border-bottom-color: #11385b;
+}
+.login-page-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.login-page-field label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #2d4f71;
+  margin-bottom: 4px;
+}
+.login-page-field input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #cad9ea;
+  border-radius: 10px;
+  font-size: 1rem;
+}
+.login-page-field input:focus {
+  outline: none;
+  border-color: #11385b;
+  box-shadow: 0 0 0 2px rgba(17, 56, 91, 0.15);
+}
+.login-page-error {
+  margin: 0;
+  padding: 10px 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  color: #b91c1c;
+  font-size: 0.9rem;
+}
+.login-page-submit {
+  margin-top: 4px;
+  padding: 12px 16px;
+  background: #11385b;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.login-page-submit:hover:not(:disabled) {
+  background: #0d2a46;
+}
+.login-page-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Auth button dropdown */
+.auth-button-wrap {
+  position: relative;
+}
+.auth-button-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  border: none;
+  background: transparent;
+  cursor: default;
+}
+.auth-button-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 200px;
+  background: #fff;
+  border: 1px solid #d5e3f1;
+  border-radius: 12px;
+  box-shadow: 0 12px 28px rgba(15, 34, 57, 0.18);
+  padding: 8px 0;
+  z-index: 50;
+}
+.auth-button-menu-email {
+  display: block;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  color: #4d6883;
+  border-bottom: 1px solid #e8eef4;
+}
+.auth-button-menu-item {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: none;
+  text-align: left;
+  font-size: 0.95rem;
+  color: #11385b;
+  cursor: pointer;
+}
+.auth-button-menu-item:hover {
+  background: #f5f9fd;
+}
+
+/* My Itineraries list */
+.my-itineraries-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.my-itineraries-item {
+  display: block;
+  width: 100%;
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  border: 1px solid #d5e3f1;
+  border-radius: 12px;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.my-itineraries-item:hover {
+  background: #f5f9fd;
+  border-color: #11385b;
+}
+.my-itineraries-name {
+  display: block;
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: #11385b;
+}
+.my-itineraries-location {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.9rem;
+  color: #4d6883;
 }
 
 .attraction-modal-image,

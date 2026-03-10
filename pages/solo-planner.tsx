@@ -1,6 +1,10 @@
 import { FormEvent, ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
+import AuthButton from "../components/AuthButton";
 import SavedTripBuilder from "../components/SavedTripBuilder";
+import { FavoriteAttraction } from "../lib/favorites-context";
+import { useAuth } from "../lib/auth-context";
+import { useItinerary } from "../lib/itinerary-context";
 
 type ChatMessage = {
   message_id: string;
@@ -56,13 +60,22 @@ function renderFormattedMessage(content: string): ReactNode {
   return parts.length > 0 ? parts : content;
 }
 
+function formatLocation(city: string, stateProvince: string, country: string) {
+  return [city, stateProvince, country].filter(Boolean).join(", ") || "Location unavailable";
+}
+
 export default function SoloPlannerPage() {
+  const { user } = useAuth();
   const router = useRouter();
   const placeQuery = router.query.place;
   const initialPlace = Array.isArray(placeQuery) ? placeQuery[0] : placeQuery;
 
-  const [panelOpen, setPanelOpen] = useState(false);
+  const { attractions, addAttraction, removeAttraction, clearAttractions, isInItinerary } = useItinerary();
+
+  const [panelOpen, setPanelOpen] = useState(true);
   const [isChatCollapsed, setIsChatCollapsed] = useState(false);
+  const [suggestedAttractions, setSuggestedAttractions] = useState<FavoriteAttraction[]>([]);
+  const [isLoadingSuggested, setIsLoadingSuggested] = useState(false);
 
   const [sessionId, setSessionId] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -108,6 +121,11 @@ export default function SoloPlannerPage() {
     setChatError(null);
     setSessionId(crypto.randomUUID());
   }, []);
+
+  useEffect(() => {
+    if (panelOpen) return;
+    setIsChatCollapsed(false);
+  }, [panelOpen]);
 
   useEffect(() => {
     if (!sessionId) return;
@@ -157,7 +175,7 @@ export default function SoloPlannerPage() {
       const agentResponse = await fetch("/api/agent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: content, session_id: sessionId })
+        body: JSON.stringify({ prompt: content, session_id: sessionId, user_id: user?.id ?? undefined })
       });
 
       const agentData = await agentResponse.json();
@@ -187,15 +205,7 @@ export default function SoloPlannerPage() {
         <button type="button" className="solo-back-button" onClick={() => router.push("/planning-options")}>
           ← Back
         </button>
-        {panelOpen && (
-          <button
-            type="button"
-            className="collab-chat-toggle"
-            onClick={() => setIsChatCollapsed((collapsed) => !collapsed)}
-          >
-            {isChatCollapsed ? "Show Chatbot" : "Collapse Chatbot"}
-          </button>
-        )}
+        <AuthButton />
       </header>
 
       <button
@@ -282,7 +292,40 @@ export default function SoloPlannerPage() {
               Collapse
             </button>
           </div>
-          <SavedTripBuilder embedded />
+          {initialPlace && (
+            <section className="solo-itinerary-suggested">
+              <h3>Suggested for {initialPlace}</h3>
+              {isLoadingSuggested ? (
+                <p className="saved-suggested-loading">Loading suggestions...</p>
+              ) : (
+                <div className="solo-itinerary-list">
+                  {suggestedAttractions.slice(0, 8).map((attraction) => {
+                    const added = isInItinerary(attraction.id);
+                    return (
+                      <article className="solo-itinerary-item" key={attraction.id}>
+                        <div>
+                          <strong>{attraction.name}</strong>
+                          <p>{formatLocation(attraction.city, attraction.stateProvince, attraction.country)}</p>
+                        </div>
+                        <button
+                          type="button"
+                          className={`saved-suggested-add ${added ? "saved-suggested-added" : ""}`}
+                          onClick={() => (added ? removeAttraction(attraction.id) : addAttraction(attraction))}
+                        >
+                          {added ? "Added" : "+ Add"}
+                        </button>
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          )}
+          
+          <SavedTripBuilder
+            embedded
+            initialTripPlace={typeof initialPlace === "string" ? initialPlace : undefined}
+          />
         </div>
       </aside>
     </main>

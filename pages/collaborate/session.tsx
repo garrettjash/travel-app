@@ -1,5 +1,6 @@
 import { TouchEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
+import AuthButton from "../../components/AuthButton";
 
 type Attraction = {
   id: number;
@@ -32,6 +33,7 @@ type SessionPayload = {
   attractions: Attraction[];
   isExpired?: boolean;
   results?: SessionAttractionResult[];
+  itineraryPath?: string;
   error?: string;
 };
 
@@ -217,6 +219,10 @@ export default function CollaborateSessionPage() {
           Object.fromEntries((payload.results ?? []).map((item) => [item.attractionId, item]))
         );
         setCurrentIndex(0);
+        if (payload.isExpired && payload.itineraryPath) {
+          router.replace(payload.itineraryPath);
+          return;
+        }
       } catch (loadError) {
         if (!isActive) return;
         setAttractions([]);
@@ -371,6 +377,7 @@ export default function CollaborateSessionPage() {
         >
           TravelApp
         </button>
+        <AuthButton />
       </header>
 
       <section className="destinations-content" style={{ padding: "24px" }}>

@@ -1,6 +1,9 @@
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
-import { FavoriteAttraction } from "../lib/favorites-context";
+import AuthButton from "./AuthButton";
+import AttractionDetailsModal from "./AttractionDetailsModal";
+import { useAuth } from "../lib/auth-context";
+import { FavoriteAttraction, useFavorites } from "../lib/favorites-context";
 import { useItinerary } from "../lib/itinerary-context";
 
 type Pace = "relaxed" | "balanced" | "packed";
@@ -91,7 +94,10 @@ export type SavedItinerary = {
 type SavedTripBuilderProps = {
   initialItinerary?: SavedItinerary | null;
   itineraryIdFromRoute?: string | null;
+  /** When true, render only the inner itinerary UI without the global header/sidebar chrome. */
   embedded?: boolean;
+  /** Optional starting location when no initialItinerary is provided (e.g. from solo-planner place query). */
+  initialTripPlace?: string;
 };
 
 const slotOrder: Slot[] = ["Morning", "Afternoon", "Evening"];
@@ -156,9 +162,18 @@ function sanitizeItineraryId(raw: string | null | undefined) {
 
 const SUGGESTED_LIMIT = 24;
 
-export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRoute, embedded = false }: SavedTripBuilderProps) {
+export default function SavedTripBuilder({
+  initialItinerary,
+  itineraryIdFromRoute,
+  embedded,
+  initialTripPlace
+}: SavedTripBuilderProps) {
   const router = useRouter();
+  const { user } = useAuth();
+  const { toggleFavorite, isFavorite } = useFavorites();
   const { attractions, addAttraction, removeAttraction, clearAttractions, isInItinerary } = useItinerary();
+
+  const [selectedAttraction, setSelectedAttraction] = useState<FavoriteAttraction | null>(null);
 
   const today = new Date();
   const defaultStart = today.toISOString().slice(0, 10);
@@ -172,7 +187,7 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
   const [suggestedAttractions, setSuggestedAttractions] = useState<FavoriteAttraction[]>([]);
   const [loadingSuggested, setLoadingSuggested] = useState(false);
   const [tripName, setTripName] = useState(initialItinerary?.tripName ?? "My Weekend Escape");
-  const [tripPlace, setTripPlace] = useState(initialItinerary?.tripPlace ?? "");
+  const [tripPlace, setTripPlace] = useState(initialItinerary?.tripPlace ?? initialTripPlace ?? "");
   const [startDate, setStartDate] = useState(initialItinerary?.startDate ?? defaultStart);
   const [endDate, setEndDate] = useState(initialItinerary?.endDate ?? defaultEnd);
   const [pace, setPace] = useState<Pace>(initialItinerary?.pace ?? "balanced");
@@ -186,7 +201,6 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
   );
   const [shareLink, setShareLink] = useState<string | null>(null);
   const [isShareCopied, setIsShareCopied] = useState(false);
-  const [isLoginNoticeOpen, setIsLoginNoticeOpen] = useState(false);
   const [dragSource, setDragSource] = useState<DragSource | null>(null);
   const [buildForMeOpen, setBuildForMeOpen] = useState(false);
   const [buildTypes, setBuildTypes] = useState<Set<string>>(new Set());
@@ -220,26 +234,49 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
   const activeTripName = tripName.trim() || "Untitled Trip";
 
   useEffect(() => {
+    const q = placeInputValue.trim();
+    if (!q) {
+      setPlacesOptions([]);
+      return;
+    }
     let cancelled = false;
-    (async () => {
+    const timer = setTimeout(async () => {
       try {
-        const res = await fetch("/api/collab-places");
-        const data = (await res.json()) as { options?: PlaceOption[]; error?: string };
+        const params = new URLSearchParams();
+        params.set("search", q);
+        const res = await fetch(`/api/collab-places?${params.toString()}`);
+        let data: { options?: PlaceOption[]; error?: string } = {};
+        try {
+          const text = await res.text();
+          if (text && text.trim().startsWith("{")) data = JSON.parse(text);
+        } catch {
+          /* response was not valid JSON (e.g. HTML error page) */
+        }
         if (!cancelled && data.options) setPlacesOptions(data.options);
+        else if (!cancelled) setPlacesOptions([]);
       } catch {
         if (!cancelled) setPlacesOptions([]);
       }
-    })();
+    }, 200);
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
-  }, []);
+  }, [placeInputValue]);
+
+  /** Effective trip location: from dropdown selection, input, or saved/prop value */
+  const effectiveLocation = useMemo(
+    () =>
+      (selectedPlace?.label ?? placeInputValue.trim() ?? tripPlace.trim() ?? initialTripPlace ?? "").trim(),
+    [selectedPlace?.label, placeInputValue, tripPlace, initialTripPlace]
+  );
 
   useEffect(() => {
-    if (!selectedPlace?.city && !selectedPlace?.countryRegion) {
+    if (!effectiveLocation) {
       setSuggestedAttractions([]);
       return;
     }
+
     let cancelled = false;
     setLoadingSuggested(true);
     (async () => {
@@ -247,8 +284,17 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
         const params = new URLSearchParams();
         params.set("limit", String(SUGGESTED_LIMIT));
         params.set("offset", "0");
-        // Filter by city only so we match DB (e.g. "United States" vs "USA")
-        if (selectedPlace.city) params.set("city", selectedPlace.city);
+        if (selectedPlace?.city) {
+          params.set("city", selectedPlace.city);
+        } else {
+          const [rawCity] = effectiveLocation.split(",");
+          const cityLike = (rawCity ?? "").trim();
+          if (cityLike) {
+            params.set("city", cityLike);
+          } else {
+            params.set("search", effectiveLocation);
+          }
+        }
         const res = await fetch(`/api/attractions?${params.toString()}`);
         const json = (await res.json()) as { data?: ApiAttraction[]; error?: string };
         if (!cancelled && json.data) {
@@ -265,29 +311,33 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
     return () => {
       cancelled = true;
     };
-  }, [selectedPlace?.id]);
+  }, [effectiveLocation, selectedPlace?.id, selectedPlace?.city]);
 
   useEffect(() => {
-    if (!initialItinerary?.tripPlace || placesOptions.length === 0) return;
+    const fallback = initialTripPlace ?? "";
+    const sourcePlace = initialItinerary?.tripPlace ?? fallback;
+    if (sourcePlace && !placeInputValue) {
+      setPlaceInputValue(sourcePlace);
+      setTripPlace(sourcePlace);
+    }
+  }, [initialItinerary?.tripPlace, initialTripPlace, placeInputValue]);
+
+  useEffect(() => {
+    const toMatch = initialItinerary?.tripPlace ?? initialTripPlace ?? "";
+    if (!toMatch || placesOptions.length === 0) return;
     const match = placesOptions.find(
-      (p) => p.label === initialItinerary.tripPlace || p.label.startsWith(initialItinerary.tripPlace ?? "")
+      (p) =>
+        p.label === toMatch ||
+        p.label.toLowerCase() === toMatch.toLowerCase() ||
+        p.label.toLowerCase().startsWith(toMatch.toLowerCase())
     );
     if (match) {
       setSelectedPlace(match);
       setPlaceInputValue(match.label);
     }
-  }, [initialItinerary?.tripPlace, placesOptions]);
+  }, [initialItinerary?.tripPlace, initialTripPlace, placesOptions]);
 
-  const filteredPlaces = useMemo(() => {
-    const q = placeInputValue.trim().toLowerCase();
-    if (!q) return placesOptions.slice(0, 50);
-    return placesOptions.filter(
-      (p) =>
-        p.label.toLowerCase().includes(q) ||
-        p.city.toLowerCase().includes(q) ||
-        (p.countryRegion && p.countryRegion.toLowerCase().includes(q))
-    ).slice(0, 50);
-  }, [placesOptions, placeInputValue]);
+  const filteredPlaces = useMemo(() => placesOptions.slice(0, 50), [placesOptions]);
 
   useEffect(() => {
     if (!initialItinerary || !initialItinerary.itineraryId) return;
@@ -485,8 +535,10 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
 
     const payload = {
       itineraryId: activeItineraryId || undefined,
+      userId: user?.id ?? undefined,
       tripName: activeTripName,
       tripPlace: tripPlace.trim(),
+      placeId: selectedPlace?.id ?? undefined,
       startDate,
       endDate,
       pace,
@@ -537,54 +589,8 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
     }
   }
 
-  return (
-    <main className={`destinations-page ${embedded ? "saved-trips-embedded-page" : ""}`}>
-      {!embedded && (
-        <header className="destinations-topbar">
-          <button
-            type="button"
-            className="destinations-brand destinations-brand-button"
-            onClick={() => router.push("/")}
-          >
-            TravelApp
-          </button>
-          <button type="button" className="destinations-login" onClick={() => setIsLoginNoticeOpen(true)}>
-            Login
-          </button>
-        </header>
-      )}
-
-      <section className={embedded ? "saved-trips-embedded-layout" : "destinations-layout"}>
-        {!embedded && (
-          <nav className="destinations-sidebar" aria-label="Main navigation">
-            <button type="button" className="destinations-tab" onClick={() => router.push("/home")}>
-              <span aria-hidden="true">🗺️</span>
-              <span>Destinations</span>
-            </button>
-            <button type="button" className="destinations-tab destinations-tab-active">
-              <span aria-hidden="true">💾</span>
-              <span>Itinerary</span>
-            </button>
-            <button type="button" className="destinations-tab" onClick={() => router.push("/favorites")}>
-              <span aria-hidden="true">❤</span>
-              <span>Favorites</span>
-            </button>
-            <button type="button" className="destinations-tab" onClick={() => router.push("/collaborate")}>
-              <span aria-hidden="true">👥</span>
-              <span>Collaborate</span>
-            </button>
-            <button type="button" className="destinations-tab" onClick={() => router.push("/ai-chatbot")}>
-              <span aria-hidden="true">✨</span>
-              <span>AI Chatbot</span>
-            </button>
-            <button type="button" className="destinations-tab" onClick={() => router.push("/about")}>
-              <span aria-hidden="true">ℹ️</span>
-              <span>About</span>
-            </button>
-          </nav>
-        )}
-
-        <div className={embedded ? "saved-trips-embedded-content" : "destinations-content"}>
+  const body = (
+    <>
           <section className="saved-trips-header">
             <h1>Itinerary</h1>
             <p>Turn your favorites into a ready-to-go itinerary in one click and save it with a shareable link.</p>
@@ -775,9 +781,20 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
             </article>
           </section>
 
-          {selectedPlace && (
+          <section className="saved-trips-notes">
+            <label htmlFor="trip-notes">Trip Notes</label>
+            <textarea
+              id="trip-notes"
+              value={notes}
+              onChange={(event) => setNotes(event.target.value)}
+              placeholder="Add reminders: reservations, neighborhood plans, must-eat spots..."
+              rows={3}
+            />
+          </section>
+
+          {!router.query.fromCollab && effectiveLocation && (
             <section className="saved-suggested-section" aria-labelledby="suggested-heading">
-              <h2 id="suggested-heading">Suggested in {selectedPlace.label}</h2>
+              <h2 id="suggested-heading">Suggested in {effectiveLocation}</h2>
               <p className="saved-suggested-intro">Click + to add a place to your itinerary.</p>
               {loadingSuggested ? (
                 <p className="saved-suggested-loading">Loading suggestions…</p>
@@ -786,7 +803,19 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
                   {suggestedAttractions.map((attraction) => {
                     const added = isInItinerary(attraction.id);
                     return (
-                      <article className="saved-suggested-card" key={attraction.id}>
+                      <article
+                        className="saved-suggested-card saved-suggested-card-clickable"
+                        key={attraction.id}
+                        onClick={() => setSelectedAttraction(attraction)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            setSelectedAttraction(attraction);
+                          }
+                        }}
+                      >
                         {attraction.imageUrl ? (
                           <img
                             src={attraction.imageUrl}
@@ -814,7 +843,8 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
                             type="button"
                             className={`saved-suggested-add ${added ? "saved-suggested-added" : ""}`}
                             aria-label={added ? `Remove ${attraction.name} from itinerary` : `Add ${attraction.name} to itinerary`}
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation();
                               if (added) {
                                 removeFromItinerary(attraction.id);
                               } else {
@@ -834,7 +864,7 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
             </section>
           )}
 
-          {attractions.length === 0 ? (
+          {(unscheduled.length === 0 && !dayPlans.some((d) => d.stops.length > 0)) ? (
             <section className="saved-trips-empty">
               <h2>No places in your itinerary yet</h2>
               <p>Pick a location above to see suggested places, or go to Destinations to add places. They’ll appear here and you can drag to reorder.</p>
@@ -849,19 +879,7 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
               </div>
             </section>
           ) : (
-            <>
-              <section className="saved-trips-notes">
-                <label htmlFor="trip-notes">Trip Notes</label>
-                <textarea
-                  id="trip-notes"
-                  value={notes}
-                  onChange={(event) => setNotes(event.target.value)}
-                  placeholder="Add reminders: reservations, neighborhood plans, must-eat spots..."
-                  rows={3}
-                />
-              </section>
-
-              <section className="saved-trips-drag-schedule" aria-label="Schedule">
+            <section className="saved-trips-drag-schedule" aria-label="Schedule">
                 <div
                   className="saved-unassigned-zone"
                   onDragOver={(e) => {
@@ -879,8 +897,9 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
                     {unscheduled.map((attraction, idx) => (
                       <div
                         key={attraction.id}
-                        className={`saved-schedule-card ${dragSource?.type === "unscheduled" && dragSource.index === idx ? "saved-schedule-card-dragging" : ""}`}
+                        className={`saved-schedule-card saved-schedule-card-clickable ${dragSource?.type === "unscheduled" && dragSource.index === idx ? "saved-schedule-card-dragging" : ""}`}
                         draggable
+                        onClick={() => setSelectedAttraction(attraction)}
                         onDragStart={() => setDragSource({ type: "unscheduled", index: idx })}
                         onDragEnd={() => setDragSource(null)}
                         onDragOver={(e) => {
@@ -918,7 +937,13 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
                             removeFromItinerary(attraction.id);
                           }}
                         >
-                          🗑
+                          <img
+                            src="https://img.icons8.com/fluent-systems-regular/24/FA5252/trash.png"
+                            alt=""
+                            width={18}
+                            height={18}
+                            className="saved-schedule-card-remove-icon"
+                          />
                         </button>
                       </div>
                     ))}
@@ -945,8 +970,9 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
                         {day.stops.map((stop, slotIndex) => (
                           <div
                             key={`${day.dayNumber}-${stop.attraction.id}-${stop.slot}`}
-                            className={`saved-schedule-card saved-schedule-card-in-day ${dragSource?.type === "day" && dragSource.dayIndex === dayIndex && dragSource.slotIndex === slotIndex ? "saved-schedule-card-dragging" : ""}`}
+                            className={`saved-schedule-card saved-schedule-card-in-day saved-schedule-card-clickable ${dragSource?.type === "day" && dragSource.dayIndex === dayIndex && dragSource.slotIndex === slotIndex ? "saved-schedule-card-dragging" : ""}`}
                             draggable
+                            onClick={() => setSelectedAttraction(stop.attraction)}
                             onDragStart={() => setDragSource({ type: "day", dayIndex, slotIndex })}
                             onDragEnd={() => setDragSource(null)}
                             onDragOver={(e) => {
@@ -984,7 +1010,13 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
                                 removeFromItinerary(stop.attraction.id);
                               }}
                             >
-                              🗑
+                              <img
+                                src="https://img.icons8.com/fluent-systems-regular/24/FA5252/trash.png"
+                                alt=""
+                                width={18}
+                                height={18}
+                                className="saved-schedule-card-remove-icon"
+                              />
                             </button>
                           </div>
                         ))}
@@ -996,7 +1028,6 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
                   ))}
                 </div>
               </section>
-            </>
           )}
 
           <section className="saved-trips-share">
@@ -1030,7 +1061,61 @@ export default function SavedTripBuilder({ initialItinerary, itineraryIdFromRout
               </p>
             )}
           </section>
-        </div>
+      <AttractionDetailsModal
+        attraction={selectedAttraction}
+        isFavorited={selectedAttraction ? isFavorite(selectedAttraction.id) : false}
+        onToggleFavorite={toggleFavorite}
+        onClose={() => setSelectedAttraction(null)}
+      />
+    </>
+  );
+
+  if (embedded) {
+    return <>{body}</>;
+  }
+
+  return (
+    <main className="destinations-page">
+      <header className="destinations-topbar">
+        <button
+          type="button"
+          className="destinations-brand destinations-brand-button"
+          onClick={() => router.push("/")}
+        >
+          TravelApp
+        </button>
+        <AuthButton />
+      </header>
+
+      <section className="destinations-layout">
+        <nav className="destinations-sidebar" aria-label="Main navigation">
+          <button type="button" className="destinations-tab" onClick={() => router.push("/home")}>
+            <span aria-hidden="true">🗺️</span>
+            <span>Destinations</span>
+          </button>
+          <button type="button" className="destinations-tab destinations-tab-active">
+            <span aria-hidden="true">💾</span>
+            <span>Itinerary</span>
+          </button>
+          <button type="button" className="destinations-tab" onClick={() => router.push("/favorites")}>
+            <span aria-hidden="true">❤</span>
+            <span>Favorites</span>
+          </button>
+          <button type="button" className="destinations-tab" onClick={() => router.push("/collaborate")}>
+            <span aria-hidden="true">👥</span>
+            <span>Collaborate</span>
+          </button>
+          <button type="button" className="destinations-tab" onClick={() => router.push("/ai-chatbot")}>
+            <span aria-hidden="true">✨</span>
+            <span>AI Chatbot</span>
+          </button>
+          <button type="button" className="destinations-tab" onClick={() => router.push("/about")}>
+            <span aria-hidden="true">ℹ️</span>
+            <span>About</span>
+          </button>
+        </nav>
+
+        <div className="destinations-content">{body}</div>
       </section>
     </main>
   );

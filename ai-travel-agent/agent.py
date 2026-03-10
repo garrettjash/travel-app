@@ -199,6 +199,7 @@ def handler(event: dict):
     # Event is the JSON object passed as the payload
     user_input = event.get("prompt")
     session_id = event.get("session_id")
+    user_id = event.get("user_id")
 
     if not user_input:
         return {"output": "No prompt provided."}
@@ -216,7 +217,10 @@ def handler(event: dict):
 
     # If no session found, create one. Otherwise, get summary and last update time
     if not db_session.data or len(db_session.data) == 0:
-        supabase.table("sessions").insert({"session_id": session_id}).execute()
+        session_row = {"session_id": session_id}
+        if user_id:
+            session_row["user_id"] = user_id
+        supabase.table("sessions").insert(session_row).execute()
         summary = ""
         last_summary_time = None
     else:
