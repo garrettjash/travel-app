@@ -1153,6 +1153,61 @@ def upsert_attraction_row(supabase: Client, payload: dict[str, Any], name: str, 
 		return None
 
 
+def assess_place_existing_google_and_images(supabase: Client, place_id: int) -> tuple[bool, bool]:
+	if not place_id:
+		return False, False
+
+	has_google_data = False
+	has_images = False
+	try:
+		rows = (
+			supabase.table("attraction")
+			.select("attraction_id,attraction_totalcountratings,attraction_normalizedrating,attraction_rawdata")
+			.eq("place_id", place_id)
+			.execute()
+		).data or []
+	except Exception:
+		rows = []
+
+	ids: list[int] = []
+	for row in rows:
+		attraction_id = row.get("attraction_id")
+		if attraction_id is not None:
+			try:
+				ids.append(int(attraction_id))
+			except Exception:
+				pass
+
+		count = to_int_or_none(row.get("attraction_totalcountratings")) or 0
+		rating = to_float_or_none(row.get("attraction_normalizedrating")) or 0.0
+		raw = row.get("attraction_rawdata") if isinstance(row.get("attraction_rawdata"), dict) else {}
+		has_google_payload = bool(raw.get("google_reviews_payload") or raw.get("google_place_id"))
+		if has_google_payload or count > 0 or rating > 0:
+			has_google_data = True
+
+	if ids:
+		chunk_size = 500
+		for i in range(0, len(ids), chunk_size):
+			chunk = ids[i : i + chunk_size]
+			if not chunk:
+				continue
+			try:
+				img_rows = (
+					supabase.table("images")
+					.select("attraction_id")
+					.in_("attraction_id", chunk)
+					.limit(1)
+					.execute()
+				).data or []
+				if img_rows:
+					has_images = True
+					break
+			except Exception:
+				continue
+
+	return has_google_data, has_images
+
+
 def fetch_places(supabase: Client, limit_places: Optional[int] = None, place_filter: Optional[str] = None) -> list[dict[str, Any]]:
 	offset = 0
 	batch = 200
@@ -1214,6 +1269,12 @@ def process_place(
 	place_types = ensure_place_type(supabase, place, dry_run=dry_run)
 	if place_types:
 		print(f"   ✓ place_type: {place_types}")
+
+	place_has_google_data, place_has_images = assess_place_existing_google_and_images(supabase, int(place_id))
+	if place_has_google_data:
+		print("   💸 Google enrichment skipped: place already has Google reviews/ratings data")
+	if place_has_images:
+		print("   💸 Image fetch skipped: place already has at least one image")
 
 	distance_updated = backfill_missing_distance_for_place(supabase, place)
 	if distance_updated:
@@ -1346,27 +1407,33 @@ def process_place(
 
 		try:
 			place_hint = f"{city}, {country}" if country else city
-			google_reviews_payload = fetch_google_reviews_payload(
-				attraction_name=candidate.name,
-				place_hint=place_hint,
-				city=candidate.city or city,
-				country=country,
-				force_refresh=False,
-			)
+			google_reviews_payload = None
+			if not place_has_google_data:
+				google_reviews_payload = fetch_google_reviews_payload(
+					attraction_name=candidate.name,
+					place_hint=place_hint,
+					city=candidate.city or city,
+					country=country,
+					force_refresh=False,
+				)
 			tripadvisor_payload = fetch_tripadvisor_payload(
 				attraction_name=candidate.name,
 				city=candidate.city or city,
 				country=country,
 			)
 
-			search = _google_text_search(query, google_maps_key)
-			if not search:
-				skipped += 1
-				print(f"      ⊘ No Google place result for: {candidate.name}")
-				continue
+			search: dict[str, Any] = {}
+			google_place_id = None
+			details: dict[str, Any] = {}
+			if not place_has_google_data:
+				search = _google_text_search(query, google_maps_key) or {}
+				if not search:
+					skipped += 1
+					print(f"      ⊘ No Google place result for: {candidate.name}")
+					continue
 
-			google_place_id = search.get("place_id")
-			details = _google_place_details(google_place_id, google_maps_key) if google_place_id else {}
+				google_place_id = search.get("place_id")
+				details = _google_place_details(google_place_id, google_maps_key) if google_place_id else {}
 			details = details or {}
 
 			effective_rating = details.get("rating", search.get("rating"))
@@ -1520,6 +1587,9 @@ def process_place(
 			print(f"      ✓ Upserted: {candidate.name} (id={attraction_id})")
 
 			# Image handling via Google Places photo API
+			if place_has_images:
+				continue
+
 			photos = details.get("photos") or search.get("photos") or []
 			if not photos:
 				print("        ⊘ No Google photos")

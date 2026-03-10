@@ -549,6 +549,61 @@ def place_exists(supabase: Client, city: str) -> Optional[dict[str, Any]]:
 	return res.data[0] if res.data else None
 
 
+def assess_place_existing_google_and_images(supabase: Client, place_id: int) -> tuple[bool, bool]:
+	if not place_id:
+		return False, False
+
+	has_google_data = False
+	has_images = False
+	try:
+		rows = (
+			supabase.table("attraction")
+			.select("attraction_id,attraction_totalcountratings,attraction_normalizedrating,attraction_rawdata")
+			.eq("place_id", place_id)
+			.execute()
+		).data or []
+	except Exception:
+		rows = []
+
+	ids: list[int] = []
+	for row in rows:
+		attraction_id = row.get("attraction_id")
+		if attraction_id is not None:
+			try:
+				ids.append(int(attraction_id))
+			except Exception:
+				pass
+
+		count = to_int_or_none(row.get("attraction_totalcountratings")) or 0
+		rating = to_float_or_none(row.get("attraction_normalizedrating")) or 0.0
+		raw = row.get("attraction_rawdata") if isinstance(row.get("attraction_rawdata"), dict) else {}
+		has_google_payload = bool(raw.get("google_reviews_payload") or raw.get("google_place_id"))
+		if has_google_payload or count > 0 or rating > 0:
+			has_google_data = True
+
+	if ids:
+		chunk_size = 500
+		for i in range(0, len(ids), chunk_size):
+			chunk = ids[i : i + chunk_size]
+			if not chunk:
+				continue
+			try:
+				img_rows = (
+					supabase.table("images")
+					.select("attraction_id")
+					.in_("attraction_id", chunk)
+					.limit(1)
+					.execute()
+				).data or []
+				if img_rows:
+					has_images = True
+					break
+			except Exception:
+				continue
+
+	return has_google_data, has_images
+
+
 def parse_place_text_fallback(place_text: str) -> ParsedPlace:
 	parts = [p.strip() for p in str(place_text or "").split(",") if p.strip()]
 	if not parts:
@@ -623,6 +678,14 @@ def populate_new_place(
 	place_id = place_row.get("place_id")
 	city = (place_row.get("place_city") or "").strip()
 	country = (place_row.get("place_countryregion") or "").strip() or None
+	place_has_google_data = False
+	place_has_images = False
+	if place_id and int(place_id) > 0:
+		place_has_google_data, place_has_images = assess_place_existing_google_and_images(supabase, int(place_id))
+		if place_has_google_data:
+			print("   💸 Google enrichment skipped: place already has Google reviews/ratings data")
+		if place_has_images:
+			print("   💸 Image fetch skipped: place already has at least one image")
 
 	attractions = propose_unbounded_top_attractions(openai_client, city=city, country=country, model=openai_model)
 	if not attractions:
@@ -644,27 +707,29 @@ def populate_new_place(
 	for rank, candidate in enumerate(candidates, start=1):
 		try:
 			place_hint = f"{city}, {country}" if country else city
-			google_reviews_payload = fetch_google_reviews_payload(
-				attraction_name=candidate.name,
-				place_hint=place_hint,
-				city=candidate.city or city,
-				country=country,
-				force_refresh=False,
-			)
+			google_reviews_payload = None
+			if not place_has_google_data:
+				google_reviews_payload = fetch_google_reviews_payload(
+					attraction_name=candidate.name,
+					place_hint=place_hint,
+					city=candidate.city or city,
+					country=country,
+					force_refresh=False,
+				)
 			tripadvisor_payload = fetch_tripadvisor_payload(
 				attraction_name=candidate.name,
 				city=candidate.city or city,
 				country=country,
 			)
 
-			search = None
-			details = {}
-			if google_maps_key:
+			search: dict[str, Any] = {}
+			details: dict[str, Any] = {}
+			if google_maps_key and not place_has_google_data:
 				q_parts = [candidate.name, candidate.city or city]
 				if country:
 					q_parts.append(country)
 				query = ", ".join([p for p in q_parts if p])
-				search = _google_text_search(query, google_maps_key)
+				search = _google_text_search(query, google_maps_key) or {}
 				place_ref = search.get("place_id") if search else None
 				details = _google_place_details(place_ref, google_maps_key) if place_ref else {}
 				details = details or {}
@@ -801,6 +866,9 @@ def populate_new_place(
 			attraction_id = inserted.get("attraction_id")
 			added += 1
 			print(f"   ✓ Added attraction: {candidate.name} (id={attraction_id})")
+
+			if place_has_images:
+				continue
 
 			photos = (details.get("photos") if isinstance(details, dict) else None) or ((search or {}).get("photos") if isinstance(search, dict) else None) or []
 			if not photos or not images_bucket or not google_maps_key or not attraction_id:
