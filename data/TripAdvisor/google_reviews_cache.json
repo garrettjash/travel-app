@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-03-07T23:46:32.583534+00:00",
+  "updated_at": "2026-03-10T00:11:14.825577+00:00",
   "items": {
     "downtown bozeman::bozeman": {
       "attraction_name": "Downtown Bozeman",
@@ -8129,6 +8129,319 @@
         }
       ],
       "fetched_at": "2026-03-07T23:46:32.583521+00:00"
+    },
+    "xin tian di::shanghai china": {
+      "attraction_name": "Xin Tian Di",
+      "query": "Xin Tian Di, Shanghai, China",
+      "google_place_id": "ChIJvzP29nFwsjUR8s2UB5QXC3E",
+      "google_name": "Shanghai New World",
+      "google_formatted_address": "119 Ma Dang Lu, 新天地 Huang Pu Qu, Shang Hai Shi, China, 200021",
+      "google_rating": 4.4,
+      "google_user_ratings_total": 85,
+      "google_maps_url": "https://maps.google.com/?cid=8145630275579465202",
+      "google_reviews_summary": "YKC (5/5): Old and new together in the nightview. Nice cold wet weather with few rain still. | S G (4/5): This is a nice building in a nice area. It seems more like a tourist or foreigner oasis in an area that is already much the same. The block is packed with restaurants and bars catering to tourists. It's not a bad place to stop for a rest if you are absolutely craving foreign food (burgers, bars and bar food).  It's close to the the First Congress of the Communist Party of China, which is right around the corner and much more interesting to see and explore. | Bryan Chan (4/5): A successful place which redevelop from the old factory and shop...",
+      "google_reviews_raw": [
+        {
+          "author_name": "YKC",
+          "author_url": "https://www.google.com/maps/contrib/111879276751193391560/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a/ACg8ocJwfqtLUK5jHOFRecFZgRV8sNHyeBKDheK0eaUGcfezAhaggQ=s128-c0x00000000-cc-rp-mo-ba7",
+          "rating": 5,
+          "relative_time_description": "2 weeks ago",
+          "text": "Old and new together in the nightview. Nice cold wet weather with few rain still.",
+          "time": 1771609939,
+          "translated": false
+        },
+        {
+          "author_name": "S G",
+          "author_url": "https://www.google.com/maps/contrib/117921549254731198215/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a/ACg8ocItzuzgmGYQx8KQYPtHEA0z9PAcbsMXSCHMuGWjEytBn6o2tQ=s128-c0x00000000-cc-rp-mo-ba6",
+          "rating": 4,
+          "relative_time_description": "4 years ago",
+          "text": "This is a nice building in a nice area. It seems more like a tourist or foreigner oasis in an area that is already much the same. The block is packed with restaurants and bars catering to tourists. It's not a bad place to stop for a rest if you are absolutely craving foreign food (burgers, bars and bar food).  It's close to the the First Congress of the Communist Party of China, which is right around the corner and much more interesting to see and explore.",
+          "time": 1619258832,
+          "translated": false
+        },
+        {
+          "author_name": "Bryan Chan",
+          "author_url": "https://www.google.com/maps/contrib/106720923526865701671/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjWFD29h6lHaW4tN8ImwE0P0wrGTUnkraCAC264DbfYL7GDS0Pr50Q=s128-c0x00000000-cc-rp-mo-ba6",
+          "rating": 4,
+          "relative_time_description": "7 years ago",
+          "text": "A successful place which redevelop from the old factory and shop...",
+          "time": 1530025648,
+          "translated": false
+        }
+      ],
+      "fetched_at": "2026-03-09T23:43:54.677276+00:00"
+    },
+    "tian zi fang::shanghai china": {
+      "attraction_name": "Tian Zi Fang",
+      "query": "Tian Zi Fang, Shanghai, China",
+      "google_place_id": "ChIJF0iL_KF6sjURjQpUzO-LXaM",
+      "google_name": "Tianzifang",
+      "google_formatted_address": "Tianzifang, Huangpu, China",
+      "google_rating": null,
+      "google_user_ratings_total": null,
+      "google_maps_url": "https://maps.google.com/?cid=11771718863057848973",
+      "google_reviews_summary": "",
+      "google_reviews_raw": [],
+      "fetched_at": "2026-03-09T23:44:11.496423+00:00"
+    },
+    "oriental pearl tv tower::shanghai china": {
+      "attraction_name": "Oriental Pearl TV Tower",
+      "query": "Oriental Pearl TV Tower, Shanghai, China",
+      "google_place_id": "ChIJ29SwJftwsjURZYXg4jufPhY",
+      "google_name": "Oriental Pearl TV Tower",
+      "google_formatted_address": "1 Shi Ji Da Dao, Lujiazui, Pu Dong Xin Qu, Shang Hai Shi, China, 200120",
+      "google_rating": 4.6,
+      "google_user_ratings_total": 7321,
+      "google_maps_url": "https://maps.google.com/?cid=1602893596948727141",
+      "google_reviews_summary": "Zhang Qingye (5/5): Visited the Oriental Pearl TV Tower in October 2024, and it’s easily one of Shanghai’s most iconic landmarks. Even if you don’t go up, the tower itself is impressive to see up close, especially at night when it’s fully lit and reflected along the Huangpu River.\n\nI went up to the observation decks, and the panoramic view of Pudong and the Bund is amazing. On a clear day, you can really appreciate how massive and modern Shanghai is. The glass floor section is a fun (and slightly scary) experience and worth trying at least once. | A D (5/5): The iconic building is a feature of the Shanghai skyline from the Bund. Looks mesmerizing in the evening with glittering lights. There are observation decks if you want to visit it. We loved looking at from land from the Bund promonade, from water during our evening river cruise and from air from the top of Shanghai tower. | Danish Khan (5/5): Iconic skyline & photo ops\nThe area around the Oriental Pearl Tower is the heart of Shanghai’s financial district, with futuristic skyscrapers, the Huangpu River, and landmarks like Shanghai Tower, Jin Mao Tower, and the Shanghai World Financial Center. Perfect for photos, especially during sunset or at night when the buildings are lit up.",
+      "google_reviews_raw": [
+        {
+          "author_name": "Zhang Qingye",
+          "author_url": "https://www.google.com/maps/contrib/109176833677357095370/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a/ACg8ocI1GBnwaeIRVdhZ3q5Kj_OZQkz7UVUcYUV8PZYtAWuJgYRCV8E=s128-c0x00000000-cc-rp-mo-ba5",
+          "rating": 5,
+          "relative_time_description": "a month ago",
+          "text": "Visited the Oriental Pearl TV Tower in October 2024, and it’s easily one of Shanghai’s most iconic landmarks. Even if you don’t go up, the tower itself is impressive to see up close, especially at night when it’s fully lit and reflected along the Huangpu River.\n\nI went up to the observation decks, and the panoramic view of Pudong and the Bund is amazing. On a clear day, you can really appreciate how massive and modern Shanghai is. The glass floor section is a fun (and slightly scary) experience and worth trying at least once.",
+          "time": 1769417851,
+          "translated": false
+        },
+        {
+          "author_name": "A D",
+          "author_url": "https://www.google.com/maps/contrib/104477820331582802808/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjX_HypPRZMx_Hxp_Aa3gIYKIeUlw8katsDXvxvRYUDdwHUlSuA=s128-c0x00000000-cc-rp-mo-ba6",
+          "rating": 5,
+          "relative_time_description": "a month ago",
+          "text": "The iconic building is a feature of the Shanghai skyline from the Bund. Looks mesmerizing in the evening with glittering lights. There are observation decks if you want to visit it. We loved looking at from land from the Bund promonade, from water during our evening river cruise and from air from the top of Shanghai tower.",
+          "time": 1770066564,
+          "translated": false
+        },
+        {
+          "author_name": "Danish Khan",
+          "author_url": "https://www.google.com/maps/contrib/113747933307966471931/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjXui7XFFaZNuT37ywHJAtG7HKDUb_RPcHhwFQwj7CGjjGIRPiK_=s128-c0x00000000-cc-rp-mo-ba6",
+          "rating": 5,
+          "relative_time_description": "a month ago",
+          "text": "Iconic skyline & photo ops\nThe area around the Oriental Pearl Tower is the heart of Shanghai’s financial district, with futuristic skyscrapers, the Huangpu River, and landmarks like Shanghai Tower, Jin Mao Tower, and the Shanghai World Financial Center. Perfect for photos, especially during sunset or at night when the buildings are lit up.",
+          "time": 1768308689,
+          "translated": false
+        }
+      ],
+      "fetched_at": "2026-03-09T23:44:14.710589+00:00"
+    },
+    "shanghai disneyland::shanghai china": {
+      "attraction_name": "Shanghai Disneyland",
+      "query": "Shanghai Disneyland, Shanghai, China, China",
+      "google_place_id": "ChIJeTeSUGiHrTURrNSkfYkOFGo",
+      "google_name": "Shanghai Disneyland Park",
+      "google_formatted_address": "4MV5+945, Pudong, Shanghai, China, 201205",
+      "google_rating": 4.5,
+      "google_user_ratings_total": 3099,
+      "google_maps_url": "https://maps.google.com/?cid=7643750451235837100",
+      "google_reviews_summary": "Christopher Malonda (5/5): This Disneyland park is notably the most expansive we have encountered. The selection of attractions is exceptional, ranging from Tron to the immersive Pirates of the Caribbean. Our children particularly enjoyed the Zootopia theme park. Numerous photo opportunities are available, and the Hot Pursuit ride offers a truly remarkable experience. We advise guests to be aware of potential wait times. Nevertheless, a visit to this park is highly recommended if you are in Shanghai. | Amos Chen (5/5): Visiting Shanghai Disneyland honestly exceeded my expectations. The park feels bigger and more open than I imagined, and the castle is stunning both during the day and at night — especially once it’s lit up.\n\nWhat stood out to me most was how immersive everything felt. The details in each area are very well done, and even just walking around felt enjoyable. The rides are a good mix of fun and impressive, not just for kids but for adults as well. Compared to other Disney parks I’ve been to, this one feels newer and more spacious.\n\nCrowds were manageable when I went, and the overall experience felt smooth and well organized. Definitely worth a full day, and I’d recommend staying until nighttime to see the park in a completely different atmosphere. | Chan Wai, 陈柃汐 (5/5): We visited Shanghai Disneyland in mid-November and it exceeded all my expectations. The weather was very cold, and we queued for about an hour before the official park opening. To our surprise, the park opened earlier than the stated time, which was a great start to the day. Because of that, we managed to ride TRON Lightcycle Power Run with almost no wait — and it was absolutely the best ride I’ve ever experienced. Truly next level.\n\nMy second favourite ride was Seven Dwarfs Mine Train — fun, smooth, and beautifully themed. Overall, the park operations were impressive. People generally queued patiently, everyone was polite, and we didn’t experience any queue cutting, which made the experience very pleasant.\n\nWe spent two full days in the park and were able to cover most of the rides without feeling too rushed. The park is well designed, immersive, and magical in its own way.\n\nWe loved it so much and will definitely be back again. Highly recommended! ✨🎢",
+      "google_reviews_raw": [
+        {
+          "author_name": "Christopher Malonda",
+          "author_url": "https://www.google.com/maps/contrib/114010539540989883641/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjXWuCOExs1-EWViqviRAMqINqx5EVV5Gb2xWnwBrfDkfJ4rh0f2NQ=s128-c0x00000000-cc-rp-mo-ba4",
+          "rating": 5,
+          "relative_time_description": "4 weeks ago",
+          "text": "This Disneyland park is notably the most expansive we have encountered. The selection of attractions is exceptional, ranging from Tron to the immersive Pirates of the Caribbean. Our children particularly enjoyed the Zootopia theme park. Numerous photo opportunities are available, and the Hot Pursuit ride offers a truly remarkable experience. We advise guests to be aware of potential wait times. Nevertheless, a visit to this park is highly recommended if you are in Shanghai.",
+          "time": 1770595751,
+          "translated": false
+        },
+        {
+          "author_name": "Amos Chen",
+          "author_url": "https://www.google.com/maps/contrib/102451492904428440564/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjVMfmLPXUm1xnauCi839PGNpPKOmFSRPMzGFfhNlbNfz8p4tyQ=s128-c0x00000000-cc-rp-mo-ba5",
+          "rating": 5,
+          "relative_time_description": "4 weeks ago",
+          "text": "Visiting Shanghai Disneyland honestly exceeded my expectations. The park feels bigger and more open than I imagined, and the castle is stunning both during the day and at night — especially once it’s lit up.\n\nWhat stood out to me most was how immersive everything felt. The details in each area are very well done, and even just walking around felt enjoyable. The rides are a good mix of fun and impressive, not just for kids but for adults as well. Compared to other Disney parks I’ve been to, this one feels newer and more spacious.\n\nCrowds were manageable when I went, and the overall experience felt smooth and well organized. Definitely worth a full day, and I’d recommend staying until nighttime to see the park in a completely different atmosphere.",
+          "time": 1770663946,
+          "translated": false
+        },
+        {
+          "author_name": "Chan Wai, 陈柃汐",
+          "author_url": "https://www.google.com/maps/contrib/100289457793824033886/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjWWEFHmQzzLX3w7OEYXBl9dFKcigvfzaRgtJ_7mRgcG802Rvo0f=s128-c0x00000000-cc-rp-mo-ba6",
+          "rating": 5,
+          "relative_time_description": "2 months ago",
+          "text": "We visited Shanghai Disneyland in mid-November and it exceeded all my expectations. The weather was very cold, and we queued for about an hour before the official park opening. To our surprise, the park opened earlier than the stated time, which was a great start to the day. Because of that, we managed to ride TRON Lightcycle Power Run with almost no wait — and it was absolutely the best ride I’ve ever experienced. Truly next level.\n\nMy second favourite ride was Seven Dwarfs Mine Train — fun, smooth, and beautifully themed. Overall, the park operations were impressive. People generally queued patiently, everyone was polite, and we didn’t experience any queue cutting, which made the experience very pleasant.\n\nWe spent two full days in the park and were able to cover most of the rides without feeling too rushed. The park is well designed, immersive, and magical in its own way.\n\nWe loved it so much and will definitely be back again. Highly recommended! ✨🎢",
+          "time": 1767155669,
+          "translated": false
+        }
+      ],
+      "fetched_at": "2026-03-10T00:07:02.469434+00:00"
+    },
+    "shanghai planetarium::shanghai china": {
+      "attraction_name": "Shanghai Planetarium",
+      "query": "Shanghai Planetarium, Shanghai, China, China",
+      "google_place_id": "ChIJUT97vZJ1rTURbKDrde_WqLw",
+      "google_name": "Shanghai Astronomy Museum",
+      "google_formatted_address": "China, Shang Hai Shi, Pu Dong Xin Qu, Huan Hu Xi San Lu, 交界处 CN 上海市 浦东新区 临港大道 和 邮政编码: 201308",
+      "google_rating": 4.5,
+      "google_user_ratings_total": 91,
+      "google_maps_url": "https://maps.google.com/?cid=13594351799181746284",
+      "google_reviews_summary": "Theodora Widjaja (5/5): This planetarium is definitely worth a visit for families with kids, science enthusiasts, and anyone with the time to spare (note that it takes over an hour by metro to get here from central Shanghai). It makes learning about space engaging for all ages. The exhibits on our solar system are packed with fascinating details and up-to-date discoveries. We especially loved the interactive stations.\nTips:\n• It is better to come in the morning to enjoy the museum at its quietest.\n• You can book tickets in advance on Trip.com. (Or through wechat)\n· Accessibility: The facility is stroller- and wheelchair-accessible. Exhibits also feature Braille and English translations, making the experience more inclusive. | Michael Kesuma (5/5): My family and I had an amazing experience at the Shanghai Astronomy Museum! The architecture itself is stunning and feels futuristic, perfectly matching the theme of space. Inside, the exhibits are both educational and exciting — from interactive displays to realistic simulations of planets and galaxies.\n\nThe planetarium show was a highlight, truly immersive and breathtaking. I also appreciated how the museum made complex astronomy concepts easy to understand for all ages.\n\nIt’s a great place for families, science lovers, or anyone curious about the universe. Definitely one of the must-visit attractions in Shanghai! 🌌✨ | Christian J. Loferer (2/5): Very Nice Architecture\nIts Hard to get entrance to all Shows if you have no Chinese Mobile Number - not pretty inviting for a tourist\nBut: the Staff was amazing friendly",
+      "google_reviews_raw": [
+        {
+          "author_name": "Theodora Widjaja",
+          "author_url": "https://www.google.com/maps/contrib/112394065768183607074/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjVCi5y-PiPScwtSPmQBzlbrjmF0hQM49qZ_CQlS9t54X3v-6es=s128-c0x00000000-cc-rp-mo-ba4",
+          "rating": 5,
+          "relative_time_description": "2 months ago",
+          "text": "This planetarium is definitely worth a visit for families with kids, science enthusiasts, and anyone with the time to spare (note that it takes over an hour by metro to get here from central Shanghai). It makes learning about space engaging for all ages. The exhibits on our solar system are packed with fascinating details and up-to-date discoveries. We especially loved the interactive stations.\nTips:\n• It is better to come in the morning to enjoy the museum at its quietest.\n• You can book tickets in advance on Trip.com. (Or through wechat)\n· Accessibility: The facility is stroller- and wheelchair-accessible. Exhibits also feature Braille and English translations, making the experience more inclusive.",
+          "time": 1766146858,
+          "translated": false
+        },
+        {
+          "author_name": "Michael Kesuma",
+          "author_url": "https://www.google.com/maps/contrib/105575066973687322067/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjUYJj9TXn5a3MQawvxhxoMveuvFK5a8ia6fRu9U8Gb-GPObpqJU1Q=s128-c0x00000000-cc-rp-mo-ba6",
+          "rating": 5,
+          "relative_time_description": "5 months ago",
+          "text": "My family and I had an amazing experience at the Shanghai Astronomy Museum! The architecture itself is stunning and feels futuristic, perfectly matching the theme of space. Inside, the exhibits are both educational and exciting — from interactive displays to realistic simulations of planets and galaxies.\n\nThe planetarium show was a highlight, truly immersive and breathtaking. I also appreciated how the museum made complex astronomy concepts easy to understand for all ages.\n\nIt’s a great place for families, science lovers, or anyone curious about the universe. Definitely one of the must-visit attractions in Shanghai! 🌌✨",
+          "time": 1759551600,
+          "translated": false
+        },
+        {
+          "author_name": "Christian J. Loferer",
+          "author_url": "https://www.google.com/maps/contrib/102953607071641881779/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjV2CUhDpM4rHVzcCA9fY-Ux8RC54KhvfiILUM6CpTQOhbVQUA=s128-c0x00000000-cc-rp-mo-ba3",
+          "rating": 2,
+          "relative_time_description": "4 months ago",
+          "text": "Very Nice Architecture\nIts Hard to get entrance to all Shows if you have no Chinese Mobile Number - not pretty inviting for a tourist\nBut: the Staff was amazing friendly",
+          "time": 1760623776,
+          "translated": false
+        }
+      ],
+      "fetched_at": "2026-03-10T00:07:24.487720+00:00"
+    },
+    "shanghai tower observation deck::shanghai china": {
+      "attraction_name": "Shanghai Tower Observation Deck",
+      "query": "Shanghai Tower Observation Deck, Shanghai, China, China",
+      "google_place_id": "ChIJcT52JmpwsjURKKp8uyIQKjU",
+      "google_name": "Shanghai Tower",
+      "google_formatted_address": "501 Yin Cheng Zhong Lu, Lujiazui, Pu Dong Xin Qu, Shang Hai Shi, China, 200120",
+      "google_rating": 4.6,
+      "google_user_ratings_total": 2964,
+      "google_maps_url": "https://maps.google.com/?cid=3830892174392470056",
+      "google_reviews_summary": "Alejandro Enrique Sanchez Vazquez (5/5): Standing at the base of the Shanghai Tower, you truly feel the scale of this engineering masterpiece: it is a vertical city that redefines the modern skyline! The experience begins as you board the world’s fastest elevator, whisking you up to the 118th and 119th floors in a matter of seconds. It is a seamless, high-performance feat of technology that sets the stage for the breathtaking views waiting at the Top of Shanghai Observatory.\n\nOnce you step out, the 360-degree panorama is absolutely mind-blowing. Seeing the massive Jin Mao Tower and the World Financial Center from above makes you realize just how high you really are. The perspective of the Huangpu River winding through the city is cinematic, especially as the clouds drift past the windows. It’s an immersive, high-impact experience that perfectly captures the futuristic, cosmopolitan energy of Shanghai. | Amos Chen (5/5): Standing at the top of Shanghai Tower really puts the scale of the city into perspective. The elevator ride itself is an experience — incredibly fast and smooth — and within seconds you’re looking down at a completely different version of Shanghai.\n\nThe observation deck offers a unique view compared to other skyscrapers nearby. Instead of just wide-open scenery, you get this layered, vertical cityscape with surrounding towers almost at eye level, which feels both futuristic and slightly surreal, especially at night.\n\nThe interior design is modern and spacious, and the whole visit feels well organized without being rushed. It’s not just about the height — it’s about how the building makes you feel small while the city feels endless. If you want to truly understand Shanghai’s scale and ambition, this is the place to do it. | A D (5/5): Tallest building in Shanghai looks wonderful both from outside and from the observation deck inside on the 118 floor. We loved it from the Bund, evening cruise and city sightseeing tour bus. Its called the egg beater by locals because of its shape. We enjoyed the 360 degree view from the top deck in the twilight time, daylight fading out and all the glittering lights switching on. We booked our combo ticket at the Bund sightseeing tunnel, there was no queue. The elevator was super smooth, shooting to the top in few seconds. It is a very popular place, always crowded. Easily accessed via public transport, metro station adjacent.",
+      "google_reviews_raw": [
+        {
+          "author_name": "Alejandro Enrique Sanchez Vazquez",
+          "author_url": "https://www.google.com/maps/contrib/101280057005007795170/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjU7uL2ylF5xnN6mEWBcmt8xj6ubJ500Txrn6GzGpMwHhCKZ_TI-Dg=s128-c0x00000000-cc-rp-mo-ba3",
+          "rating": 5,
+          "relative_time_description": "3 weeks ago",
+          "text": "Standing at the base of the Shanghai Tower, you truly feel the scale of this engineering masterpiece: it is a vertical city that redefines the modern skyline! The experience begins as you board the world’s fastest elevator, whisking you up to the 118th and 119th floors in a matter of seconds. It is a seamless, high-performance feat of technology that sets the stage for the breathtaking views waiting at the Top of Shanghai Observatory.\n\nOnce you step out, the 360-degree panorama is absolutely mind-blowing. Seeing the massive Jin Mao Tower and the World Financial Center from above makes you realize just how high you really are. The perspective of the Huangpu River winding through the city is cinematic, especially as the clouds drift past the windows. It’s an immersive, high-impact experience that perfectly captures the futuristic, cosmopolitan energy of Shanghai.",
+          "time": 1770688666,
+          "translated": false
+        },
+        {
+          "author_name": "Amos Chen",
+          "author_url": "https://www.google.com/maps/contrib/102451492904428440564/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjVMfmLPXUm1xnauCi839PGNpPKOmFSRPMzGFfhNlbNfz8p4tyQ=s128-c0x00000000-cc-rp-mo-ba5",
+          "rating": 5,
+          "relative_time_description": "4 weeks ago",
+          "text": "Standing at the top of Shanghai Tower really puts the scale of the city into perspective. The elevator ride itself is an experience — incredibly fast and smooth — and within seconds you’re looking down at a completely different version of Shanghai.\n\nThe observation deck offers a unique view compared to other skyscrapers nearby. Instead of just wide-open scenery, you get this layered, vertical cityscape with surrounding towers almost at eye level, which feels both futuristic and slightly surreal, especially at night.\n\nThe interior design is modern and spacious, and the whole visit feels well organized without being rushed. It’s not just about the height — it’s about how the building makes you feel small while the city feels endless. If you want to truly understand Shanghai’s scale and ambition, this is the place to do it.",
+          "time": 1770616318,
+          "translated": false
+        },
+        {
+          "author_name": "A D",
+          "author_url": "https://www.google.com/maps/contrib/104477820331582802808/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjX_HypPRZMx_Hxp_Aa3gIYKIeUlw8katsDXvxvRYUDdwHUlSuA=s128-c0x00000000-cc-rp-mo-ba6",
+          "rating": 5,
+          "relative_time_description": "a month ago",
+          "text": "Tallest building in Shanghai looks wonderful both from outside and from the observation deck inside on the 118 floor. We loved it from the Bund, evening cruise and city sightseeing tour bus. Its called the egg beater by locals because of its shape. We enjoyed the 360 degree view from the top deck in the twilight time, daylight fading out and all the glittering lights switching on. We booked our combo ticket at the Bund sightseeing tunnel, there was no queue. The elevator was super smooth, shooting to the top in few seconds. It is a very popular place, always crowded. Easily accessed via public transport, metro station adjacent.",
+          "time": 1770068280,
+          "translated": false
+        }
+      ],
+      "fetched_at": "2026-03-10T00:11:05.072762+00:00"
+    },
+    "longhua temple and pagoda::shanghai china": {
+      "attraction_name": "Longhua Temple and Pagoda",
+      "query": "Longhua Temple and Pagoda, Shanghai, China",
+      "google_place_id": "ChIJ33XthSl7sjURtfalYd9mk60",
+      "google_name": "Longhua Temple",
+      "google_formatted_address": "2853 Long Hua Lu, Xu Hui Qu, Shang Hai Shi, China, 200232",
+      "google_rating": 4.7,
+      "google_user_ratings_total": 234,
+      "google_maps_url": "https://maps.google.com/?cid=12507453699740006069",
+      "google_reviews_summary": "Jan Whitehead (5/5): A nice temple to visit in Shanghai. Just close to the underground station.\nQuite busy at the weekend but definitely worth a visit.\nSome cats and dogs in the temple area.\nAlso the park just next to the temple is very nice.\nPlan for at least 1 hour. | Gina (5/5): I had to queue for hours to buy the lucky bracelet I wanted. The temple is beautiful and sacred. I paid respects to all the deities and Buddha images. Entering the temple to pray doesn't require queuing; the only queue was when buying the bracelet. | Soudamini Mohapatra (5/5): Longhua Temple with Longhua Pagoda is the largest and oldest temple in Shanghai. The temple was built in the 3rd century, which was damaged and renovated over the centuries. The temple has a history of 1700 years and various dynasties have added their own style of architectural structure in the temple complex.\n\nIt has many as other Buddhist temples in the complex, such as Maitreya Hall, Mahavir Hall, Devaraja Hall, the Bell tower and Drum tower etc. The Bell Tower has a large bronze Bell of 2 meter in height.\nThe seven-storied Longhua Pagoda is located in front of the Longhua temple. It's a distinctive feature of the temple complex.\n\nThe temple complex is  huge, require half a day to visit it properly. There is a large collection of Bonsai plants in the complex.\nVisiting this temple was a very fulfilling experience for me. In my opinion this is the best temple in Shanghai,  not to be missed",
+      "google_reviews_raw": [
+        {
+          "author_name": "Jan Whitehead",
+          "author_url": "https://www.google.com/maps/contrib/104802376462594691820/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjWjmgkrDHoSin9mtG1Ut5_RzphiTVQg5sQlDSD9Qs02h1z8HChh=s128-c0x00000000-cc-rp-mo-ba4",
+          "rating": 5,
+          "relative_time_description": "a month ago",
+          "text": "A nice temple to visit in Shanghai. Just close to the underground station.\nQuite busy at the weekend but definitely worth a visit.\nSome cats and dogs in the temple area.\nAlso the park just next to the temple is very nice.\nPlan for at least 1 hour.",
+          "time": 1770473145,
+          "translated": false
+        },
+        {
+          "author_name": "Gina",
+          "author_url": "https://www.google.com/maps/contrib/101474382678621496199/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjWvZhezFOSJ1Kzqy_9bgLtX9jWezjqtUZZfnppSzEALEfG0rz2W=s128-c0x00000000-cc-rp-mo-ba3",
+          "rating": 5,
+          "relative_time_description": "a month ago",
+          "text": "I had to queue for hours to buy the lucky bracelet I wanted. The temple is beautiful and sacred. I paid respects to all the deities and Buddha images. Entering the temple to pray doesn't require queuing; the only queue was when buying the bracelet.",
+          "time": 1768738654,
+          "translated": false
+        },
+        {
+          "author_name": "Soudamini Mohapatra",
+          "author_url": "https://www.google.com/maps/contrib/104125158935712265893/reviews",
+          "language": "en",
+          "original_language": "en",
+          "profile_photo_url": "https://lh3.googleusercontent.com/a-/ALV-UjXAANRYZRnZ5PD_fC0WnX09PzhdfeFkiogVJSvJYxOHGIJVblw79A=s128-c0x00000000-cc-rp-mo-ba8",
+          "rating": 5,
+          "relative_time_description": "4 months ago",
+          "text": "Longhua Temple with Longhua Pagoda is the largest and oldest temple in Shanghai. The temple was built in the 3rd century, which was damaged and renovated over the centuries. The temple has a history of 1700 years and various dynasties have added their own style of architectural structure in the temple complex.\n\nIt has many as other Buddhist temples in the complex, such as Maitreya Hall, Mahavir Hall, Devaraja Hall, the Bell tower and Drum tower etc. The Bell Tower has a large bronze Bell of 2 meter in height.\nThe seven-storied Longhua Pagoda is located in front of the Longhua temple. It's a distinctive feature of the temple complex.\n\nThe temple complex is  huge, require half a day to visit it properly. There is a large collection of Bonsai plants in the complex.\nVisiting this temple was a very fulfilling experience for me. In my opinion this is the best temple in Shanghai,  not to be missed",
+          "time": 1760407669,
+          "translated": false
+        }
+      ],
+      "fetched_at": "2026-03-10T00:11:14.825558+00:00"
     }
   }
 }

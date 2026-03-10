@@ -8,6 +8,7 @@ import os
 import re
 import threading
 import time
+from difflib import SequenceMatcher
 from pathlib import Path
 from typing import Any, Optional
 from urllib.parse import urlparse
@@ -30,6 +31,7 @@ class AttractionCandidate(BaseModel):
 	city: str = Field(..., description="City where attraction is located")
 	category: str = Field(..., description="Category like Museum, Landmark, Theme Park")
 	short_summary: str = Field(..., description="One concise summary sentence")
+	vibes: list[str] = Field(default_factory=list, description="Mood/style tags like romantic, adventurous, historical")
 	popularity_keywords: list[str] = Field(default_factory=list)
 	estimated_price_level: str = Field(default="Unknown")
 	why_popular: str = Field(default="")
@@ -48,6 +50,10 @@ class UselessAttractionDecision(BaseModel):
 
 class SummaryRewrite(BaseModel):
 	summary: str
+
+
+class VibeRewrite(BaseModel):
+	vibes: list[str] = Field(default_factory=list)
 
 
 NEXT_CANONICAL_ID: Optional[int] = None
@@ -110,6 +116,217 @@ def normalize_name(name: str) -> str:
 	cleaned = re.sub(r"[^a-z0-9]+", " ", (name or "").lower()).strip()
 	cleaned = re.sub(r"^(the|a|an)\s+", "", cleaned)
 	return cleaned
+
+
+def build_attraction_vibes(candidate: AttractionCandidate) -> list[str]:
+	vibes_raw = list(candidate.vibes or []) + list(candidate.popularity_keywords or [])
+	seen: set[str] = set()
+	vibes: list[str] = []
+	for vibe in vibes_raw:
+		cleaned = re.sub(r"\s+", " ", str(vibe or "").strip().lower())
+		if not cleaned or cleaned in seen:
+			continue
+		seen.add(cleaned)
+		vibes.append(cleaned)
+		if len(vibes) >= 10:
+			break
+	return vibes
+
+
+def ensure_place_type(supabase: Client, place: dict[str, Any], dry_run: bool) -> list[str]:
+	place_id = place.get("place_id")
+	current = place.get("place_type")
+	if isinstance(current, list) and any(str(v).strip() for v in current):
+		return [str(v).strip().lower() for v in current if str(v).strip()]
+
+	default_type = ["city"]
+	place["place_type"] = default_type
+	if dry_run or not place_id:
+		return default_type
+
+	try:
+		supabase.table("place").update({"place_type": default_type}).eq("place_id", place_id).execute()
+	except Exception:
+		pass
+	return default_type
+
+
+def normalize_for_duplicate_match(name: str) -> str:
+	text = normalize_name(name)
+	text = re.sub(r"\bin\s+[a-z0-9\s\-']+$", "", text).strip()
+	text = re.sub(r"\b(city|town|village|district|area)\b", "", text).strip()
+	text = re.sub(r"\s+", " ", text).strip()
+	return text
+
+
+def token_set(name: str) -> set[str]:
+	return {t for t in normalize_for_duplicate_match(name).split() if len(t) > 2}
+
+
+def names_are_probable_duplicates(name_a: str, name_b: str) -> bool:
+	a = normalize_for_duplicate_match(name_a)
+	b = normalize_for_duplicate_match(name_b)
+	if not a or not b:
+		return False
+	if a == b:
+		return True
+
+	if len(a) >= 8 and len(b) >= 8 and (a in b or b in a):
+		return True
+
+	ratio = SequenceMatcher(None, a, b).ratio()
+	if ratio >= 0.92:
+		return True
+
+	ta = token_set(a)
+	tb = token_set(b)
+	if ta and tb:
+		inter = len(ta & tb)
+		union = len(ta | tb)
+		if union > 0 and (inter / union) >= 0.80:
+			return True
+
+	return False
+
+
+def pick_duplicate_keeper(rows: list[dict[str, Any]], image_counts: dict[int, int]) -> dict[str, Any]:
+	def score(row: dict[str, Any]) -> tuple[int, float, int, int]:
+		attraction_id = int(row.get("attraction_id"))
+		images = int(image_counts.get(attraction_id, 0))
+		reviews = to_int_or_none(row.get("attraction_totalcountratings")) or 0
+		pop = to_int_or_none(row.get("attraction_popularityscore")) or 0
+		summary_len = len(str(row.get("attraction_summary") or "").strip())
+		return (images, reviews, pop, summary_len)
+
+	return sorted(rows, key=score, reverse=True)[0]
+
+
+def merge_duplicate_rows(supabase: Client, keeper_id: int, loser_id: int, dry_run: bool) -> bool:
+	if dry_run:
+		return True
+
+	try:
+		keeper_imgs = (
+			supabase.table("images")
+			.select("image_url")
+			.eq("attraction_id", keeper_id)
+			.execute()
+		).data or []
+		keeper_urls = {str(r.get("image_url")) for r in keeper_imgs if r.get("image_url")}
+
+		loser_imgs = (
+			supabase.table("images")
+			.select("image_url")
+			.eq("attraction_id", loser_id)
+			.execute()
+		).data or []
+		for row in loser_imgs:
+			url = row.get("image_url")
+			if url and str(url) not in keeper_urls:
+				supabase.table("images").insert({"attraction_id": keeper_id, "image_url": url}).execute()
+				keeper_urls.add(str(url))
+
+		supabase.table("images").delete().eq("attraction_id", loser_id).execute()
+	except Exception:
+		pass
+
+	try:
+		loser_sources = (
+			supabase.table("attraction_sources")
+			.select("source_id")
+			.eq("attraction_id", loser_id)
+			.execute()
+		).data or []
+		for row in loser_sources:
+			source_id = row.get("source_id")
+			if source_id is not None:
+				supabase.table("attraction_sources").upsert(
+					{"attraction_id": keeper_id, "source_id": source_id},
+					on_conflict="attraction_id,source_id",
+				).execute()
+		supabase.table("attraction_sources").delete().eq("attraction_id", loser_id).execute()
+	except Exception:
+		pass
+
+	try:
+		loser_categories = (
+			supabase.table("attraction_categories")
+			.select("category_id")
+			.eq("attraction_id", loser_id)
+			.execute()
+		).data or []
+		for row in loser_categories:
+			category_id = row.get("category_id")
+			if category_id is not None:
+				supabase.table("attraction_categories").upsert(
+					{"attraction_id": keeper_id, "category_id": category_id},
+					on_conflict="attraction_id,category_id",
+				).execute()
+		supabase.table("attraction_categories").delete().eq("attraction_id", loser_id).execute()
+	except Exception:
+		pass
+
+	try:
+		supabase.table("attraction").delete().eq("attraction_id", loser_id).execute()
+		return True
+	except Exception:
+		return False
+
+
+def dedupe_existing_attractions(supabase: Client, place: dict[str, Any], rows: list[dict[str, Any]], dry_run: bool) -> int:
+	if not rows:
+		return 0
+
+	ids = [int(r.get("attraction_id")) for r in rows if r.get("attraction_id") is not None]
+	image_counts: dict[int, int] = {}
+	if ids:
+		try:
+			img_rows = supabase.table("images").select("attraction_id").in_("attraction_id", ids).execute().data or []
+			for row in img_rows:
+				attraction_id = row.get("attraction_id")
+				if attraction_id is not None:
+					key = int(attraction_id)
+					image_counts[key] = image_counts.get(key, 0) + 1
+		except Exception:
+			pass
+
+	merged = 0
+	consumed: set[int] = set()
+	for i in range(len(rows)):
+		base = rows[i]
+		base_id = int(base.get("attraction_id")) if base.get("attraction_id") is not None else None
+		if base_id is None or base_id in consumed:
+			continue
+
+		cluster = [base]
+		for j in range(i + 1, len(rows)):
+			other = rows[j]
+			other_id = int(other.get("attraction_id")) if other.get("attraction_id") is not None else None
+			if other_id is None or other_id in consumed:
+				continue
+			if names_are_probable_duplicates(base.get("attraction_name") or "", other.get("attraction_name") or ""):
+				cluster.append(other)
+
+		if len(cluster) <= 1:
+			continue
+
+		keeper = pick_duplicate_keeper(cluster, image_counts)
+		keeper_id = int(keeper.get("attraction_id"))
+		for row in cluster:
+			row_id = int(row.get("attraction_id"))
+			if row_id == keeper_id:
+				continue
+			ok = merge_duplicate_rows(supabase, keeper_id, row_id, dry_run=dry_run)
+			if ok:
+				merged += 1
+				consumed.add(row_id)
+				mode = "[DRY] Would merge" if dry_run else "Merged"
+				print(
+					f"   🔁 {mode} duplicate attraction: '{row.get('attraction_name')}' (id={row_id}) "
+					f"into '{keeper.get('attraction_name')}' (id={keeper_id})"
+				)
+
+	return merged
 
 
 def get_clients() -> tuple[Client, OpenAI, Any]:
@@ -320,6 +537,40 @@ def infer_popularity(review_count: Optional[int], keywords: list[str], rank: int
 	return max(1, min(100, score))
 
 
+def to_int_or_none(value: Any) -> Optional[int]:
+	if value is None:
+		return None
+	if isinstance(value, bool):
+		return int(value)
+	if isinstance(value, int):
+		return value
+	if isinstance(value, float):
+		return int(value)
+	text = str(value).strip().replace(",", "")
+	if not text:
+		return None
+	try:
+		return int(float(text))
+	except Exception:
+		return None
+
+
+def to_float_or_none(value: Any) -> Optional[float]:
+	if value is None:
+		return None
+	if isinstance(value, bool):
+		return float(int(value))
+	if isinstance(value, (int, float)):
+		return float(value)
+	text = str(value).strip().replace(",", "")
+	if not text:
+		return None
+	try:
+		return float(text)
+	except Exception:
+		return None
+
+
 def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
 	r1 = math.radians(lat1)
 	r2 = math.radians(lat2)
@@ -481,6 +732,7 @@ Requirements:
 - Focus on truly popular, mainstream attractions for tourists.
 - Include museums, landmarks, neighborhoods, parks, viewpoints, and major experiences.
 - Provide a concise short_summary and why_popular.
+- Provide vibes as short mood/style tags (e.g., romantic, adventurous, historical, family-friendly).
 - Use estimated_price_level from: Free, Cheap, Moderate, Expensive, Luxury, Unknown.
 - popularity_keywords should be short tags.
 """.strip()
@@ -636,6 +888,102 @@ Requirements:
 		return None
 
 
+def normalize_vibe_list(vibes: Any) -> list[str]:
+	if not isinstance(vibes, list):
+		return []
+	seen: set[str] = set()
+	result: list[str] = []
+	for vibe in vibes:
+		cleaned = re.sub(r"\s+", " ", str(vibe or "").strip().lower())
+		if not cleaned or cleaned in seen:
+			continue
+		seen.add(cleaned)
+		result.append(cleaned)
+		if len(result) >= 10:
+			break
+	return result
+
+
+def suggest_vibes_with_openai(
+	client: OpenAI,
+	name: str,
+	city: str,
+	country: str,
+	summary: str,
+	review_summary: str,
+	rawdata: Any,
+	model: str,
+) -> Optional[list[str]]:
+	rawdata_text = json.dumps(rawdata, ensure_ascii=False)[:1800] if rawdata is not None else "null"
+	prompt = f"""
+Generate a broad but useful vibe tag list for this attraction.
+
+Attraction: {name}
+City: {city}
+Country: {country}
+Summary: {summary or '(none)'}
+Review summary: {review_summary or '(none)'}
+Raw data: {rawdata_text}
+
+Requirements:
+- Return 3-8 short vibe tags.
+- Lowercase tags preferred.
+- Focus on traveler intent/mood, e.g. romantic, adventurous, historical, family-friendly, cultural, scenic, nightlife, relaxing.
+- Avoid generic words like attraction/place/good/popular.
+""".strip()
+
+	try:
+		completion = client.beta.chat.completions.parse(
+			model=model,
+			messages=[
+				{"role": "system", "content": "Return only structured vibe tags for travel retrieval."},
+				{"role": "user", "content": prompt},
+			],
+			response_format=VibeRewrite,
+		)
+		parsed = completion.choices[0].message.parsed
+		if not parsed:
+			return None
+		vibes = normalize_vibe_list(parsed.vibes)
+		return vibes if vibes else None
+	except Exception:
+		return None
+
+
+def build_embedding_text_for_existing(
+	name: str,
+	summary: str,
+	review_summary: str,
+	vibes: list[str],
+	city: str,
+	country: str,
+	rawdata: Any,
+) -> str:
+	raw = rawdata if isinstance(rawdata, dict) else {}
+	parts = [
+		f"name: {name}",
+		f"summary: {summary}",
+		f"review_summary: {review_summary}",
+		f"vibes: {', '.join(vibes)}",
+		f"city: {city}",
+		f"country: {country}",
+	]
+	if raw.get("category"):
+		parts.append(f"category: {raw.get('category')}")
+	if raw.get("why_popular"):
+		parts.append(f"why_popular: {raw.get('why_popular')}")
+	if isinstance(raw.get("google_reviews_payload"), dict):
+		gr = raw.get("google_reviews_payload") or {}
+		if gr.get("google_reviews_summary"):
+			parts.append(f"google_reviews: {gr.get('google_reviews_summary')}")
+	if isinstance(raw.get("tripadvisor_payload"), dict):
+		ta = raw.get("tripadvisor_payload") or {}
+		if ta.get("description"):
+			parts.append(f"tripadvisor_description: {ta.get('description')}")
+
+	return " | ".join([p for p in parts if p and str(p).strip()])
+
+
 def remove_attraction_and_children(supabase: Client, attraction_id: int, dry_run: bool) -> bool:
 	if dry_run:
 		return True
@@ -666,7 +1014,8 @@ def maintain_existing_attractions(
 	country = (place.get("place_countryregion") or "").strip()
 
 	removed = 0
-	updated = 0
+	summaries_updated = 0
+	vibes_updated = 0
 	inspected = 0
 
 	for row in rows:
@@ -674,6 +1023,8 @@ def maintain_existing_attractions(
 		attraction_id = row.get("attraction_id")
 		name = row.get("attraction_name") or ""
 		summary = row.get("attraction_summary") or ""
+		review_summary = row.get("attraction_reviewssummary") or ""
+		current_vibes = normalize_vibe_list(row.get("attraction_vibe"))
 		rawdata = row.get("attraction_rawdata")
 
 		if not attraction_id or not name:
@@ -701,6 +1052,9 @@ def maintain_existing_attractions(
 				if dry_run:
 					print(f"   [DRY] Kept borderline attraction: {name} ({reason_hint})")
 
+		update_payload: dict[str, Any] = {}
+		effective_summary = str(summary or "")
+
 		if needs_summary_refresh(summary):
 			new_summary = rewrite_summary_with_openai(
 				client=openai_client,
@@ -711,20 +1065,58 @@ def maintain_existing_attractions(
 				model=openai_model,
 			)
 			if new_summary and new_summary.strip() and new_summary.strip() != str(summary).strip():
-				if dry_run:
-					print(f"   [DRY] Would rewrite summary: {name}")
-					updated += 1
-				else:
-					try:
-						supabase.table("attraction").update(
-							{"attraction_summary": new_summary, "attraction_lastrefreshed": datetime.datetime.now(datetime.timezone.utc).isoformat()}
-						).eq("attraction_id", attraction_id).execute()
-						updated += 1
-						print(f"   ✍️ Rewrote summary: {name} (id={attraction_id})")
-					except Exception as exc:
-						print(f"   ⚠️ Failed summary update for {name}: {exc}")
+				effective_summary = new_summary.strip()
+				update_payload["attraction_summary"] = effective_summary
+				summaries_updated += 1
 
-	return {"removed": removed, "summaries_updated": updated, "inspected": inspected}
+		suggested_vibes = suggest_vibes_with_openai(
+			client=openai_client,
+			name=name,
+			city=city,
+			country=country,
+			summary=effective_summary,
+			review_summary=review_summary,
+			rawdata=rawdata,
+			model=openai_model,
+		)
+		if suggested_vibes:
+			norm_suggested = normalize_vibe_list(suggested_vibes)
+			if norm_suggested and norm_suggested != current_vibes:
+				update_payload["attraction_vibe"] = norm_suggested
+				vibes_updated += 1
+
+		if update_payload:
+			effective_vibes = normalize_vibe_list(update_payload.get("attraction_vibe", current_vibes))
+			embedding_text = build_embedding_text_for_existing(
+				name=name,
+				summary=update_payload.get("attraction_summary", effective_summary),
+				review_summary=review_summary,
+				vibes=effective_vibes,
+				city=city,
+				country=country,
+				rawdata=rawdata,
+			)
+			embedding = generate_embedding(openai_client, embedding_text)
+			if embedding:
+				update_payload["attraction_embedding"] = embedding
+			update_payload["attraction_lastrefreshed"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+
+			if dry_run:
+				if "attraction_summary" in update_payload:
+					print(f"   [DRY] Would rewrite summary: {name}")
+				if "attraction_vibe" in update_payload:
+					print(f"   [DRY] Would refresh vibes: {name} -> {update_payload.get('attraction_vibe')}")
+			else:
+				try:
+					supabase.table("attraction").update(update_payload).eq("attraction_id", attraction_id).execute()
+					if "attraction_summary" in update_payload:
+						print(f"   ✍️ Rewrote summary: {name} (id={attraction_id})")
+					if "attraction_vibe" in update_payload:
+						print(f"   🎭 Refreshed vibes: {name} (id={attraction_id})")
+				except Exception as exc:
+					print(f"   ⚠️ Failed maintenance update for {name}: {exc}")
+
+	return {"removed": removed, "summaries_updated": summaries_updated, "vibes_updated": vibes_updated, "inspected": inspected}
 
 
 def upsert_attraction_row(supabase: Client, payload: dict[str, Any], name: str, place_id: int) -> Optional[dict[str, Any]]:
@@ -768,7 +1160,7 @@ def fetch_places(supabase: Client, limit_places: Optional[int] = None, place_fil
 
 	while True:
 		query = supabase.table("place").select(
-			"place_id,place_city,place_countryregion,place_stateprovince,place_latitude,place_longitude"
+			"place_id,place_city,place_countryregion,place_stateprovince,place_type,place_latitude,place_longitude"
 		)
 		if place_filter:
 			query = query.eq("place_city", place_filter)
@@ -807,20 +1199,60 @@ def process_place(
 	display_country = country or "Unknown"
 
 	if not place_id or not city:
-		return {"added": 0, "images": 0, "skipped": 0, "removed": 0, "summaries_updated": 0, "timed_out": 0}
+		return {
+			"added": 0,
+			"images": 0,
+			"skipped": 0,
+			"removed": 0,
+			"summaries_updated": 0,
+			"vibes_updated": 0,
+			"duplicates_merged": 0,
+			"timed_out": 0,
+		}
 
 	print(f"\n🌍 Processing {city}, {display_country} (place_id={place_id})")
+	place_types = ensure_place_type(supabase, place, dry_run=dry_run)
+	if place_types:
+		print(f"   ✓ place_type: {place_types}")
+
 	distance_updated = backfill_missing_distance_for_place(supabase, place)
 	if distance_updated:
 		print(f"   ✓ Backfilled missing distances: {distance_updated}")
 
 	current_res = (
 		supabase.table("attraction")
-		.select("attraction_id,attraction_name,attraction_summary,attraction_rawdata")
+		.select(
+			"attraction_id,attraction_name,attraction_summary,attraction_rawdata,"
+			"attraction_totalcountratings,attraction_popularityscore,"
+			"attraction_reviewssummary,attraction_vibe"
+		)
 		.eq("place_id", place_id)
 		.execute()
 	)
 	current_rows = current_res.data or []
+	duplicates_merged = dedupe_existing_attractions(
+		supabase=supabase,
+		place=place,
+		rows=current_rows,
+		dry_run=dry_run,
+	)
+	if duplicates_merged:
+		mode = "[DRY] Duplicate merges planned" if dry_run else "Duplicate merges completed"
+		print(f"   ✓ {mode}: {duplicates_merged}")
+
+	# refresh after duplicate merge
+	current_res = (
+		supabase.table("attraction")
+		.select(
+			"attraction_id,attraction_name,attraction_summary,attraction_rawdata,"
+			"attraction_totalcountratings,attraction_popularityscore,"
+			"attraction_reviewssummary,attraction_vibe"
+		)
+		.eq("place_id", place_id)
+		.execute()
+	)
+	current_rows = current_res.data or []
+
 	maintenance_stats = maintain_existing_attractions(
 		supabase=supabase,
 		openai_client=openai_client,
@@ -834,6 +1266,8 @@ def process_place(
 			f"   ✓ Existing cleanup: removed={maintenance_stats['removed']}, "
 			f"summaries_updated={maintenance_stats['summaries_updated']}"
 		)
+	if maintenance_stats.get("vibes_updated", 0):
+		print(f"   ✓ Existing vibes refreshed: {maintenance_stats.get('vibes_updated', 0)}")
 
 	# Refresh current rows after deletions/updates
 	current_res = (
@@ -858,7 +1292,16 @@ def process_place(
 		)
 	except Exception as exc:
 		print(f"   ⚠️ OpenAI generation failed: {exc}")
-		return {"added": 0, "images": 0, "skipped": 0}
+		return {
+			"added": 0,
+			"images": 0,
+			"skipped": 0,
+			"removed": maintenance_stats["removed"],
+			"summaries_updated": maintenance_stats["summaries_updated"],
+				"vibes_updated": maintenance_stats.get("vibes_updated", 0),
+			"duplicates_merged": duplicates_merged,
+			"timed_out": 0,
+		}
 
 	deduped_candidates: list[AttractionCandidate] = []
 	seen = set(existing_norm)
@@ -877,6 +1320,8 @@ def process_place(
 			"skipped": 0,
 			"removed": maintenance_stats["removed"],
 			"summaries_updated": maintenance_stats["summaries_updated"],
+			"vibes_updated": maintenance_stats.get("vibes_updated", 0),
+			"duplicates_merged": duplicates_merged,
 			"timed_out": 0,
 		}
 
@@ -947,6 +1392,9 @@ def process_place(
 				effective_rating = tripadvisor_payload.get("rating")
 			if (not effective_count) and tripadvisor_payload and tripadvisor_payload.get("num_reviews") is not None:
 				effective_count = tripadvisor_payload.get("num_reviews")
+
+			effective_rating = to_float_or_none(effective_rating)
+			effective_count_int = to_int_or_none(effective_count)
 			price_level = details.get("price_level")
 			if price_level is None:
 				price_level = map_price_level(candidate.estimated_price_level)
@@ -965,15 +1413,16 @@ def process_place(
 			normalized_rating = None
 			if effective_rating is not None:
 				try:
-					normalized_rating = (float(effective_rating) / 5.0) * 10.0
+					normalized_rating = (effective_rating / 5.0) * 10.0
 				except Exception:
 					normalized_rating = None
 
 			popularity_score = infer_popularity(
-				review_count=int(effective_count) if isinstance(effective_count, (int, float)) else None,
+				review_count=effective_count_int,
 				keywords=candidate.popularity_keywords,
 				rank=rank,
 			)
+			attraction_vibes = build_attraction_vibes(candidate)
 
 			rawdata = {
 				"source": "openai_backfill",
@@ -989,14 +1438,29 @@ def process_place(
 				"tripadvisor_payload": tripadvisor_payload,
 			}
 
-			embedding_text = (
-				f"{candidate.name}: {candidate.short_summary} "
-				f"Popular for: {candidate.why_popular}. Keywords: {', '.join(candidate.popularity_keywords)}"
-			)
+			embedding_parts = [
+				f"name: {candidate.name}",
+				f"summary: {candidate.short_summary}",
+				f"review_summary: {review_summary}",
+				f"vibes: {', '.join(attraction_vibes)}",
+				f"category: {candidate.category}",
+				f"why_popular: {candidate.why_popular}",
+				f"keywords: {', '.join(candidate.popularity_keywords)}",
+				f"city: {candidate.city or city}",
+				f"country: {country or ''}",
+				f"place_types: {', '.join(place_types)}",
+			]
 			if google_reviews_payload and google_reviews_payload.get("google_reviews_summary"):
-				embedding_text += f" GoogleReviews: {google_reviews_payload.get('google_reviews_summary')}"
+				embedding_parts.append(f"google_reviews: {google_reviews_payload.get('google_reviews_summary')}")
 			if tripadvisor_payload and tripadvisor_payload.get("description"):
-				embedding_text += f" TripAdvisor: {tripadvisor_payload.get('description')}"
+				embedding_parts.append(f"tripadvisor_description: {tripadvisor_payload.get('description')}")
+			if effective_rating is not None:
+				embedding_parts.append(f"rating_out_of_5: {effective_rating}")
+			if effective_count_int is not None:
+				embedding_parts.append(f"review_count: {effective_count_int}")
+			if candidate.recommended_visit_minutes is not None:
+				embedding_parts.append(f"recommended_visit_minutes: {candidate.recommended_visit_minutes}")
+			embedding_text = " | ".join([p for p in embedding_parts if p and str(p).strip()])
 			embedding = generate_embedding(openai_client, embedding_text)
 
 			existing_res = (
@@ -1017,7 +1481,7 @@ def process_place(
 				"canonical_id": canonical_id,
 				"attraction_name": candidate.name,
 				"attraction_summary": candidate.short_summary,
-				"attraction_vibe": candidate.popularity_keywords[:5],
+				"attraction_vibe": attraction_vibes,
 				"attraction_rawdata": rawdata,
 				"attraction_embedding": embedding,
 				"attraction_city": candidate.city or city,
@@ -1027,11 +1491,11 @@ def process_place(
 				"attraction_longitude": lon,
 				"attraction_distancefromplace": compute_distance_from_place_km(place, lat, lon),
 				"attraction_lastrefreshed": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-				"attraction_credibilitytier": 3 if (effective_count or 0) >= 1000 else 2,
+				"attraction_credibilitytier": 3 if (effective_count_int or 0) >= 1000 else 2,
 				"attraction_pricelevel": price_level,
 				"attraction_popularityscore": popularity_score,
 				"attraction_normalizedrating": normalized_rating,
-				"attraction_totalcountratings": effective_count or 0,
+				"attraction_totalcountratings": effective_count_int or 0,
 				"attraction_reviewssummary": review_summary,
 			}
 
@@ -1109,6 +1573,8 @@ def process_place(
 		"skipped": skipped,
 		"removed": maintenance_stats["removed"],
 		"summaries_updated": maintenance_stats["summaries_updated"],
+		"vibes_updated": maintenance_stats.get("vibes_updated", 0),
+		"duplicates_merged": duplicates_merged,
 		"timed_out": timed_out,
 	}
 
@@ -1153,6 +1619,8 @@ def main() -> None:
 	total_skipped = 0
 	total_removed = 0
 	total_summaries_updated = 0
+	total_vibes_updated = 0
+	total_duplicates_merged = 0
 	deadline_epoch: Optional[float] = None
 	if args.max_runtime_minutes and args.max_runtime_minutes > 0:
 		deadline_epoch = time.time() + (args.max_runtime_minutes * 60)
@@ -1181,6 +1649,8 @@ def main() -> None:
 		total_skipped += stats["skipped"]
 		total_removed += stats.get("removed", 0)
 		total_summaries_updated += stats.get("summaries_updated", 0)
+		total_vibes_updated += stats.get("vibes_updated", 0)
+		total_duplicates_merged += stats.get("duplicates_merged", 0)
 		if stats.get("timed_out", 0):
 			timed_out_any = 1
 			if deadline_epoch is not None and time.time() >= deadline_epoch:
@@ -1190,8 +1660,10 @@ def main() -> None:
 	print("\n✅ Backfill complete")
 	print(f"   Attractions added/updated: {total_added}")
 	print(f"   Images added: {total_images}")
+	print(f"   Duplicate attractions merged: {total_duplicates_merged}")
 	print(f"   Useless attractions removed: {total_removed}")
 	print(f"   Weak summaries rewritten: {total_summaries_updated}")
+	print(f"   Attraction vibes refreshed: {total_vibes_updated}")
 	print(f"   Skipped/errors: {total_skipped}")
 	if timed_out_any:
 		print("   Stopped early due to runtime limit")

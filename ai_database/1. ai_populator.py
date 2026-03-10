@@ -28,6 +28,7 @@ PHOTO_URL = "https://maps.googleapis.com/maps/api/place/photo"
 class ParsedPlace(BaseModel):
 	city: str
 	country: Optional[str] = None
+	place_type: Optional[str] = Field(default="city", description="One of: city, stateprovince, countryregion")
 
 
 class AttractionCandidate(BaseModel):
@@ -35,6 +36,7 @@ class AttractionCandidate(BaseModel):
 	city: str = Field(..., description="City where attraction is located")
 	category: str = Field(..., description="Category like Museum, Landmark, Theme Park")
 	short_summary: str = Field(..., description="One concise summary sentence")
+	vibes: list[str] = Field(default_factory=list, description="Mood/style tags like romantic, adventurous, historical")
 	popularity_keywords: list[str] = Field(default_factory=list)
 	estimated_price_level: str = Field(default="Unknown")
 	why_popular: str = Field(default="")
@@ -61,6 +63,66 @@ def normalize_name(name: str) -> str:
 	cleaned = re.sub(r"[^a-z0-9]+", " ", (name or "").lower()).strip()
 	cleaned = re.sub(r"^(the|a|an)\s+", "", cleaned)
 	return cleaned
+
+
+def to_int_or_none(value: Any) -> Optional[int]:
+	if value is None:
+		return None
+	if isinstance(value, bool):
+		return None
+	if isinstance(value, int):
+		return value
+	if isinstance(value, float):
+		return int(value)
+	text = str(value).strip().replace(",", "")
+	if not text:
+		return None
+	try:
+		return int(float(text))
+	except Exception:
+		return None
+
+
+def to_float_or_none(value: Any) -> Optional[float]:
+	if value is None:
+		return None
+	if isinstance(value, bool):
+		return None
+	if isinstance(value, (int, float)):
+		return float(value)
+	text = str(value).strip().replace(",", "")
+	if not text:
+		return None
+	try:
+		return float(text)
+	except Exception:
+		return None
+
+
+def normalize_place_type(value: Optional[str]) -> list[str]:
+	text = str(value or "").strip().lower()
+	if text in {"city", "stateprovince", "countryregion"}:
+		return [text]
+	if text in {"state", "province", "region", "state_province"}:
+		return ["stateprovince"]
+	if text in {"country", "nation"}:
+		return ["countryregion"]
+	return ["city"]
+
+
+def build_attraction_vibes(candidate: AttractionCandidate) -> list[str]:
+	vibes_raw = list(candidate.vibes or []) + list(candidate.popularity_keywords or [])
+	seen: set[str] = set()
+	vibes: list[str] = []
+	for vibe in vibes_raw:
+		cleaned = re.sub(r"\s+", " ", str(vibe or "").strip().lower())
+		if not cleaned or cleaned in seen:
+			continue
+		seen.add(cleaned)
+		vibes.append(cleaned)
+		if len(vibes) >= 10:
+			break
+	return vibes
 
 
 def get_clients() -> tuple[Client, OpenAI, Any]:
@@ -389,6 +451,7 @@ def parse_user_place(openai_client: OpenAI, place_input: str, model: str) -> Par
 	prompt = f"""
 Parse this user place input into city + country.
 If country is missing, leave it null.
+Infer place_type as one of: city, stateprovince, countryregion.
 
 User input: {place_input}
 """.strip()
@@ -492,7 +555,7 @@ def parse_place_text_fallback(place_text: str) -> ParsedPlace:
 		raise RuntimeError("Invalid place text")
 	city = parts[0]
 	country = parts[-1] if len(parts) > 1 else None
-	return ParsedPlace(city=city, country=country)
+	return ParsedPlace(city=city, country=country, place_type="city")
 
 
 def load_seed_places(seed_file: Path) -> list[str]:
@@ -532,6 +595,7 @@ def create_place(supabase: Client, city: str, country: Optional[str], google_map
 		"place_city": city,
 		"place_countryregion": place_country,
 		"place_stateprovince": None,
+		"place_type": ["city"],
 		"place_latitude": place_lat,
 		"place_longitude": place_lon,
 	}
@@ -628,6 +692,9 @@ def populate_new_place(
 			if (not effective_count) and tripadvisor_payload and tripadvisor_payload.get("num_reviews") is not None:
 				effective_count = tripadvisor_payload.get("num_reviews")
 
+			effective_rating = to_float_or_none(effective_rating)
+			effective_count_int = to_int_or_none(effective_count)
+
 			price_level = details.get("price_level")
 			if price_level is None:
 				price_level = map_price_level(candidate.estimated_price_level)
@@ -646,15 +713,17 @@ def populate_new_place(
 			normalized_rating = None
 			if effective_rating is not None:
 				try:
-					normalized_rating = (float(effective_rating) / 5.0) * 10.0
+					normalized_rating = (effective_rating / 5.0) * 10.0
 				except Exception:
 					normalized_rating = None
 
 			popularity_score = infer_popularity(
-				review_count=int(effective_count) if isinstance(effective_count, (int, float)) else None,
+				review_count=effective_count_int,
 				keywords=candidate.popularity_keywords,
 				rank=rank,
 			)
+
+			attraction_vibes = build_attraction_vibes(candidate)
 
 			rawdata = {
 				"source": "ai_populator",
@@ -670,14 +739,28 @@ def populate_new_place(
 				"tripadvisor_payload": tripadvisor_payload,
 			}
 
-			embedding_text = (
-				f"{candidate.name}: {candidate.short_summary} "
-				f"Popular for: {candidate.why_popular}. Keywords: {', '.join(candidate.popularity_keywords)}"
-			)
+			embedding_parts = [
+				f"name: {candidate.name}",
+				f"summary: {candidate.short_summary}",
+				f"review_summary: {review_summary}",
+				f"vibes: {', '.join(attraction_vibes)}",
+				f"category: {candidate.category}",
+				f"why_popular: {candidate.why_popular}",
+				f"keywords: {', '.join(candidate.popularity_keywords)}",
+				f"city: {candidate.city or city}",
+				f"country: {country or ''}",
+			]
 			if google_reviews_payload and google_reviews_payload.get("google_reviews_summary"):
-				embedding_text += f" GoogleReviews: {google_reviews_payload.get('google_reviews_summary')}"
+				embedding_parts.append(f"google_reviews: {google_reviews_payload.get('google_reviews_summary')}")
 			if tripadvisor_payload and tripadvisor_payload.get("description"):
-				embedding_text += f" TripAdvisor: {tripadvisor_payload.get('description')}"
+				embedding_parts.append(f"tripadvisor_description: {tripadvisor_payload.get('description')}")
+			if effective_rating is not None:
+				embedding_parts.append(f"rating_out_of_5: {effective_rating}")
+			if effective_count_int is not None:
+				embedding_parts.append(f"review_count: {effective_count_int}")
+			if candidate.recommended_visit_minutes is not None:
+				embedding_parts.append(f"recommended_visit_minutes: {candidate.recommended_visit_minutes}")
+			embedding_text = " | ".join([p for p in embedding_parts if p and str(p).strip()])
 			embedding = generate_embedding(openai_client, embedding_text)
 
 			canonical_id = get_next_canonical_id(supabase)
@@ -686,7 +769,7 @@ def populate_new_place(
 				"canonical_id": canonical_id,
 				"attraction_name": candidate.name,
 				"attraction_summary": candidate.short_summary,
-				"attraction_vibe": candidate.popularity_keywords[:5],
+				"attraction_vibe": attraction_vibes,
 				"attraction_rawdata": rawdata,
 				"attraction_embedding": embedding,
 				"attraction_city": candidate.city or city,
@@ -696,11 +779,11 @@ def populate_new_place(
 				"attraction_longitude": lon,
 				"attraction_distancefromplace": compute_distance_from_place_km(place_row, lat, lon),
 				"attraction_lastrefreshed": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-				"attraction_credibilitytier": 3 if (effective_count or 0) >= 1000 else 2,
+				"attraction_credibilitytier": 3 if (effective_count_int or 0) >= 1000 else 2,
 				"attraction_pricelevel": price_level,
 				"attraction_popularityscore": popularity_score,
 				"attraction_normalizedrating": normalized_rating,
-				"attraction_totalcountratings": effective_count or 0,
+				"attraction_totalcountratings": effective_count_int or 0,
 				"attraction_reviewssummary": review_summary,
 			}
 
@@ -773,6 +856,7 @@ def process_one_place_input(
 
 	city = parsed_place.city.strip()
 	country = parsed_place.country.strip() if parsed_place.country else None
+	place_type = normalize_place_type(parsed_place.place_type)
 	if not city:
 		return {"status": "invalid", "city": "", "added": 0, "images": 0, "skipped": 1}
 
@@ -783,6 +867,12 @@ def process_one_place_input(
 
 	print(f"Creating new place: {city}{', ' + country if country else ''}")
 	place_row = create_place(supabase, city, country, google_maps_key, dry_run)
+	place_row["place_type"] = place_type
+	if not dry_run:
+		try:
+			supabase.table("place").update({"place_type": place_type}).eq("place_id", place_row.get("place_id")).execute()
+		except Exception:
+			pass
 
 	stats = populate_new_place(
 		supabase=supabase,
