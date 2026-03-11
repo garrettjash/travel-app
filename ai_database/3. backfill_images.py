@@ -472,6 +472,9 @@ def backfill_images(
 	print(f"   Skipped (already had image): {skipped_existing}")
 	print(f"   Skipped (no image found): {skipped_not_found}")
 	print(f"   Errors: {errors}")
+	final_existing_image_ids = find_existing_image_ids(supabase, attr_ids)
+	final_missing_count = len(attractions) - len(final_existing_image_ids)
+	print(f"   FINAL COUNT (still needs image): {final_missing_count}")
 
 
 def main() -> None:
