@@ -53,7 +53,12 @@ export default function PlanningOptionsPage() {
         >
           TravelApp
         </button>
-        <AuthButton />
+        <div className="destinations-topbar-actions">
+          <AuthButton />
+          <button type="button" className="destinations-login" onClick={() => router.push("/old-version")}>
+            Old Version
+          </button>
+        </div>
       </header>
 
       <section className="planning-options-shell" style={{ backgroundImage: `url(${heroImage})` }}>

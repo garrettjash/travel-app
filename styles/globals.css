@@ -910,6 +910,12 @@ body {
   z-index: 5;
 }
 
+.destinations-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .destinations-brand {
   font-size: 1.55rem;
   font-weight: 700;

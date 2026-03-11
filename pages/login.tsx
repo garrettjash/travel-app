@@ -51,7 +51,13 @@ export default function LoginPage() {
         <button
           type="button"
           className="destinations-login"
-          onClick={() => router.push("/home")}
+          onClick={() => {
+            if (typeof window !== "undefined" && window.history.length > 1) {
+              router.back();
+              return;
+            }
+            router.push("/");
+          }}
         >
           Back to app
         </button>
