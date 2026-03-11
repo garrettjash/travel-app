@@ -1,6 +1,6 @@
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
-import AuthButton from "./AuthButton";
+import AppShell from "./AppShell";
 import AttractionDetailsModal from "./AttractionDetailsModal";
 import { useAuth } from "../lib/auth-context";
 import { FavoriteAttraction, useFavorites } from "../lib/favorites-context";
@@ -1074,49 +1074,5 @@ export default function SavedTripBuilder({
     return <>{body}</>;
   }
 
-  return (
-    <main className="destinations-page">
-      <header className="destinations-topbar">
-        <button
-          type="button"
-          className="destinations-brand destinations-brand-button"
-          onClick={() => router.push("/")}
-        >
-          TravelApp
-        </button>
-        <AuthButton />
-      </header>
-
-      <section className="destinations-layout">
-        <nav className="destinations-sidebar" aria-label="Main navigation">
-          <button type="button" className="destinations-tab" onClick={() => router.push("/home")}>
-            <span aria-hidden="true">🗺️</span>
-            <span>Destinations</span>
-          </button>
-          <button type="button" className="destinations-tab destinations-tab-active">
-            <span aria-hidden="true">💾</span>
-            <span>Itinerary</span>
-          </button>
-          <button type="button" className="destinations-tab" onClick={() => router.push("/favorites")}>
-            <span aria-hidden="true">❤</span>
-            <span>Favorites</span>
-          </button>
-          <button type="button" className="destinations-tab" onClick={() => router.push("/collaborate")}>
-            <span aria-hidden="true">👥</span>
-            <span>Collaborate</span>
-          </button>
-          <button type="button" className="destinations-tab" onClick={() => router.push("/ai-chatbot")}>
-            <span aria-hidden="true">✨</span>
-            <span>AI Chatbot</span>
-          </button>
-          <button type="button" className="destinations-tab" onClick={() => router.push("/about")}>
-            <span aria-hidden="true">ℹ️</span>
-            <span>About</span>
-          </button>
-        </nav>
-
-        <div className="destinations-content">{body}</div>
-      </section>
-    </main>
-  );
+  return <AppShell activeTab="itinerary">{body}</AppShell>;
 }

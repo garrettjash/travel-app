@@ -1,6 +1,7 @@
 import { FormEvent, ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import AuthButton from "../components/AuthButton";
+import AppSidebar from "../components/AppSidebar";
 import { useAuth } from "../lib/auth-context";
 
 type FilterOptionsResponse = {
@@ -113,6 +114,7 @@ function renderFormattedMessage(content: string): ReactNode {
 export default function CollabPlannerPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const placeQuery = router.query.place;
   const chatQuery = router.query.chat;
   const initialPlace = sanitizePlainText(Array.isArray(placeQuery) ? placeQuery[0] ?? "" : placeQuery ?? "");
@@ -373,6 +375,16 @@ export default function CollabPlannerPage() {
     setDraft(`Help me plan a group trip to ${initialPlace}. What are the best things to do?`);
   }, [initialPlace, sessionId]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setIsSidebarCollapsed(window.localStorage.getItem("travelapp-sidebar-collapsed") === "true");
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("travelapp-sidebar-collapsed", String(isSidebarCollapsed));
+  }, [isSidebarCollapsed]);
+
   const handleChatSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const content = draft.trim();
@@ -418,7 +430,7 @@ export default function CollabPlannerPage() {
     <main
       className={`collab-planner-page ${isChatOpen ? "collab-planner-page-chat-open" : ""} ${
         isCollaborateCollapsed ? "collab-planner-page-main-collapsed" : ""
-      }`}
+      } ${isSidebarCollapsed ? "collab-planner-page-sidebar-collapsed" : ""}`}
     >
       <header className="collab-planner-topbar">
         <button type="button" className="solo-back-button" onClick={() => router.push("/planning-options")}>
@@ -426,6 +438,12 @@ export default function CollabPlannerPage() {
         </button>
         <AuthButton />
       </header>
+
+      <AppSidebar
+        activeTab="collab-planner"
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={() => setIsSidebarCollapsed((collapsed) => !collapsed)}
+      />
 
       <section className="collab-planner-main">
         <div className="collab-planner-content planner-pane-surface">

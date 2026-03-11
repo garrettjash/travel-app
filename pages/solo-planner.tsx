@@ -1,6 +1,7 @@
 import { FormEvent, ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import AuthButton from "../components/AuthButton";
+import AppSidebar from "../components/AppSidebar";
 import SavedTripBuilder from "../components/SavedTripBuilder";
 import { FavoriteAttraction } from "../lib/favorites-context";
 import { useAuth } from "../lib/auth-context";
@@ -67,6 +68,7 @@ function formatLocation(city: string, stateProvince: string, country: string) {
 export default function SoloPlannerPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const placeQuery = router.query.place;
   const initialPlace = Array.isArray(placeQuery) ? placeQuery[0] : placeQuery;
 
@@ -154,6 +156,16 @@ export default function SoloPlannerPage() {
     setDraft(`Show me the best things to do in ${initialPlace}`);
   }, [initialPlace, sessionId]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setIsSidebarCollapsed(window.localStorage.getItem("travelapp-sidebar-collapsed") === "true");
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("travelapp-sidebar-collapsed", String(isSidebarCollapsed));
+  }, [isSidebarCollapsed]);
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const content = draft.trim();
@@ -199,7 +211,7 @@ export default function SoloPlannerPage() {
     <main
       className={`solo-planner-page ${panelOpen ? "solo-planner-page-panel-open" : ""} ${
         isChatCollapsed ? "solo-planner-page-chat-collapsed" : ""
-      }`}
+      } ${isSidebarCollapsed ? "solo-planner-page-sidebar-collapsed" : ""}`}
     >
       <header className="solo-planner-topbar">
         <button type="button" className="solo-back-button" onClick={() => router.push("/planning-options")}>
@@ -207,6 +219,12 @@ export default function SoloPlannerPage() {
         </button>
         <AuthButton />
       </header>
+
+      <AppSidebar
+        activeTab="solo-planner"
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={() => setIsSidebarCollapsed((collapsed) => !collapsed)}
+      />
 
       <section className="solo-chat-area">
         <section className="chat-shell solo-chat-shell planner-pane-surface">

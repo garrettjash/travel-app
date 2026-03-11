@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { useRouter } from "next/router";
 import AttractionDetailsModal from "../components/AttractionDetailsModal";
-import AuthButton from "../components/AuthButton";
+import AppShell from "../components/AppShell";
 import { useFavorites } from "../lib/favorites-context";
 
 function formatLocation(city: string, stateProvince: string, country: string) {
@@ -17,53 +16,12 @@ function formatCommaList(value: string) {
 }
 
 export default function FavoritesPage() {
-  const router = useRouter();
   const { favorites, toggleFavorite, isFavorite } = useFavorites();
   const [imageIndexByAttraction, setImageIndexByAttraction] = useState<Record<number, number>>({});
   const [selectedAttraction, setSelectedAttraction] = useState<(typeof favorites)[number] | null>(null);
 
   return (
-    <main className="destinations-page">
-      <header className="destinations-topbar">
-        <button
-          type="button"
-          className="destinations-brand destinations-brand-button"
-          onClick={() => router.push("/")}
-        >
-          TravelApp
-        </button>
-        <AuthButton />
-      </header>
-
-      <section className="destinations-layout">
-        <nav className="destinations-sidebar" aria-label="Main navigation">
-          <button type="button" className="destinations-tab" onClick={() => router.push("/home")}>
-            <span aria-hidden="true">🗺️</span>
-            <span>Destinations</span>
-          </button>
-          <button type="button" className="destinations-tab" onClick={() => router.push("/saved-trips")}>
-            <span aria-hidden="true">💾</span>
-            <span>Itinerary</span>
-          </button>
-          <button type="button" className="destinations-tab destinations-tab-active">
-            <span aria-hidden="true">❤</span>
-            <span>Favorites</span>
-          </button>
-          <button type="button" className="destinations-tab" onClick={() => router.push("/collaborate")}>
-            <span aria-hidden="true">👥</span>
-            <span>Collaborate</span>
-          </button>
-          <button type="button" className="destinations-tab" onClick={() => router.push("/ai-chatbot")}>
-            <span aria-hidden="true">✨</span>
-            <span>AI Chatbot</span>
-          </button>
-          <button type="button" className="destinations-tab" onClick={() => router.push("/about")}>
-            <span aria-hidden="true">ℹ️</span>
-            <span>About</span>
-          </button>
-        </nav>
-
-        <div className="destinations-content">
+    <AppShell activeTab="favorites">
           <header className="attractions-header">
             <h1>Your Favorites</h1>
             <p>Saved for this session only. Refreshing the page clears favorites.</p>
@@ -163,14 +121,13 @@ export default function FavoritesPage() {
               </div>
             </section>
           )}
-        </div>
-      </section>
+
       <AttractionDetailsModal
         attraction={selectedAttraction}
         isFavorited={selectedAttraction ? isFavorite(selectedAttraction.id) : false}
         onToggleFavorite={toggleFavorite}
         onClose={() => setSelectedAttraction(null)}
       />
-    </main>
+    </AppShell>
   );
 }
