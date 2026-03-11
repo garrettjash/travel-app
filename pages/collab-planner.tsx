@@ -424,27 +424,46 @@ export default function CollabPlannerPage() {
         <button type="button" className="solo-back-button" onClick={() => router.push("/planning-options")}>
           ← Back
         </button>
-        <button
-          type="button"
-          className="collab-chat-toggle"
-          onClick={() =>
-            setIsChatOpen((open) => {
-              const next = !open;
-              if (!next) setIsCollaborateCollapsed(false);
-              return next;
-            })
-          }
-          aria-expanded={isChatOpen}
-        >
-          {isChatOpen ? "Hide AI Chatbot" : "Expand AI Chatbot"}
-        </button>
         <AuthButton />
       </header>
 
       <section className="collab-planner-main">
-        <div className="collab-planner-content">
+        <div className="collab-planner-content planner-pane-surface">
+          <div className="planner-pane-header collab-planner-pane-header">
+            <div>
+              <h1>Collaborate</h1>
+              <p>Create or join a collaborate session.</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="planner-pane-side-toggle planner-pane-side-toggle-right"
+            onClick={() => {
+              if (isChatOpen) {
+                setIsCollaborateCollapsed((collapsed) => !collapsed);
+                return;
+              }
+              setIsChatOpen(true);
+            }}
+            aria-label={
+              isChatOpen
+                ? isCollaborateCollapsed
+                  ? "Expand collaborate panel"
+                  : "Collapse collaborate panel"
+                : "Open AI chatbot panel"
+            }
+            title={
+              isChatOpen
+                ? isCollaborateCollapsed
+                  ? "Expand collaborate panel"
+                  : "Collapse collaborate panel"
+                : "Open chat"
+            }
+          >
+            <span aria-hidden="true">{isChatOpen ? (isCollaborateCollapsed ? "→" : "←") : "←"}</span>
+          </button>
           <section className="about-card">
-            <h1>Collaborate</h1>
+            <h2>Start a session</h2>
             <p>Create or join a collaborate session.</p>
           </section>
 
@@ -550,25 +569,22 @@ export default function CollabPlannerPage() {
       </section>
 
       <aside className={`collab-chat-panel ${isChatOpen ? "collab-chat-panel-open" : ""}`}>
-        <div className="collab-chat-panel-header">
-          {isChatOpen && (
-            <button
-              type="button"
-              className="solo-itinerary-collapse"
-              onClick={() => setIsCollaborateCollapsed((collapsed) => !collapsed)}
-            >
-              {isCollaborateCollapsed ? "Show Collaborate" : "Collapse Collaborate"}
-            </button>
-          )}
-          <button type="button" className="solo-itinerary-collapse" onClick={() => setIsChatOpen(false)}>
-            Collapse
-          </button>
-        </div>
-        <section className="chat-shell collab-chat-shell">
-          <header className="chat-header">
-            <h1>AI Travel Chatbot</h1>
-            <p>{initialPlace ? `Group planning for ${initialPlace}.` : "Use AI while you set up your group session."}</p>
+        <section className="chat-shell collab-chat-shell planner-pane-surface">
+          <header className="chat-header planner-pane-header">
+            <div>
+              <h1>AI Travel Chatbot</h1>
+              <p>{initialPlace ? `Group planning for ${initialPlace}.` : "Use AI while you set up your group session."}</p>
+            </div>
           </header>
+          <button
+            type="button"
+            className="planner-pane-side-toggle planner-pane-side-toggle-left"
+            onClick={() => setIsChatOpen(false)}
+            aria-label="Collapse chatbot panel"
+            title="Collapse chatbot"
+          >
+            <span aria-hidden="true">→</span>
+          </button>
 
           <div className="chat-messages" role="log" aria-live="polite">
             {messages.length === 0 && <p className="chat-state">No messages yet.</p>}
