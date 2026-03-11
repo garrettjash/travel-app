@@ -24,14 +24,14 @@ export default function LoginPage() {
           setError(err.message);
           return;
         }
-        router.push("/home");
+        router.push("/");
       } else {
         const { error: err } = await signUp(email, password, firstName, lastName);
         if (err) {
           setError(err.message);
           return;
         }
-        router.push("/home");
+        router.push("/");
       }
     } finally {
       setLoading(false);
