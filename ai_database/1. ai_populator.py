@@ -10,7 +10,7 @@ import threading
 import time
 from pathlib import Path
 from typing import Any, Optional
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse
 
 import boto3
 import requests
@@ -23,6 +23,10 @@ from supabase import Client, create_client
 TEXT_SEARCH_URL = "https://maps.googleapis.com/maps/api/place/textsearch/json"
 DETAILS_URL = "https://maps.googleapis.com/maps/api/place/details/json"
 PHOTO_URL = "https://maps.googleapis.com/maps/api/place/photo"
+WIKIPEDIA_SEARCH_URL = "https://en.wikipedia.org/w/api.php"
+WIKIPEDIA_SUMMARY_URL = "https://en.wikipedia.org/api/rest_v1/page/summary/{title}"
+WIKIMEDIA_COMMONS_SEARCH_URL = "https://commons.wikimedia.org/w/api.php"
+REQUEST_HEADERS = {"User-Agent": "travel-app-ai-populator/1.0"}
 
 
 class ParsedPlace(BaseModel):
@@ -410,6 +414,218 @@ def _google_photo_download(photo_reference: str, api_key: str, max_width: int = 
 	if not content_type.startswith("image/"):
 		return None, None
 	return response.content, content_type
+
+
+def normalize_alias_name(name: str) -> list[str]:
+	base = str(name or "").strip()
+	if not base:
+		return []
+	variants = [base]
+	no_parens = re.sub(r"\s*\([^)]*\)", "", base).strip()
+	if no_parens and no_parens not in variants:
+		variants.append(no_parens)
+	replaced = no_parens.replace("&", " and ")
+	replaced = re.sub(r"\s+", " ", replaced).strip()
+	if replaced and replaced not in variants:
+		variants.append(replaced)
+	alias_map = {
+		r"\bv\s*&\s*a\b": "victoria and alfred",
+		r"\bmocaa\b": "museum of contemporary art africa",
+		r"\bctr\b": "centre",
+	}
+	for pattern, repl in alias_map.items():
+		candidate = re.sub(pattern, repl, replaced, flags=re.IGNORECASE).strip()
+		candidate = re.sub(r"\s+", " ", candidate)
+		if candidate and candidate not in variants:
+			variants.append(candidate)
+	return variants[:6]
+
+
+def build_query_candidates(attraction_name: str, city: Optional[str], country: Optional[str]) -> list[str]:
+	city = (city or "").strip()
+	country = (country or "").strip()
+	names = normalize_alias_name(attraction_name)
+	queries: list[str] = []
+	for name in names:
+		for q in [
+			name,
+			f"{name}, {city}" if city else "",
+			f"{name}, {city}, {country}" if city and country else "",
+			f"{name} ({city})" if city else "",
+		]:
+			clean = re.sub(r"\s+", " ", q).strip(" ,")
+			if clean and clean not in queries:
+				queries.append(clean)
+	return queries[:12]
+
+
+def wiki_search_page_titles(query: str, limit: int = 5) -> list[str]:
+	params = {
+		"action": "query",
+		"list": "search",
+		"srsearch": query,
+		"srlimit": max(1, min(limit, 10)),
+		"format": "json",
+	}
+	try:
+		resp = requests.get(WIKIPEDIA_SEARCH_URL, params=params, timeout=20, headers=REQUEST_HEADERS)
+		if resp.status_code != 200:
+			return []
+		rows = ((resp.json() or {}).get("query") or {}).get("search") or []
+		return [str(r.get("title")).strip() for r in rows if r.get("title")]
+	except Exception:
+		return []
+
+
+def wiki_summary_thumbnail(title: str) -> Optional[str]:
+	if not title:
+		return None
+	url = WIKIPEDIA_SUMMARY_URL.format(title=quote(title.replace(" ", "_")))
+	try:
+		resp = requests.get(url, timeout=20, headers=REQUEST_HEADERS)
+		if resp.status_code != 200:
+			return None
+		body = resp.json() or {}
+		thumb = body.get("originalimage") or body.get("thumbnail") or {}
+		src = thumb.get("source") if isinstance(thumb, dict) else None
+		if isinstance(src, str) and src.startswith("http"):
+			return src
+		return None
+	except Exception:
+		return None
+
+
+def wiki_page_images(title: str) -> tuple[list[str], list[str]]:
+	if not title:
+		return [], []
+	params = {
+		"action": "query",
+		"titles": title,
+		"redirects": 1,
+		"prop": "pageimages|pageprops|links",
+		"piprop": "thumbnail|original",
+		"pithumbsize": 1600,
+		"pllimit": 20,
+		"format": "json",
+	}
+	try:
+		resp = requests.get(WIKIPEDIA_SEARCH_URL, params=params, timeout=20, headers=REQUEST_HEADERS)
+		if resp.status_code != 200:
+			return [], []
+		pages = ((resp.json() or {}).get("query") or {}).get("pages") or {}
+		for page in pages.values():
+			props = page.get("pageprops") or {}
+			if props.get("disambiguation") is not None:
+				links = page.get("links") or []
+				titles = [str(l.get("title")).strip() for l in links if l.get("title")]
+				return [], titles[:10]
+			images: list[str] = []
+			original = page.get("original") or {}
+			thumbnail = page.get("thumbnail") or {}
+			for candidate in [original.get("source"), thumbnail.get("source")]:
+				if isinstance(candidate, str) and candidate.startswith("http") and candidate not in images:
+					images.append(candidate)
+			return images, []
+		return [], []
+	except Exception:
+		return [], []
+
+
+def wikimedia_commons_image(query: str) -> Optional[str]:
+	params = {
+		"action": "query",
+		"generator": "search",
+		"gsrsearch": f"{query} filetype:bitmap",
+		"gsrnamespace": 6,
+		"gsrlimit": 3,
+		"prop": "imageinfo",
+		"iiprop": "url|mime",
+		"format": "json",
+	}
+	try:
+		resp = requests.get(WIKIMEDIA_COMMONS_SEARCH_URL, params=params, timeout=20, headers=REQUEST_HEADERS)
+		if resp.status_code != 200:
+			return None
+		pages = ((resp.json() or {}).get("query") or {}).get("pages") or {}
+		for page in pages.values():
+			infos = page.get("imageinfo") or []
+			if not infos:
+				continue
+			first = infos[0]
+			url = first.get("url")
+			mime = first.get("mime") or ""
+			if isinstance(url, str) and url.startswith("http") and str(mime).startswith("image/"):
+				return url
+		return None
+	except Exception:
+		return None
+
+
+def download_image(url: str, timeout: int = 20) -> tuple[Optional[bytes], Optional[str]]:
+	try:
+		resp = requests.get(url, timeout=timeout, headers=REQUEST_HEADERS, allow_redirects=True)
+		if resp.status_code != 200:
+			return None, None
+		content_type = resp.headers.get("content-type", "")
+		if not content_type.startswith("image/"):
+			return None, None
+		if len(resp.content or b"") < 15_000:
+			return None, None
+		return resp.content, content_type
+	except Exception:
+		return None, None
+
+
+def wikipedia_first_image(attraction_name: str, city: Optional[str], country: Optional[str]) -> tuple[Optional[bytes], Optional[str], Optional[str]]:
+	queries = build_query_candidates(attraction_name, city, country)
+	seen_titles: set[str] = set()
+	for query in queries:
+		for title in wiki_search_page_titles(query, limit=5):
+			norm = title.lower().strip()
+			if not norm or norm in seen_titles:
+				continue
+			seen_titles.add(norm)
+			thumb_url = wiki_summary_thumbnail(title)
+			if thumb_url:
+				img, ctype = download_image(thumb_url)
+				if img and ctype:
+					return img, ctype, "wikipedia_summary"
+			page_images, disambig_titles = wiki_page_images(title)
+			for image_url in page_images:
+				img, ctype = download_image(image_url)
+				if img and ctype:
+					return img, ctype, "wikipedia_pageimages"
+			for dis_title in disambig_titles[:6]:
+				dis_images, _ = wiki_page_images(dis_title)
+				for image_url in dis_images:
+					img, ctype = download_image(image_url)
+					if img and ctype:
+						return img, ctype, "wikipedia_disambiguation"
+	for query in queries:
+		commons_url = wikimedia_commons_image(query)
+		if commons_url:
+			img, ctype = download_image(commons_url)
+			if img and ctype:
+				return img, ctype, "wikimedia_commons"
+	return None, None, None
+
+
+def google_photo_by_query(query: str, api_key: str) -> tuple[Optional[bytes], Optional[str], Optional[str]]:
+	if not api_key:
+		return None, None, None
+	search = _google_text_search(query, api_key)
+	if not search:
+		return None, None, None
+	photos = search.get("photos") or []
+	if not photos:
+		return None, None, None
+	photo_reference = photos[0].get("photo_reference")
+	if not photo_reference:
+		return None, None, None
+	img_bytes, content_type = _google_photo_download(photo_reference, api_key)
+	if not img_bytes or not content_type:
+		return None, None, None
+	return img_bytes, content_type, "google_places_query"
 
 
 def _summarize_google_reviews(reviews: list[dict[str, Any]], max_reviews: int = 3) -> str:
@@ -870,8 +1086,7 @@ def populate_new_place(
 			if place_has_images:
 				continue
 
-			photos = (details.get("photos") if isinstance(details, dict) else None) or ((search or {}).get("photos") if isinstance(search, dict) else None) or []
-			if not photos or not images_bucket or not google_maps_key or not attraction_id:
+			if not images_bucket or not attraction_id:
 				continue
 
 			existing_image = (
@@ -884,11 +1099,27 @@ def populate_new_place(
 			if existing_image.data:
 				continue
 
-			photo_reference = photos[0].get("photo_reference")
-			if not photo_reference:
-				continue
+			img_bytes = None
+			content_type = None
+			image_source = None
 
-			img_bytes, content_type = _google_photo_download(photo_reference, google_maps_key)
+			img_bytes, content_type, image_source = wikipedia_first_image(candidate.name, candidate.city or city, country)
+
+			if (not img_bytes or not content_type) and google_maps_key:
+				photos = (details.get("photos") if isinstance(details, dict) else None) or ((search or {}).get("photos") if isinstance(search, dict) else None) or []
+				if photos:
+					photo_reference = photos[0].get("photo_reference")
+					if photo_reference:
+						img_bytes, content_type = _google_photo_download(photo_reference, google_maps_key)
+						if img_bytes and content_type:
+							image_source = "google_places_cached"
+				if (not img_bytes or not content_type):
+					query_parts = [candidate.name, candidate.city or city]
+					if country:
+						query_parts.append(country)
+					query = ", ".join([p for p in query_parts if p])
+					img_bytes, content_type, image_source = google_photo_by_query(query, google_maps_key)
+
 			if not img_bytes or not content_type:
 				continue
 
@@ -898,6 +1129,8 @@ def populate_new_place(
 			image_url = build_s3_url(images_bucket, aws_region, s3_key)
 			supabase.table("images").insert({"attraction_id": attraction_id, "image_url": image_url}).execute()
 			images_added += 1
+			if image_source:
+				print(f"   🖼️ Image source for {candidate.name}: {image_source}")
 
 		except Exception as exc:
 			skipped += 1

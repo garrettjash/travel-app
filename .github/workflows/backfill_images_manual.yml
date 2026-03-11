@@ -1,36 +1,31 @@
-name: AI Backfill (One-Time Manual)
+name: Backfill Images (Manual)
 
 on:
   workflow_dispatch:
     inputs:
       place:
         type: string
-        description: "Optional exact place_city (e.g. Shanghai). Leave blank for all places."
+        description: "Optional attraction city filter (e.g. Cape Town). Leave blank for all cities."
         required: false
         default: ""
-      limit_places:
+      limit:
         type: string
-        description: "Optional max number of places to process (blank = no limit)."
-        required: false
-        default: ""
-      start_place_id:
-        type: string
-        description: "Optional resume place_id (inclusive), e.g. 750"
-        required: false
-        default: ""
-      max_runtime_minutes:
-        type: string
-        description: "Optional runtime cap in minutes (blank/0 = no cap)."
+        description: "Optional max number of attractions to scan (blank = no limit)."
         required: false
         default: ""
       dry_run:
         type: boolean
-        description: "Preview only; no DB/S3 writes"
+        description: "Preview only; no S3 or DB writes"
+        required: false
+        default: true
+      allow_google_fallback:
+        type: boolean
+        description: "If true, use Google Places Photo only when Wikipedia/Wikimedia fail"
         required: false
         default: false
 
 jobs:
-  ai_backfill:
+  backfill_images:
     environment: production
     runs-on: ubuntu-latest
     timeout-minutes: 360
@@ -47,24 +42,21 @@ jobs:
       - name: Install dependencies
         run: python -m pip install --upgrade pip && pip install -r requirements.txt
 
-      - name: Run ai_backfill (manual one-time)
+      - name: Run backfill_images
         env:
           S3_IMG_BUCKET_NAME: ${{ secrets.S3_IMG_BUCKET_NAME }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
           AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
-          TA_API_KEY: ${{ secrets.TA_API_KEY }}
           GOOGLE_IMAGE_MAX_WIDTH: ${{ vars.GOOGLE_IMAGE_MAX_WIDTH || '800' }}
           PLACE: ${{ github.event.inputs.place }}
-          LIMIT_PLACES: ${{ github.event.inputs.limit_places }}
-          START_PLACE_ID: ${{ github.event.inputs.start_place_id }}
-          MAX_RUNTIME_MINUTES: ${{ github.event.inputs.max_runtime_minutes || vars.BACKFILL_MAX_RUNTIME_MINUTES || '0' }}
+          LIMIT: ${{ github.event.inputs.limit }}
           DRY_RUN: ${{ github.event.inputs.dry_run }}
+          ALLOW_GOOGLE_FALLBACK: ${{ github.event.inputs.allow_google_fallback }}
         run: |
           set -eo pipefail
 
@@ -74,30 +66,26 @@ jobs:
             ARGS+=(--place "${PLACE}")
           fi
 
-          if [ -n "${LIMIT_PLACES}" ]; then
-            ARGS+=(--limit-places "${LIMIT_PLACES}")
-          fi
-
-          if [ -n "${START_PLACE_ID}" ]; then
-            ARGS+=(--start-place-id "${START_PLACE_ID}")
-          fi
-
-          if [ -n "${MAX_RUNTIME_MINUTES}" ] && [ "${MAX_RUNTIME_MINUTES}" != "0" ]; then
-            ARGS+=(--max-runtime-minutes "${MAX_RUNTIME_MINUTES}")
+          if [ -n "${LIMIT}" ]; then
+            ARGS+=(--limit "${LIMIT}")
           fi
 
           if [ "${DRY_RUN}" = "true" ]; then
             ARGS+=(--dry-run)
           fi
 
+          if [ "${ALLOW_GOOGLE_FALLBACK}" = "true" ]; then
+            ARGS+=(--allow-google-fallback)
+          fi
+
           echo "GOOGLE_IMAGE_MAX_WIDTH=${GOOGLE_IMAGE_MAX_WIDTH}"
-          echo "Running: python -u ai_database/2. ai_backfill.py ${ARGS[*]}"
-          python -u "ai_database/2. ai_backfill.py" "${ARGS[@]}" | tee ai_backfill.log
+          echo "Running: python -u ai_database/3. backfill_images.py ${ARGS[*]}"
+          python -u "ai_database/3. backfill_images.py" "${ARGS[@]}" | tee backfill_images.log
 
       - name: Upload run log
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ai-backfill-log-${{ github.run_id }}
-          path: ai_backfill.log
+          name: backfill-images-log-${{ github.run_id }}
+          path: backfill_images.log
           if-no-files-found: warn

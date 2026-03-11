@@ -1208,7 +1208,12 @@ def assess_place_existing_google_and_images(supabase: Client, place_id: int) -> 
 	return has_google_data, has_images
 
 
-def fetch_places(supabase: Client, limit_places: Optional[int] = None, place_filter: Optional[str] = None) -> list[dict[str, Any]]:
+def fetch_places(
+	supabase: Client,
+	limit_places: Optional[int] = None,
+	place_filter: Optional[str] = None,
+	start_place_id: Optional[int] = None,
+) -> list[dict[str, Any]]:
 	offset = 0
 	batch = 200
 	places: list[dict[str, Any]] = []
@@ -1217,8 +1222,11 @@ def fetch_places(supabase: Client, limit_places: Optional[int] = None, place_fil
 		query = supabase.table("place").select(
 			"place_id,place_city,place_countryregion,place_stateprovince,place_type,place_latitude,place_longitude"
 		)
+		query = query.order("place_id", desc=False)
 		if place_filter:
 			query = query.eq("place_city", place_filter)
+		if start_place_id is not None and start_place_id > 0:
+			query = query.gte("place_id", start_place_id)
 		query = query.range(offset, offset + batch - 1)
 		res = query.execute()
 		rows = res.data or []
@@ -1653,6 +1661,7 @@ def main() -> None:
 	parser = argparse.ArgumentParser(description="Backfill missing popular attractions per place using OpenAI + Google Maps")
 	parser.add_argument("--place", type=str, default=None, help="Only process this exact place_city")
 	parser.add_argument("--limit-places", type=int, default=None)
+	parser.add_argument("--start-place-id", type=int, default=None, help="Resume from this place_id (inclusive)")
 	parser.add_argument(
 		"--max-runtime-minutes",
 		type=int,
@@ -1673,7 +1682,12 @@ def main() -> None:
 		raise RuntimeError("Missing GOOGLE_MAPS_API_KEY")
 
 	supabase, openai_client, s3_client = get_clients()
-	places = fetch_places(supabase, limit_places=args.limit_places, place_filter=args.place)
+	places = fetch_places(
+		supabase,
+		limit_places=args.limit_places,
+		place_filter=args.place,
+		start_place_id=args.start_place_id,
+	)
 
 	if not places:
 		print("No matching places found.")
@@ -1681,6 +1695,8 @@ def main() -> None:
 
 	print(f"Found {len(places)} place(s) to process")
 	print(f"mode=fluid_unbounded, dry_run={args.dry_run}")
+	if args.start_place_id is not None:
+		print(f"start_place_id={args.start_place_id}")
 	if args.max_runtime_minutes and args.max_runtime_minutes > 0:
 		print(f"max_runtime_minutes={args.max_runtime_minutes}")
 
