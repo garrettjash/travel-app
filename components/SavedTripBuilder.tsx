@@ -1063,12 +1063,7 @@ export default function SavedTripBuilder({
             </div>
             {user?.id && shareCode && (
               <p className="attractions-state" style={{ marginTop: 8 }}>
-                Share code for editing this itinerary: <strong>{shareCode}</strong>
-              </p>
-            )}
-            {shareLink && (
-              <p className="attractions-state" style={{ marginTop: 8 }}>
-                Anyone with this link can view and edit this itinerary: {shareLink}
+                Share Code: <strong>{shareCode}</strong>
               </p>
             )}
             {saveError && (

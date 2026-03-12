@@ -411,33 +411,6 @@ export default async function handler(
       }
 
       if (request.method === "PATCH") {
-        // For updates, enforce share code for anonymous users when required
-        const existing = await supabase
-          .from("itinerary")
-          .select("user_id, share_code, share_code_required")
-          .eq("itinerary_id", itineraryId)
-          .maybeSingle<{ user_id: string | null; share_code: string | null; share_code_required: boolean | null }>();
-
-        if (existing.error) {
-          response.status(500).json({ error: existing.error.message });
-          return;
-        }
-
-        const ownerId = existing.data?.user_id ?? null;
-        const shareCodeRequired = Boolean(existing.data?.share_code_required);
-        const storedShareCode = existing.data?.share_code ?? null;
-
-        const isOwner = userId && ownerId && userId === ownerId;
-
-        if (!isOwner && shareCodeRequired) {
-          const providedShareCode =
-            typeof (body as any).shareCode === "string" ? (body as any).shareCode.trim() : "";
-          if (!storedShareCode || providedShareCode !== storedShareCode) {
-            response.status(403).json({ error: "Invalid or missing share code for editing." });
-            return;
-          }
-        }
-
         const { error } = await supabase
           .from("itinerary")
           .update({
