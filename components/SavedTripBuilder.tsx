@@ -207,11 +207,6 @@ export default function SavedTripBuilder({
   const [buildTypes, setBuildTypes] = useState<Set<string>>(new Set());
   const [buildShuffle, setBuildShuffle] = useState(false);
   const [shareCode, setShareCode] = useState<string | null>(null);
-  const [shareCodeInput, setShareCodeInput] = useState("");
-  const [shareCodeError, setShareCodeError] = useState<string | null>(null);
-  const [hasShareCodeAccess, setHasShareCodeAccess] = useState<boolean>(
-    Boolean(user?.id) || !initialItinerary?.requiresShareCode
-  );
 
   const tripDays = useMemo(() => daysBetween(startDate, endDate), [startDate, endDate]);
 
@@ -539,7 +534,6 @@ export default function SavedTripBuilder({
     setIsSaving(true);
     setSaveError(null);
     setIsShareCopied(false);
-    setShareCodeError(null);
 
     const payload: any = {
       itineraryId: activeItineraryId || undefined,
@@ -554,15 +548,6 @@ export default function SavedTripBuilder({
       days: dayPlans,
       unscheduled
     };
-
-    if (!user?.id && initialItinerary?.requiresShareCode && !hasShareCodeAccess) {
-      if (!shareCodeInput.trim()) {
-        setIsSaving(false);
-        setShareCodeError("Enter the share code to save changes.");
-        return;
-      }
-      payload.shareCode = shareCodeInput.trim();
-    }
 
     try {
       const response = await fetch("/api/itinerary", {
@@ -592,10 +577,6 @@ export default function SavedTripBuilder({
 
       if (data.shareCode) {
         setShareCode(data.shareCode);
-      }
-
-      if (initialItinerary?.requiresShareCode && !user?.id && payload.shareCode) {
-        setHasShareCodeAccess(true);
       }
 
       const currentPath = router.asPath;
@@ -1084,29 +1065,6 @@ export default function SavedTripBuilder({
               <p className="attractions-state" style={{ marginTop: 8 }}>
                 Share code for editing this itinerary: <strong>{shareCode}</strong>
               </p>
-            )}
-            {!user?.id && initialItinerary?.requiresShareCode && !hasShareCodeAccess && (
-              <div style={{ marginTop: 8 }}>
-                <label htmlFor="share-code-input" className="planning-solo-label">
-                  Enter share code to save edits
-                </label>
-                <div className="planning-solo-input-row">
-                  <input
-                    id="share-code-input"
-                    className="planning-solo-input"
-                    type="text"
-                    value={shareCodeInput}
-                    onChange={(e) => setShareCodeInput(e.target.value)}
-                    maxLength={12}
-                    placeholder="6-digit code"
-                  />
-                </div>
-                {shareCodeError && (
-                  <p className="chat-error" style={{ marginTop: 4 }}>
-                    {shareCodeError}
-                  </p>
-                )}
-              </div>
             )}
             {shareLink && (
               <p className="attractions-state" style={{ marginTop: 8 }}>
