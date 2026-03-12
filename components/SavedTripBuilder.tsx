@@ -154,6 +154,19 @@ function daysBetween(startDate: string, endDate: string) {
   return Math.max(1, dayDiff);
 }
 
+function formatDateForIcs(date: Date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}${m}${d}`;
+}
+
+function formatTimeForIcs(hours: number, minutes: number) {
+  const hh = String(hours).padStart(2, "0");
+  const mm = String(minutes).padStart(2, "0");
+  return `${hh}${mm}00`;
+}
+
 function sanitizeItineraryId(raw: string | null | undefined) {
   if (!raw) return "";
   return raw
@@ -203,6 +216,7 @@ export default function SavedTripBuilder({
   );
   const [shareLink, setShareLink] = useState<string | null>(null);
   const [isShareCopied, setIsShareCopied] = useState(false);
+  const [isShareCodeCopied, setIsShareCodeCopied] = useState(false);
   const [dragSource, setDragSource] = useState<DragSource | null>(null);
   const [buildForMeOpen, setBuildForMeOpen] = useState(false);
   const [buildTypes, setBuildTypes] = useState<Set<string>>(new Set());
@@ -535,6 +549,7 @@ export default function SavedTripBuilder({
     setIsSaving(true);
     setSaveError(null);
     setIsShareCopied(false);
+    setIsShareCodeCopied(false);
 
     const payload: any = {
       itineraryId: activeItineraryId || undefined,
@@ -591,6 +606,98 @@ export default function SavedTripBuilder({
     }
   }
 
+  async function handleExport() {
+    if (!startDate || dayPlans.length === 0) return;
+
+    const events: string[] = [];
+    const baseTitle = activeTripName || "Trip";
+    const cleanedTitle = baseTitle.replace(/\r?\n/g, " ").trim();
+
+    for (const day of dayPlans) {
+      if (!day.stops.length) continue;
+      const dayIndex = day.dayNumber - 1;
+      const baseDate = new Date(startDate);
+      if (Number.isNaN(baseDate.getTime())) continue;
+      const eventDate = new Date(baseDate.getTime() + dayIndex * 24 * 60 * 60 * 1000);
+      const datePart = formatDateForIcs(eventDate);
+
+      const stops = day.stops;
+      const total = stops.length;
+
+      for (let i = 0; i < total; i++) {
+        const stop = stops[i];
+        const a = stop.attraction;
+
+        let startHour = 10;
+        let startMinute = 0;
+
+        if (total <= 3) {
+          // Use Morning / Afternoon / Evening mapping
+          const slotLabel = stop.slot;
+          if (slotLabel === "Morning") startHour = 10;
+          else if (slotLabel === "Afternoon") startHour = 14;
+          else if (slotLabel === "Evening") startHour = 17;
+        } else {
+          // Evenly space between 9:00 and 20:00
+          const firstMinutes = 9 * 60;
+          const lastMinutes = 20 * 60;
+          const span = lastMinutes - firstMinutes;
+          const step = total > 1 ? Math.floor(span / (total - 1)) : span;
+          const minutesFromStart = firstMinutes + step * i;
+          startHour = Math.floor(minutesFromStart / 60);
+          startMinute = minutesFromStart % 60;
+        }
+
+        const startTime = formatTimeForIcs(startHour, startMinute);
+        // default to 1 hour duration
+        let endHour = startHour;
+        let endMinute = startMinute + 60;
+        if (endMinute >= 60) {
+          endHour += Math.floor(endMinute / 60);
+          endMinute = endMinute % 60;
+        }
+        const endTime = formatTimeForIcs(endHour, endMinute);
+
+        const summary = `${cleanedTitle} - ${a.name}`.replace(/[\r\n]+/g, " ");
+        const locationParts = [a.name, a.city, a.stateProvince, a.country].filter(Boolean);
+        const location = locationParts.join(", ").replace(/[\r\n]+/g, " ");
+
+        events.push(
+          "BEGIN:VEVENT",
+          `UID:${a.id}-${day.dayNumber}-${i}@travelapp`,
+          `DTSTAMP:${formatDateForIcs(new Date())}T000000`,
+          `DTSTART:${datePart}T${startTime}`,
+          `DTEND:${datePart}T${endTime}`,
+          `SUMMARY:${summary}`,
+          location ? `LOCATION:${location}` : "",
+          "END:VEVENT"
+        );
+      }
+    }
+
+    if (events.length === 0) return;
+
+    const lines = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//TravelApp//Itinerary Export//EN",
+      ...events.filter(Boolean),
+      "END:VCALENDAR"
+    ];
+
+    const icsContent = lines.join("\r\n");
+    const blob = new Blob([icsContent], { type: "text/calendar;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const safeTitle = cleanedTitle || "itinerary";
+    link.href = url;
+    link.download = `${safeTitle.replace(/[^a-z0-9_-]+/gi, "-").slice(0, 60) || "itinerary"}.ics`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
   async function handleCopyShareLink() {
     if (!shareLink) return;
     try {
@@ -608,13 +715,33 @@ export default function SavedTripBuilder({
     } catch {
       // ignore copy failures
     }
+    setIsShareCodeCopied(true);
   }
 
   const body = (
     <>
-          <section className="saved-trips-header">
-            <h1>Itinerary</h1>
-            <p>Turn your favorites into a ready-to-go itinerary in one click and save it with a shareable link.</p>
+          <section
+            className="saved-trips-header"
+            style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}
+          >
+            <div>
+              <h1>Itinerary</h1>
+              <p>Turn your favorites into a ready-to-go itinerary in one click and save it with a shareable link.</p>
+            </div>
+            <button
+              type="button"
+              className="saved-trips-button"
+              onClick={handleExport}
+              style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+            >
+              <img
+                src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJQAAACUCAMAAABC4vDmAAAAXVBMVEX///8AAACbm5tQUFDv7+94eHi1tbV9fX1ERETQ0NCpqank5OQzMzMqKirJycnExMQXFxcICAj4+PglJSUeHh5hYWE5OTnb29u7u7sRERGRkZFKSkpVVVVsbGyKioovde/pAAACaElEQVR4nO3ca5OCIBQG4INprZey0i7W7v7/n7maylHCQkehmX3fLzXVwDNABF4imifxLct+45kKmyn+WZQ5+64d3YRb8UhycS3hxIloknxMD7btVGUbutbUuXRMpeojejDMRS/ZB7RVuBVK3Pfgbq+ahNjvHJuyZ1PZg05VqY5UJXVoyodQuTMVt9O+mT0THmGOVNdCCsJN/bgJ5UvF1YmJ608pqJ8FlLLUgWotKz+U85JEUXiQb6xtmzrtVH3/GUU7Z20V8Rh/zN8dFIU82iObpn7fKShHPejJSvNmTdBD0YXnL8+WiftOtL+9fRTxzGCrrW6ywq1cZyooinntcLNh4nY68HpORdGFx5WF0c5jvLsef0J11u0WZoZTW1XR3SM8oyiW89VpcVRbVX+Pp0E1e8GKvziqaamsv+/UocjPbLVU/W2/K3thLYr8e2/eWFJVduBJ3Z/rUeSf7JjKHJ9fGkDpP2wrwyiHAco0QJkGKNMAZRqgTAOUaSygYm/zJoFy+EmPSoN35XjGJwOugwfoOMq+SY+KXpdRJTfc6vjvi5oPJYTZSSajouZDme1VvfcFzYkyOwQC1EhU8fUiiXKER49aJ6/KKCagvsdsjiZMnsfvCajVmBPCE1D+CiiggAIKKKCAAgoooIACCiiggAIKKKCAAgoooOZHtZd+fxSqub55zHWKy6Pq/ht1ttYCiq5BMO56Thuo0QEKKKCAAgoooIACCiiggAIKKKCAAgoooIACCiiggHKEGnWLyoRMukXlvF445wkoWwHqH6AG/2dumRj+I9uPTdOPmYmOkcHttfMkj3Sz4R8cySgb1UR8OgAAAABJRU5ErkJggg=="
+                alt=""
+                width={18}
+                height={18}
+              />
+              <span>Export</span>
+            </button>
           </section>
 
           <form className="saved-trips-builder" onSubmit={handleSave}>
@@ -1052,7 +1179,10 @@ export default function SavedTripBuilder({
           )}
 
           <section className="saved-trips-share">
-            <div className="saved-trips-actions" style={{ marginTop: 12 }}>
+            <div
+              className="saved-trips-actions"
+              style={{ marginTop: 12, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}
+            >
               <button
                 type="button"
                 className="saved-trips-button saved-trips-button-primary"
@@ -1070,24 +1200,21 @@ export default function SavedTripBuilder({
                   {isShareCopied ? "Link Copied!" : "Copy Share Link"}
                 </button>
               )}
+              {user?.id && shareCode && (
+                <>
+                  <span>
+                    Share Code: <strong>{shareCode}</strong>
+                  </span>
+                  <button
+                    type="button"
+                    className="saved-trips-button"
+                    onClick={handleCopyShareCode}
+                  >
+                    {isShareCodeCopied ? "Code Copied!" : "Copy Code"}
+                  </button>
+                </>
+              )}
             </div>
-            {user?.id && shareCode && (
-              <div
-                className="attractions-state"
-                style={{ marginTop: 8, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}
-              >
-                <span>
-                  Share Code: <strong>{shareCode}</strong>
-                </span>
-                <button
-                  type="button"
-                  className="saved-trips-button"
-                  onClick={handleCopyShareCode}
-                >
-                  Copy Code
-                </button>
-              </div>
-            )}
             {saveError && (
               <p className="attractions-state attractions-state-error" style={{ marginTop: 8 }}>
                 {saveError}
