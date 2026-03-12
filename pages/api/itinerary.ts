@@ -39,6 +39,8 @@ type ItineraryRow = {
   itinerary_id: string;
   trip_name: string | null;
   place_id: number | null;
+  share_code: string | null;
+  share_code_required: boolean | null;
   start_date: string | null;
   end_date: string | null;
   pace: string | null;
@@ -73,6 +75,7 @@ type ItineraryResponse =
   | {
       itineraryId: string;
       path: string;
+      shareCode?: string;
     }
   | {
       itinerary?: {
@@ -86,6 +89,7 @@ type ItineraryResponse =
         unscheduled: FavoriteAttraction[];
         createdAt?: string;
         updatedAt?: string;
+        requiresShareCode?: boolean;
       };
       itineraries?: ItineraryListItem[];
       error?: string;
@@ -132,6 +136,11 @@ function generateItineraryId() {
     }
   }
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function generateShareCode() {
+  const num = Math.floor(Math.random() * 1_000_000);
+  return num.toString().padStart(6, "0");
 }
 
 export default async function handler(
@@ -213,7 +222,7 @@ export default async function handler(
       const { data, error } = await supabase
         .from("itinerary")
         .select(
-          "itinerary_id, trip_name, place_id, start_date, end_date, pace, notes, days, unscheduled, created_at, updated_at"
+          "itinerary_id, trip_name, place_id, share_code_required, start_date, end_date, pace, notes, days, unscheduled, created_at, updated_at"
         )
         .eq("itinerary_id", itineraryId)
         .limit(1)
@@ -255,7 +264,8 @@ export default async function handler(
         days: (data.days ?? []) as DayPlan[],
         unscheduled: (data.unscheduled ?? []) as FavoriteAttraction[],
         createdAt: data.created_at ?? undefined,
-        updatedAt: data.updated_at ?? undefined
+        updatedAt: data.updated_at ?? undefined,
+        requiresShareCode: Boolean(data.share_code_required)
       };
 
       response.status(200).json({ itinerary });
@@ -353,6 +363,7 @@ export default async function handler(
       }
 
       if (request.method === "POST") {
+        const shareCode = generateShareCode();
         const insertRow: Record<string, unknown> = {
           itinerary_id: itineraryId,
           trip_name: tripName,
@@ -362,7 +373,9 @@ export default async function handler(
           pace,
           notes,
           days,
-          unscheduled
+          unscheduled,
+          share_code: shareCode,
+          share_code_required: true
         };
         if (userId) insertRow.user_id = userId;
         const { error } = await supabase.from("itinerary").insert(insertRow);
@@ -375,12 +388,40 @@ export default async function handler(
 
         response.status(201).json({
           itineraryId,
-          path: `/saved-trips/${encodeURIComponent(itineraryId)}`
+          path: `/saved-trips/${encodeURIComponent(itineraryId)}`,
+          shareCode
         });
         return;
       }
 
       if (request.method === "PATCH") {
+        // For updates, enforce share code for anonymous users when required
+        const existing = await supabase
+          .from("itinerary")
+          .select("user_id, share_code, share_code_required")
+          .eq("itinerary_id", itineraryId)
+          .maybeSingle<{ user_id: string | null; share_code: string | null; share_code_required: boolean | null }>();
+
+        if (existing.error) {
+          response.status(500).json({ error: existing.error.message });
+          return;
+        }
+
+        const ownerId = existing.data?.user_id ?? null;
+        const shareCodeRequired = Boolean(existing.data?.share_code_required);
+        const storedShareCode = existing.data?.share_code ?? null;
+
+        const isOwner = userId && ownerId && userId === ownerId;
+
+        if (!isOwner && shareCodeRequired) {
+          const providedShareCode =
+            typeof (body as any).shareCode === "string" ? (body as any).shareCode.trim() : "";
+          if (!storedShareCode || providedShareCode !== storedShareCode) {
+            response.status(403).json({ error: "Invalid or missing share code for editing." });
+            return;
+          }
+        }
+
         const { error } = await supabase
           .from("itinerary")
           .update({
