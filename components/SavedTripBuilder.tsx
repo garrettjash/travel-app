@@ -90,6 +90,7 @@ export type SavedItinerary = {
   createdAt?: string;
   updatedAt?: string;
   requiresShareCode?: boolean;
+  shareCode?: string;
 };
 
 type SavedTripBuilderProps = {
@@ -206,7 +207,7 @@ export default function SavedTripBuilder({
   const [buildForMeOpen, setBuildForMeOpen] = useState(false);
   const [buildTypes, setBuildTypes] = useState<Set<string>>(new Set());
   const [buildShuffle, setBuildShuffle] = useState(false);
-  const [shareCode, setShareCode] = useState<string | null>(null);
+  const [shareCode, setShareCode] = useState<string | null>(initialItinerary?.shareCode ?? null);
 
   const tripDays = useMemo(() => daysBetween(startDate, endDate), [startDate, endDate]);
 
@@ -597,6 +598,15 @@ export default function SavedTripBuilder({
       setIsShareCopied(true);
     } catch {
       setIsShareCopied(false);
+    }
+  }
+
+  async function handleCopyShareCode() {
+    if (!shareCode) return;
+    try {
+      await navigator.clipboard.writeText(shareCode);
+    } catch {
+      // ignore copy failures
     }
   }
 
@@ -1062,9 +1072,21 @@ export default function SavedTripBuilder({
               )}
             </div>
             {user?.id && shareCode && (
-              <p className="attractions-state" style={{ marginTop: 8 }}>
-                Share Code: <strong>{shareCode}</strong>
-              </p>
+              <div
+                className="attractions-state"
+                style={{ marginTop: 8, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}
+              >
+                <span>
+                  Share Code: <strong>{shareCode}</strong>
+                </span>
+                <button
+                  type="button"
+                  className="saved-trips-button"
+                  onClick={handleCopyShareCode}
+                >
+                  Copy Code
+                </button>
+              </div>
             )}
             {saveError && (
               <p className="attractions-state attractions-state-error" style={{ marginTop: 8 }}>

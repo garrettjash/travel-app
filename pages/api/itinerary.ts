@@ -81,6 +81,7 @@ type ItineraryResponse =
       itinerary?: {
         itineraryId: string;
         tripName: string;
+        tripPlace?: string;
         startDate: string;
         endDate: string;
         pace: Pace;
@@ -90,6 +91,7 @@ type ItineraryResponse =
         createdAt?: string;
         updatedAt?: string;
         requiresShareCode?: boolean;
+        shareCode?: string;
       };
       itineraries?: ItineraryListItem[];
       error?: string;
@@ -269,7 +271,21 @@ export default async function handler(
         }
       }
 
-      const itinerary = {
+      const itinerary: {
+        itineraryId: string;
+        tripName: string;
+        tripPlace?: string;
+        startDate: string;
+        endDate: string;
+        pace: Pace;
+        notes: string;
+        days: DayPlan[];
+        unscheduled: FavoriteAttraction[];
+        createdAt?: string;
+        updatedAt?: string;
+        requiresShareCode?: boolean;
+        shareCode?: string;
+      } = {
         itineraryId: data.itinerary_id,
         tripName: normalizeText(data.trip_name) || "Untitled Trip",
         tripPlace: tripPlace || undefined,
@@ -283,6 +299,10 @@ export default async function handler(
         updatedAt: data.updated_at ?? undefined,
         requiresShareCode: Boolean(data.share_code_required)
       };
+
+      if (isOwner && data.share_code) {
+        itinerary.shareCode = data.share_code;
+      }
 
       response.status(200).json({ itinerary });
       return;
