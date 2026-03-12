@@ -780,20 +780,27 @@ export default function SavedTripBuilder({
     setNewSuggestionLocation("");
     setExtraPlaceDropdownOpen(false);
 
+    const sectionId = id;
     let cancelled = false;
     try {
       const params = new URLSearchParams();
       params.set("limit", String(SUGGESTED_LIMIT));
       params.set("offset", "0");
       const city = typeof override === "object" && override.city ? override.city.trim() : null;
+      const countryRegion =
+        typeof override === "object" && override.countryRegion ? override.countryRegion.trim() : null;
       if (city) {
         params.set("city", city);
-      } else {
+      }
+      if (countryRegion) {
+        params.set("countryRegion", countryRegion);
+      }
+      if (!city) {
         const [rawCity] = label.split(",");
         const cityLike = (rawCity ?? "").trim();
         if (cityLike) {
           params.set("city", cityLike);
-        } else {
+        } else if (!countryRegion) {
           params.set("search", label);
         }
       }
@@ -801,24 +808,20 @@ export default function SavedTripBuilder({
       const json = (await res.json()) as { data?: ApiAttraction[]; error?: string };
       if (!cancelled && json.data) {
         const favorites = json.data.map(apiAttractionToFavorite);
-        setExtraSuggestionSections((current) =>
-          current.map((section) =>
-            section.id === id ? { ...section, attractions: favorites, loading: false } : section
+        setExtraSuggestionSections((prev) =>
+          prev.map((s) =>
+            s.id === sectionId ? { ...s, attractions: favorites, loading: false } : s
           )
         );
       } else if (!cancelled) {
-        setExtraSuggestionSections((current) =>
-          current.map((section) =>
-            section.id === id ? { ...section, attractions: [], loading: false } : section
-          )
+        setExtraSuggestionSections((prev) =>
+          prev.map((s) => (s.id === sectionId ? { ...s, attractions: [], loading: false } : s))
         );
       }
     } catch {
       if (!cancelled) {
-        setExtraSuggestionSections((current) =>
-          current.map((section) =>
-            section.id === id ? { ...section, attractions: [], loading: false } : section
-          )
+        setExtraSuggestionSections((prev) =>
+          prev.map((s) => (s.id === sectionId ? { ...s, attractions: [], loading: false } : s))
         );
       }
     }
@@ -881,75 +884,85 @@ export default function SavedTripBuilder({
                 placeholder="Name your trip"
               />
             </div>
-            <div className="saved-trips-field saved-trips-field-place" ref={placeDropdownRef}>
+            <div className="saved-trips-field" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               <label htmlFor="trip-place">Trip location</label>
-              <input
-                id="trip-place"
-                type="text"
-                value={placeInputValue}
-                onChange={(e) => {
-                  setPlaceInputValue(e.target.value);
-                  setPlaceDropdownOpen(true);
-                  if (!e.target.value.trim()) {
-                    setSelectedPlace(null);
-                    setTripPlace("");
-                  }
-                }}
-                onFocus={() => setPlaceDropdownOpen(true)}
-                onBlur={() => {
-                  // Delay so option click registers
-                  setTimeout(() => setPlaceDropdownOpen(false), 180);
-                }}
-                placeholder="Type to search destinations…"
-                autoComplete="off"
-                aria-label="Trip location — type to search and pick a destination"
-                aria-expanded={placeDropdownOpen}
-                aria-haspopup="listbox"
-                aria-controls="trip-place-listbox"
-                role="combobox"
-              />
-              {placeDropdownOpen && (
-                <ul
-                  id="trip-place-listbox"
-                  className="saved-trips-place-listbox"
-                  role="listbox"
-                  aria-label="Available destinations"
-                >
-                  {filteredPlaces.length === 0 ? (
-                    <li className="saved-trips-place-option saved-trips-place-option-empty" role="option">
-                      No matching places
-                    </li>
-                  ) : (
-                    filteredPlaces.map((p) => (
-                      <li
-                        key={p.id}
-                        role="option"
-                        className="saved-trips-place-option"
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          handleSelectPlace(p);
-                        }}
-                        aria-selected={selectedPlace?.id === p.id}
-                      >
-                        {p.label}
+              <div ref={placeDropdownRef} className="saved-trips-field-place">
+                <input
+                  id="trip-place"
+                  type="text"
+                  value={placeInputValue}
+                  onChange={(e) => {
+                    setPlaceInputValue(e.target.value);
+                    setPlaceDropdownOpen(true);
+                    if (!e.target.value.trim()) {
+                      setSelectedPlace(null);
+                      setTripPlace("");
+                    }
+                  }}
+                  onFocus={() => setPlaceDropdownOpen(true)}
+                  onBlur={() => {
+                    setTimeout(() => setPlaceDropdownOpen(false), 180);
+                  }}
+                  placeholder="Type to search destinations…"
+                  autoComplete="off"
+                  aria-label="Trip location — type to search and pick a destination"
+                  aria-expanded={placeDropdownOpen}
+                  aria-haspopup="listbox"
+                  aria-controls="trip-place-listbox"
+                  role="combobox"
+                />
+                {placeDropdownOpen && (
+                  <ul
+                    id="trip-place-listbox"
+                    className="saved-trips-place-listbox"
+                    role="listbox"
+                    aria-label="Available destinations"
+                  >
+                    {filteredPlaces.length === 0 ? (
+                      <li className="saved-trips-place-option saved-trips-place-option-empty" role="option">
+                        No matching places
                       </li>
-                    ))
-                  )}
-                </ul>
-              )}
-            </div>
-            <div className="saved-trips-field" aria-label="Add another suggestion location">
+                    ) : (
+                      filteredPlaces.map((p) => (
+                        <li
+                          key={p.id}
+                          role="option"
+                          className="saved-trips-place-option"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            handleSelectPlace(p);
+                          }}
+                          aria-selected={selectedPlace?.id === p.id}
+                        >
+                          {p.label}
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                )}
+              </div>
+              {extraSuggestionSections.map((section) => (
+                <input
+                  key={section.id}
+                  type="text"
+                  readOnly
+                  value={section.label}
+                  className="planning-solo-input"
+                  style={{ opacity: 0.9 }}
+                  aria-label={`Additional location: ${section.label}`}
+                />
+              ))}
               <button
                 type="button"
                 className="saved-trips-add-location-trigger"
                 onClick={() => setAddLocationExpanded((e) => !e)}
-                style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", padding: 0, color: "inherit", fontSize: "inherit", cursor: "pointer", fontFamily: "inherit" }}
+                style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", padding: 0, color: "inherit", fontSize: "inherit", cursor: "pointer", fontFamily: "inherit", alignSelf: "flex-start" }}
               >
                 <span aria-hidden style={{ fontSize: "1.2em" }}>{addLocationExpanded ? "−" : "+"}</span>
                 <span>Add another Location</span>
               </button>
               {addLocationExpanded && (
-                <div className="saved-trips-field saved-trips-field-place" ref={extraPlaceDropdownRef} style={{ marginTop: 8 }}>
+                <div className="saved-trips-field-place" ref={extraPlaceDropdownRef} style={{ marginTop: 4 }}>
                   <div className="planning-solo-input-row" style={{ display: "flex", gap: 8, flexWrap: "wrap", position: "relative" }}>
                     <input
                       id="extra-location-input"
