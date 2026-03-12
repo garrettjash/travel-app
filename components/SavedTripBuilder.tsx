@@ -233,6 +233,10 @@ export default function SavedTripBuilder({
   const [extraSuggestionSections, setExtraSuggestionSections] = useState<ExtraSuggestionSection[]>([]);
   const [newSuggestionLocation, setNewSuggestionLocation] = useState("");
   const [primarySuggestionsCollapsed, setPrimarySuggestionsCollapsed] = useState(false);
+  const [addLocationExpanded, setAddLocationExpanded] = useState(false);
+  const [extraPlacesOptions, setExtraPlacesOptions] = useState<PlaceOption[]>([]);
+  const [extraPlaceDropdownOpen, setExtraPlaceDropdownOpen] = useState(false);
+  const extraPlaceDropdownRef = useRef<HTMLDivElement>(null);
 
   const tripDays = useMemo(() => daysBetween(startDate, endDate), [startDate, endDate]);
 
@@ -291,6 +295,38 @@ export default function SavedTripBuilder({
       clearTimeout(timer);
     };
   }, [placeInputValue]);
+
+  /** Debounced collab-places search for "Add another location" input */
+  useEffect(() => {
+    const q = newSuggestionLocation.trim();
+    if (!q) {
+      setExtraPlacesOptions([]);
+      return;
+    }
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      try {
+        const params = new URLSearchParams();
+        params.set("search", q);
+        const res = await fetch(`/api/collab-places?${params.toString()}`);
+        let data: { options?: PlaceOption[]; error?: string } = {};
+        try {
+          const text = await res.text();
+          if (text && text.trim().startsWith("{")) data = JSON.parse(text);
+        } catch {
+          /* response was not valid JSON */
+        }
+        if (!cancelled && data.options) setExtraPlacesOptions(data.options);
+        else if (!cancelled) setExtraPlacesOptions([]);
+      } catch {
+        if (!cancelled) setExtraPlacesOptions([]);
+      }
+    }, 200);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [newSuggestionLocation]);
 
   /** Effective trip location: from dropdown selection, input, or saved/prop value */
   const effectiveLocation = useMemo(
@@ -366,6 +402,7 @@ export default function SavedTripBuilder({
   }, [initialItinerary?.tripPlace, initialTripPlace, placesOptions]);
 
   const filteredPlaces = useMemo(() => placesOptions.slice(0, 50), [placesOptions]);
+  const filteredExtraPlaces = useMemo(() => extraPlacesOptions.slice(0, 50), [extraPlacesOptions]);
 
   useEffect(() => {
     if (!initialItinerary || !initialItinerary.itineraryId) return;
@@ -413,8 +450,12 @@ export default function SavedTripBuilder({
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (placeDropdownRef.current && !placeDropdownRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (placeDropdownRef.current && !placeDropdownRef.current.contains(target)) {
         setPlaceDropdownOpen(false);
+      }
+      if (extraPlaceDropdownRef.current && !extraPlaceDropdownRef.current.contains(target)) {
+        setExtraPlaceDropdownOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -724,8 +765,8 @@ export default function SavedTripBuilder({
     URL.revokeObjectURL(url);
   }
 
-  async function handleAddExtraLocation() {
-    const label = newSuggestionLocation.trim();
+  async function handleAddExtraLocation(overrideLabel?: string) {
+    const label = overrideLabel ?? newSuggestionLocation.trim();
     if (!label) return;
 
     const id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -734,6 +775,7 @@ export default function SavedTripBuilder({
       { id, label, attractions: [], loading: true, collapsed: false }
     ]);
     setNewSuggestionLocation("");
+    setExtraPlaceDropdownOpen(false);
 
     let cancelled = false;
     try {
@@ -883,24 +925,85 @@ export default function SavedTripBuilder({
               )}
             </div>
             <div className="saved-trips-field" aria-label="Add another suggestion location">
-              <label htmlFor="extra-location-input">Add another location</label>
-              <div className="planning-solo-input-row">
-                <input
-                  id="extra-location-input"
-                  className="planning-solo-input"
-                  type="text"
-                  value={newSuggestionLocation}
-                  onChange={(e) => setNewSuggestionLocation(e.target.value)}
-                  placeholder="City, country"
-                />
+              {!addLocationExpanded ? (
                 <button
                   type="button"
-                  className="planning-solo-next"
-                  onClick={handleAddExtraLocation}
+                  className="saved-trips-add-location-trigger"
+                  onClick={() => setAddLocationExpanded(true)}
+                  style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", padding: 0, color: "inherit", fontSize: "inherit", cursor: "pointer", fontFamily: "inherit" }}
                 >
-                  Add Location
+                  <span aria-hidden style={{ fontSize: "1.2em" }}>+</span>
+                  <span>Add another Location</span>
                 </button>
-              </div>
+              ) : (
+                <div className="saved-trips-field saved-trips-field-place" ref={extraPlaceDropdownRef}>
+                  <div className="planning-solo-input-row" style={{ display: "flex", gap: 8, flexWrap: "wrap", position: "relative" }}>
+                    <input
+                      id="extra-location-input"
+                      className="planning-solo-input"
+                      type="text"
+                      value={newSuggestionLocation}
+                      onChange={(e) => {
+                        setNewSuggestionLocation(e.target.value);
+                        setExtraPlaceDropdownOpen(true);
+                      }}
+                      onFocus={() => setExtraPlaceDropdownOpen(true)}
+                      onBlur={() => setTimeout(() => setExtraPlaceDropdownOpen(false), 180)}
+                      placeholder="Type to search destinations…"
+                      autoComplete="off"
+                      style={{ flex: "1 1 160px" }}
+                    />
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <button
+                        type="button"
+                        className="planning-solo-next"
+                        onClick={() => handleAddExtraLocation()}
+                      >
+                        Add Location
+                      </button>
+                      <button
+                        type="button"
+                        className="saved-trips-button saved-trips-button-muted"
+                        onClick={() => {
+                          setAddLocationExpanded(false);
+                          setNewSuggestionLocation("");
+                          setExtraPlaceDropdownOpen(false);
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                  {extraPlaceDropdownOpen && (
+                    <ul
+                      className="saved-trips-place-listbox"
+                      role="listbox"
+                      aria-label="Available destinations for suggestions"
+                      style={{ marginTop: 4, maxHeight: 200, overflowY: "auto" }}
+                    >
+                      {filteredExtraPlaces.length === 0 ? (
+                        <li className="saved-trips-place-option saved-trips-place-option-empty" role="option">
+                          No matching places
+                        </li>
+                      ) : (
+                        filteredExtraPlaces.map((p) => (
+                          <li
+                            key={p.id}
+                            role="option"
+                            className="saved-trips-place-option"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              handleAddExtraLocation(p.label);
+                            }}
+                          >
+                            {p.label}
+                          </li>
+                        ))
+                      )}
+                    </ul>
+                  )}
+                </div>
+              )}
             </div>
             <div className="saved-trips-field">
               <label htmlFor="trip-start">Start</label>
