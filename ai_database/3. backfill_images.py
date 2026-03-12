@@ -67,7 +67,12 @@ def build_s3_url(bucket: str, region: str, key: str) -> str:
 	return f"https://{bucket}.s3.{region}.amazonaws.com/{key}"
 
 
-def fetch_attractions(supabase: Client, place_filter: Optional[str], limit: Optional[int]) -> list[dict[str, Any]]:
+def fetch_attractions(
+	supabase: Client,
+	place_filter: Optional[str],
+	limit: Optional[int],
+	start_attraction_id: Optional[int] = None,
+) -> list[dict[str, Any]]:
 	offset = 0
 	batch = 300
 	rows: list[dict[str, Any]] = []
@@ -75,10 +80,13 @@ def fetch_attractions(supabase: Client, place_filter: Optional[str], limit: Opti
 	while True:
 		query = supabase.table("attraction").select(
 			"attraction_id,place_id,attraction_name,attraction_city,attraction_countryregion,attraction_rawdata"
-		)
+		).order("attraction_id", desc=False)
 
 		if place_filter:
 			query = query.ilike("attraction_city", place_filter)
+
+		if start_attraction_id is not None:
+			query = query.gte("attraction_id", int(start_attraction_id))
 
 		res = query.range(offset, offset + batch - 1).execute()
 		chunk = res.data or []
@@ -390,12 +398,18 @@ def backfill_images(
 	aws_region: str,
 	place_filter: Optional[str],
 	limit: Optional[int],
+	start_attraction_id: Optional[int],
 	dry_run: bool,
 	allow_google_fallback: bool,
 ) -> None:
 	google_maps_key = os.getenv("GOOGLE_MAPS_API_KEY") if allow_google_fallback else None
 
-	attractions = fetch_attractions(supabase, place_filter=place_filter, limit=limit)
+	attractions = fetch_attractions(
+		supabase,
+		place_filter=place_filter,
+		limit=limit,
+		start_attraction_id=start_attraction_id,
+	)
 	if not attractions:
 		print("No attractions found.")
 		return
@@ -407,6 +421,8 @@ def backfill_images(
 	print(f"Already with image: {len(existing_image_ids)}")
 	print(f"Need image backfill: {len(attractions) - len(existing_image_ids)}")
 	print(f"Google fallback enabled: {bool(google_maps_key)}")
+	if start_attraction_id is not None:
+		print(f"Start attraction_id (resume): {start_attraction_id}")
 
 	uploaded = 0
 	skipped_existing = 0
@@ -429,6 +445,8 @@ def backfill_images(
 		if attraction_id in existing_image_ids:
 			skipped_existing += 1
 			continue
+
+		print(f"   → Processing attraction_id={attraction_id}: {name}")
 
 		try:
 			img_bytes, content_type, source = first_non_google_image(name, city, country)
@@ -481,6 +499,12 @@ def main() -> None:
 	parser = argparse.ArgumentParser(description="Backfill attraction images while minimizing Google API usage")
 	parser.add_argument("--place", type=str, default=None, help="Filter by attraction city (ILIKE), e.g. 'Shanghai'")
 	parser.add_argument("--limit", type=int, default=None, help="Max number of attractions to scan")
+	parser.add_argument(
+		"--start-attraction-id",
+		type=int,
+		default=None,
+		help="Resume from this attraction_id (inclusive)",
+	)
 	parser.add_argument("--dry-run", action="store_true", help="Preview actions without uploading/inserting")
 	parser.add_argument(
 		"--allow-google-fallback",
@@ -503,6 +527,7 @@ def main() -> None:
 		aws_region=aws_region,
 		place_filter=args.place,
 		limit=args.limit,
+		start_attraction_id=args.start_attraction_id,
 		dry_run=args.dry_run,
 		allow_google_fallback=args.allow_google_fallback,
 	)

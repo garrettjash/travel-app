@@ -13,6 +13,11 @@ on:
         description: "Optional max number of attractions to scan (blank = no limit)."
         required: false
         default: ""
+      start_attraction_id:
+        type: string
+        description: "Optional resume cursor: start processing from this attraction_id (inclusive)."
+        required: false
+        default: ""
       dry_run:
         type: boolean
         description: "Preview only; no S3 or DB writes"
@@ -55,6 +60,7 @@ jobs:
           GOOGLE_IMAGE_MAX_WIDTH: ${{ vars.GOOGLE_IMAGE_MAX_WIDTH || '800' }}
           PLACE: ${{ github.event.inputs.place }}
           LIMIT: ${{ github.event.inputs.limit }}
+          START_ATTRACTION_ID: ${{ github.event.inputs.start_attraction_id }}
           DRY_RUN: ${{ github.event.inputs.dry_run }}
           ALLOW_GOOGLE_FALLBACK: ${{ github.event.inputs.allow_google_fallback }}
         run: |
@@ -68,6 +74,10 @@ jobs:
 
           if [ -n "${LIMIT}" ]; then
             ARGS+=(--limit "${LIMIT}")
+          fi
+
+          if [ -n "${START_ATTRACTION_ID}" ]; then
+            ARGS+=(--start-attraction-id "${START_ATTRACTION_ID}")
           fi
 
           if [ "${DRY_RUN}" = "true" ]; then

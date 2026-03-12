@@ -1,0 +1,131 @@
+name: Clean Attraction Data (Manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      place:
+        type: string
+        description: "Optional city filter (contains match, e.g. Grand Canyon or Paris)."
+        required: false
+        default: ""
+      country:
+        type: string
+        description: "Optional country filter (contains match)."
+        required: false
+        default: ""
+      limit_attractions:
+        type: string
+        description: "Optional max number of attraction rows to inspect. Blank = no limit."
+        required: false
+        default: ""
+      max_duplicate_pairs:
+        type: string
+        description: "Optional cap on duplicate pair reviews for testing/cost control. Blank = no cap."
+        required: false
+        default: ""
+      skip_openai:
+        type: boolean
+        description: "Use heuristics only and skip OpenAI calls."
+        required: false
+        default: false
+      min_useless_confidence:
+        type: string
+        description: "Minimum confidence required to remove a useless attraction."
+        required: false
+        default: "70"
+      min_duplicate_confidence:
+        type: string
+        description: "Minimum confidence required to merge a duplicate pair."
+        required: false
+        default: "75"
+      apply_changes:
+        type: boolean
+        description: "Actually modify the database. Leave unchecked for a preview run."
+        required: false
+        default: false
+
+jobs:
+  clean_data:
+    environment: production
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip && pip install -r requirements.txt
+
+      - name: Run attraction cleanup
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          CLEAN_DATA_OPENAI_MODEL: ${{ vars.CLEAN_DATA_OPENAI_MODEL || 'gpt-4o-mini' }}
+          PLACE: ${{ github.event.inputs.place }}
+          COUNTRY: ${{ github.event.inputs.country }}
+          LIMIT_ATTRACTIONS: ${{ github.event.inputs.limit_attractions }}
+          MAX_DUPLICATE_PAIRS: ${{ github.event.inputs.max_duplicate_pairs }}
+          SKIP_OPENAI: ${{ github.event.inputs.skip_openai }}
+          MIN_USELESS_CONFIDENCE: ${{ github.event.inputs.min_useless_confidence }}
+          MIN_DUPLICATE_CONFIDENCE: ${{ github.event.inputs.min_duplicate_confidence }}
+          APPLY_CHANGES: ${{ github.event.inputs.apply_changes }}
+        run: |
+          set -eo pipefail
+
+          ARGS=(--report-file clean_data_report.json)
+
+          if [ -n "${PLACE}" ]; then
+            ARGS+=(--place "${PLACE}")
+          fi
+
+          if [ -n "${COUNTRY}" ]; then
+            ARGS+=(--country "${COUNTRY}")
+          fi
+
+          if [ -n "${LIMIT_ATTRACTIONS}" ]; then
+            ARGS+=(--limit-attractions "${LIMIT_ATTRACTIONS}")
+          fi
+
+          if [ -n "${MAX_DUPLICATE_PAIRS}" ]; then
+            ARGS+=(--max-duplicate-pairs "${MAX_DUPLICATE_PAIRS}")
+          fi
+
+          if [ -n "${MIN_USELESS_CONFIDENCE}" ]; then
+            ARGS+=(--min-useless-confidence "${MIN_USELESS_CONFIDENCE}")
+          fi
+
+          if [ -n "${MIN_DUPLICATE_CONFIDENCE}" ]; then
+            ARGS+=(--min-duplicate-confidence "${MIN_DUPLICATE_CONFIDENCE}")
+          fi
+
+          if [ "${SKIP_OPENAI}" = "true" ]; then
+            ARGS+=(--skip-openai)
+          fi
+
+          if [ -n "${CLEAN_DATA_OPENAI_MODEL}" ]; then
+            ARGS+=(--openai-model "${CLEAN_DATA_OPENAI_MODEL}")
+          fi
+
+          if [ "${APPLY_CHANGES}" = "true" ]; then
+            ARGS+=(--apply)
+          fi
+
+          echo "Running: python -u ai_database/4. clean_data.py ${ARGS[*]}"
+          python -u "ai_database/4. clean_data.py" "${ARGS[@]}" | tee clean_data.log
+
+      - name: Upload cleanup artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: clean-data-artifacts-${{ github.run_id }}
+          path: |
+            clean_data.log
+            clean_data_report.json
+          if-no-files-found: warn

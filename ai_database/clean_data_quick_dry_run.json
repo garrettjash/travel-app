@@ -1,0 +1,104 @@
+{
+  "mode": "DRY RUN",
+  "generated_at": "2026-03-12T02:59:13.994781+00:00",
+  "filters": {
+    "place": null,
+    "country": null,
+    "limit_attractions": 150
+  },
+  "summary": {
+    "loaded_records": 150,
+    "useless_removed": 1,
+    "duplicate_merges": 11,
+    "duplicate_pairs_reviewed": 12,
+    "openai_enabled": true
+  },
+  "useless_actions": [
+    {
+      "attraction_id": 8366,
+      "name": "Saidi location de voitures",
+      "place": "Algiers, Algeria",
+      "reason": "summary matched pattern: \\bcar rental\\b",
+      "confidence": 96
+    }
+  ],
+  "duplicate_actions": [
+    {
+      "keep_id": 13394,
+      "keep_name": "The Casbah of Algiers",
+      "remove_id": 8363,
+      "remove_name": "Kasbah of Algiers",
+      "reason": "Strong heuristic duplicate match"
+    },
+    {
+      "keep_id": 9836,
+      "keep_name": "Caminito",
+      "remove_id": 12182,
+      "remove_name": "Caminito Street",
+      "reason": "Both records refer to the same attraction, Caminito, but Record A has a more complete and commonly-known name (Caminito) and detailed information. Record B adds 'Street' to the name which is less canonical. Additionally, Record A includes richer details in the summary and reviews."
+    },
+    {
+      "keep_id": 10738,
+      "keep_name": "Puerto Madero",
+      "remove_id": 12186,
+      "remove_name": "Puerto Madero",
+      "reason": "Strong heuristic duplicate match"
+    },
+    {
+      "keep_id": 9837,
+      "keep_name": "Cemetery of the Recoleta",
+      "remove_id": 12183,
+      "remove_name": "Recoleta Cemetery",
+      "reason": "Both records refer to the same attraction, the cemetery located in Buenos Aires which is known for its elaborate tombs. The first record has additional details like notable graves which adds to its completeness. 'Cemetery of the Recoleta' is the more recognized name compared to 'Recoleta Cemetery' which is a variant of the same name. The first record also has more reviews and a higher popularity score, making it the better choice to keep."
+    },
+    {
+      "keep_id": 9831,
+      "keep_name": "Teatro Colón",
+      "remove_id": 12184,
+      "remove_name": "Teatro Colón",
+      "reason": "Strong heuristic duplicate match"
+    },
+    {
+      "keep_id": 11663,
+      "keep_name": "Bodega Catena Zapata",
+      "remove_id": 11755,
+      "remove_name": "Bodega Catena Zapata",
+      "reason": "Strong heuristic duplicate match"
+    },
+    {
+      "keep_id": 11662,
+      "keep_name": "Cerro Arco",
+      "remove_id": 11756,
+      "remove_name": "Cerro Arco",
+      "reason": "Strong heuristic duplicate match"
+    },
+    {
+      "keep_id": 11662,
+      "keep_name": "Cerro Arco",
+      "remove_id": 11766,
+      "remove_name": "Cerro Arco",
+      "reason": "Strong heuristic duplicate match"
+    },
+    {
+      "keep_id": 11661,
+      "keep_name": "Parque General San Martín",
+      "remove_id": 11754,
+      "remove_name": "Parque General San Martín",
+      "reason": "Strong heuristic duplicate match"
+    },
+    {
+      "keep_id": 11664,
+      "keep_name": "Plaza Independencia",
+      "remove_id": 11758,
+      "remove_name": "Plaza Independencia",
+      "reason": "Strong heuristic duplicate match"
+    },
+    {
+      "keep_id": 3993,
+      "keep_name": "Potrerillos Dam",
+      "remove_id": 11765,
+      "remove_name": "Potrerillos Dam",
+      "reason": "Strong heuristic duplicate match"
+    }
+  ]
+}
