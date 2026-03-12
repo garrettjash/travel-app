@@ -163,7 +163,13 @@ export default async function handler(
           ? rawUserId
           : null;
 
-      if (userId) {
+      const rawId = request.query.itineraryId;
+      const itineraryId = sanitizeItineraryId(
+        Array.isArray(rawId) ? rawId[0] : rawId ?? ""
+      );
+
+      // If no specific itineraryId, but we have a userId, return their list
+      if (!itineraryId && userId) {
         const { data: rows, error } = await supabase
           .from("itinerary")
           .select("itinerary_id, trip_name, place_id")
@@ -209,11 +215,6 @@ export default async function handler(
         return;
       }
 
-      const rawId = request.query.itineraryId;
-      const itineraryId = sanitizeItineraryId(
-        Array.isArray(rawId) ? rawId[0] : rawId ?? ""
-      );
-
       if (!itineraryId) {
         response.status(400).json({ error: "itineraryId or userId is required." });
         return;
@@ -222,7 +223,7 @@ export default async function handler(
       const { data, error } = await supabase
         .from("itinerary")
         .select(
-          "itinerary_id, trip_name, place_id, share_code_required, start_date, end_date, pace, notes, days, unscheduled, created_at, updated_at"
+          "itinerary_id, trip_name, place_id, user_id, share_code, share_code_required, start_date, end_date, pace, notes, days, unscheduled, created_at, updated_at"
         )
         .eq("itinerary_id", itineraryId)
         .limit(1)
@@ -236,6 +237,21 @@ export default async function handler(
       if (!data) {
         response.status(404).json({ error: "Itinerary not found." });
         return;
+      }
+
+      const shareCodeRequired = Boolean(data.share_code_required);
+      const storedShareCode = data.share_code ?? null;
+      const ownerId = (data as { user_id?: string | null }).user_id ?? null;
+      const isOwner = Boolean(userId && ownerId && userId === ownerId);
+
+      if (!isOwner && shareCodeRequired) {
+        const rawShareCode = request.query.shareCode;
+        const providedShareCode =
+          typeof rawShareCode === "string" ? rawShareCode.trim() : "";
+        if (!storedShareCode || !providedShareCode || providedShareCode !== storedShareCode) {
+          response.status(403).json({ error: "Share code required" });
+          return;
+        }
       }
 
       let tripPlace = "";

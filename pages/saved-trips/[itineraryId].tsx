@@ -1,15 +1,20 @@
-import { useEffect, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import type { NextPage } from "next";
 import { useRouter } from "next/router";
 import AuthButton from "../../components/AuthButton";
 import SavedTripBuilder, { SavedItinerary } from "../../components/SavedTripBuilder";
+import { useAuth } from "../../lib/auth-context";
 
 const ItineraryPage: NextPage = () => {
   const router = useRouter();
   const { itineraryId } = router.query;
+  const { user } = useAuth();
   const [initialItinerary, setInitialItinerary] = useState<SavedItinerary | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [needsShareCode, setNeedsShareCode] = useState(false);
+  const [shareCodeInput, setShareCodeInput] = useState("");
+  const [shareCodeError, setShareCodeError] = useState<string | null>(null);
 
   useEffect(() => {
     const idParam = Array.isArray(itineraryId) ? itineraryId[0] : itineraryId;
@@ -20,14 +25,26 @@ const ItineraryPage: NextPage = () => {
     async function loadItinerary() {
       setIsLoading(true);
       setLoadError(null);
+      setNeedsShareCode(false);
+      setShareCodeError(null);
 
       try {
         const params = new URLSearchParams();
         params.set("itineraryId", String(idParam));
+        if (user?.id) {
+          params.set("userId", user.id);
+        }
         const response = await fetch(`/api/itinerary?${params.toString()}`);
         const data = (await response.json()) as { itinerary?: SavedItinerary; error?: string };
 
         if (!isActive) return;
+
+        if (response.status === 403 && !user?.id) {
+          // Share code required for anonymous user
+          setInitialItinerary(null);
+          setNeedsShareCode(true);
+          return;
+        }
 
         if (!response.ok || !data.itinerary) {
           throw new Error(data.error || "Unable to load itinerary.");
@@ -48,7 +65,33 @@ const ItineraryPage: NextPage = () => {
     return () => {
       isActive = false;
     };
-  }, [itineraryId]);
+  }, [itineraryId, user?.id]);
+
+  async function handleShareCodeSubmit(event: FormEvent) {
+    event.preventDefault();
+    setShareCodeError(null);
+
+    const idParam = Array.isArray(itineraryId) ? itineraryId[0] : itineraryId;
+    if (!idParam) return;
+
+    try {
+      const params = new URLSearchParams();
+      params.set("itineraryId", String(idParam));
+      params.set("shareCode", shareCodeInput.trim());
+      const response = await fetch(`/api/itinerary?${params.toString()}`);
+      const data = (await response.json()) as { itinerary?: SavedItinerary; error?: string };
+
+      if (!response.ok || !data.itinerary) {
+        throw new Error(data.error || "Invalid share code.");
+      }
+
+      setInitialItinerary(data.itinerary);
+      setNeedsShareCode(false);
+      setShareCodeError(null);
+    } catch (error) {
+      setShareCodeError(error instanceof Error ? error.message : "Invalid share code.");
+    }
+  }
 
   if (isLoading) {
     return (
@@ -96,6 +139,82 @@ const ItineraryPage: NextPage = () => {
             <section className="about-card">
               <h1>Loading itinerary...</h1>
               <p>Please wait a moment.</p>
+            </section>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  if (needsShareCode) {
+    return (
+      <main className="destinations-page">
+        <header className="destinations-topbar">
+          <button
+            type="button"
+            className="destinations-brand destinations-brand-button"
+            onClick={() => router.push("/")}
+          >
+            TravelApp
+          </button>
+          <AuthButton />
+        </header>
+
+        <section className="destinations-layout">
+          <nav className="destinations-sidebar" aria-label="Main navigation">
+            <button type="button" className="destinations-tab" onClick={() => router.push("/home")}>
+              <span aria-hidden="true">🗺️</span>
+              <span>Destinations</span>
+            </button>
+            <button type="button" className="destinations-tab destinations-tab-active">
+              <span aria-hidden="true">💾</span>
+              <span>Itinerary</span>
+            </button>
+            <button type="button" className="destinations-tab" onClick={() => router.push("/favorites")}>
+              <span aria-hidden="true">❤</span>
+              <span>Favorites</span>
+            </button>
+            <button type="button" className="destinations-tab" onClick={() => router.push("/collaborate")}>
+              <span aria-hidden="true">👥</span>
+              <span>Collaborate</span>
+            </button>
+            <button type="button" className="destinations-tab" onClick={() => router.push("/ai-chatbot")}>
+              <span aria-hidden="true">✨</span>
+              <span>AI Chatbot</span>
+            </button>
+            <button type="button" className="destinations-tab" onClick={() => router.push("/about")}>
+              <span aria-hidden="true">ℹ️</span>
+              <span>About</span>
+            </button>
+          </nav>
+
+          <div className="destinations-content">
+            <section className="about-card">
+              <h1>Enter share code</h1>
+              <p>This itinerary is protected. Ask the owner for the 6-digit share code to view and edit it.</p>
+              <form onSubmit={handleShareCodeSubmit} className="planning-solo-form">
+                <label className="planning-solo-label" htmlFor="itinerary-share-code">
+                  Share code
+                </label>
+                <div className="planning-solo-input-row">
+                  <input
+                    id="itinerary-share-code"
+                    className="planning-solo-input"
+                    value={shareCodeInput}
+                    onChange={(e) => setShareCodeInput(e.target.value)}
+                    maxLength={12}
+                    placeholder="6-digit code"
+                  />
+                  <button type="submit" className="planning-solo-next">
+                    Continue
+                  </button>
+                </div>
+                {shareCodeError && (
+                  <p className="chat-error" style={{ marginTop: 6 }}>
+                    {shareCodeError}
+                  </p>
+                )}
+              </form>
             </section>
           </div>
         </section>
