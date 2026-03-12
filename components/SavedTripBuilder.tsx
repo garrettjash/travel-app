@@ -557,6 +557,8 @@ export default function SavedTripBuilder({
   async function handleSave(event?: FormEvent) {
     if (event) event.preventDefault();
 
+    const isNew = !activeItineraryId;
+
     setIsSaving(true);
     setSaveError(null);
     setIsShareCopied(false);
@@ -604,6 +606,10 @@ export default function SavedTripBuilder({
 
       if (data.shareCode) {
         setShareCode(data.shareCode);
+      }
+
+      if (isNew) {
+        clearAttractions();
       }
 
       const currentPath = router.asPath;
@@ -876,6 +882,26 @@ export default function SavedTripBuilder({
                 </ul>
               )}
             </div>
+            <div className="saved-trips-field" aria-label="Add another suggestion location">
+              <label htmlFor="extra-location-input">Add another location</label>
+              <div className="planning-solo-input-row">
+                <input
+                  id="extra-location-input"
+                  className="planning-solo-input"
+                  type="text"
+                  value={newSuggestionLocation}
+                  onChange={(e) => setNewSuggestionLocation(e.target.value)}
+                  placeholder="City, country"
+                />
+                <button
+                  type="button"
+                  className="planning-solo-next"
+                  onClick={handleAddExtraLocation}
+                >
+                  Add Location
+                </button>
+              </div>
+            </div>
             <div className="saved-trips-field">
               <label htmlFor="trip-start">Start</label>
               <input
@@ -1104,27 +1130,6 @@ export default function SavedTripBuilder({
                   )}
                 </section>
               )}
-
-              <section className="saved-trips-notes" aria-label="Add another suggestion location">
-                <label htmlFor="extra-location-input">Add another location</label>
-                <div className="planning-solo-input-row">
-                  <input
-                    id="extra-location-input"
-                    className="planning-solo-input"
-                    type="text"
-                    value={newSuggestionLocation}
-                    onChange={(e) => setNewSuggestionLocation(e.target.value)}
-                    placeholder="City, country"
-                  />
-                  <button
-                    type="button"
-                    className="planning-solo-next"
-                    onClick={handleAddExtraLocation}
-                  >
-                    Add Location
-                  </button>
-                </div>
-              </section>
 
               {extraSuggestionSections.map((section) => (
                 <section
