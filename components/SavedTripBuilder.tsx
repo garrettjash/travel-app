@@ -623,6 +623,11 @@ export default function SavedTripBuilder({
 
       const stops = day.stops;
       const total = stops.length;
+      const slotOffsets: Record<Slot, number> = {
+        Morning: 0,
+        Afternoon: 0,
+        Evening: 0
+      };
 
       for (let i = 0; i < total; i++) {
         const stop = stops[i];
@@ -632,11 +637,15 @@ export default function SavedTripBuilder({
         let startMinute = 0;
 
         if (total <= 3) {
-          // Use Morning / Afternoon / Evening mapping
+          // Use Morning / Afternoon / Evening mapping, but stagger duplicates
           const slotLabel = stop.slot;
-          if (slotLabel === "Morning") startHour = 10;
-          else if (slotLabel === "Afternoon") startHour = 14;
-          else if (slotLabel === "Evening") startHour = 17;
+          let baseHour = 10;
+          if (slotLabel === "Morning") baseHour = 10;
+          else if (slotLabel === "Afternoon") baseHour = 14;
+          else if (slotLabel === "Evening") baseHour = 17;
+          const offsetIndex = slotOffsets[slotLabel] ?? 0;
+          startHour = baseHour + offsetIndex;
+          slotOffsets[slotLabel] = offsetIndex + 1;
         } else {
           // Evenly space between 9:00 and 20:00
           const firstMinutes = 9 * 60;
