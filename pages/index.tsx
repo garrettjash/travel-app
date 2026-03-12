@@ -1,16 +1,14 @@
 import { useRouter } from "next/router";
-import { useState } from "react";
 import AuthButton from "../components/AuthButton";
 
 const heroImage =
-  "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&q=80";
+  "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&q=80";
 
-export default function LandingPage() {
+export default function MarketingHomePage() {
   const router = useRouter();
-  const [destination, setDestination] = useState("");
 
   return (
-    <main className="landing-shell">
+    <main className="marketing-home-shell">
       <header className="landing-topbar">
         <button
           type="button"
@@ -21,54 +19,44 @@ export default function LandingPage() {
         </button>
         <div className="landing-topbar-actions">
           <AuthButton />
-          <button type="button" className="destinations-login" onClick={() => router.push("/planning-options")}>
-            New Version
-          </button>
         </div>
       </header>
-      <section className="landing-hero" style={{ backgroundImage: `url(${heroImage})` }}>
-        <div className="landing-overlay" />
-        <div className="landing-content">
-          <h1 className="landing-title">Enter Details About Your Travel</h1>
-          <div className="landing-card">
-            <div className="landing-input-block">
-              <div className="landing-label-row">
-                <span className="landing-icon" aria-hidden="true">
-                  📍
-                </span>
-                <span className="landing-label">Destination</span>
-              </div>
-              <input
-                className="landing-input"
-                placeholder="Where To?"
-                aria-label="Destination"
-                value={destination}
-                onChange={(event) => setDestination(event.target.value)}
-              />
-            </div>
+
+      <section className="marketing-home-hero" style={{ backgroundImage: `url(${heroImage})` }}>
+        <div className="marketing-home-overlay" />
+        <div className="marketing-home-content">
+          <p className="marketing-home-eyebrow">Trip planning in one workspace</p>
+          <h1 className="marketing-home-title">Start planning your trip, collaborate with friends, and save itineraries that you can revisit anytime.</h1>
+          <p className="marketing-home-copy">
+            Explore destinations, build solo plans, spin up group sessions, and keep everything organized in one place.
+          </p>
+
+          <div className="marketing-home-actions">
+            <button type="button" className="marketing-home-primary" onClick={() => router.push("/planning-options")}>
+              Browse the App
+            </button>
+            <button type="button" className="marketing-home-secondary" onClick={() => router.push("/login")}>
+              Login
+            </button>
           </div>
-          <button
-            type="button"
-            className="landing-go-button"
-            onClick={() => {
-              const place = destination.trim();
-              if (!place) {
-                router.push("/home");
-                return;
-              }
-              router.push({ pathname: "/home", query: { place } });
-            }}
-          >
-            <span>Go</span>
-            <span aria-hidden="true">→</span>
-          </button>
-          <button
-            type="button"
-            className="landing-secondary-button"
-            onClick={() => router.push("/home")}
-          >
-            View all attractions
-          </button>
+
+          <div className="marketing-home-feature-grid">
+            <article className="marketing-home-feature-card">
+              <span className="marketing-home-feature-icon" aria-hidden="true">🗺️</span>
+              <h2>Plan Faster</h2>
+              <p>Choose a solo trip flow or jump straight into destination discovery.</p>
+            </article>
+            <article className="marketing-home-feature-card">
+              <span className="marketing-home-feature-icon" aria-hidden="true">🤝</span>
+              <h2>Collaborate</h2>
+              <p>Create group planning sessions and coordinate ideas with friends.</p>
+            </article>
+            <article className="marketing-home-feature-card">
+              <span className="marketing-home-feature-icon" aria-hidden="true">💾</span>
+              <h2>Save Itineraries</h2>
+              <p>Keep favorite stops and saved trip plans ready for the next time you return.</p>
+            </article>
+          </div>
         </div>
       </section>
     </main>

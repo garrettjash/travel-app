@@ -1,6 +1,7 @@
 import { FormEvent, ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import AuthButton from "../components/AuthButton";
+import AppSidebar from "../components/AppSidebar";
 import SavedTripBuilder from "../components/SavedTripBuilder";
 import { FavoriteAttraction } from "../lib/favorites-context";
 import { useAuth } from "../lib/auth-context";
@@ -67,6 +68,7 @@ function formatLocation(city: string, stateProvince: string, country: string) {
 export default function SoloPlannerPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const placeQuery = router.query.place;
   const initialPlace = Array.isArray(placeQuery) ? placeQuery[0] : placeQuery;
 
@@ -154,6 +156,16 @@ export default function SoloPlannerPage() {
     setDraft(`Show me the best things to do in ${initialPlace}`);
   }, [initialPlace, sessionId]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setIsSidebarCollapsed(window.localStorage.getItem("travelapp-sidebar-collapsed") === "true");
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("travelapp-sidebar-collapsed", String(isSidebarCollapsed));
+  }, [isSidebarCollapsed]);
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const content = draft.trim();
@@ -199,7 +211,7 @@ export default function SoloPlannerPage() {
     <main
       className={`solo-planner-page ${panelOpen ? "solo-planner-page-panel-open" : ""} ${
         isChatCollapsed ? "solo-planner-page-chat-collapsed" : ""
-      }`}
+      } ${isSidebarCollapsed ? "solo-planner-page-sidebar-collapsed" : ""}`}
     >
       <header className="solo-planner-topbar">
         <button type="button" className="solo-back-button" onClick={() => router.push("/planning-options")}>
@@ -208,21 +220,47 @@ export default function SoloPlannerPage() {
         <AuthButton />
       </header>
 
-      <button
-        type="button"
-        className="solo-panel-toggle"
-        onClick={() => setPanelOpen((open) => !open)}
-        aria-expanded={panelOpen}
-      >
-        {panelOpen ? "Hide Itinerary" : "Build Itinerary"}
-      </button>
+      <AppSidebar
+        activeTab="solo-planner"
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={() => setIsSidebarCollapsed((collapsed) => !collapsed)}
+      />
 
       <section className="solo-chat-area">
-        <section className="chat-shell solo-chat-shell">
-          <header className="chat-header">
-            <h1>AI Travel Chatbot</h1>
-            <p>{initialPlace ? `Planning for ${initialPlace}.` : "Ask where to go, what to do, and how to organize your trip."}</p>
+        <section className="chat-shell solo-chat-shell planner-pane-surface">
+          <header className="chat-header planner-pane-header">
+            <div>
+              <h1>AI Travel Chatbot</h1>
+              <p>{initialPlace ? `Planning for ${initialPlace}.` : "Ask where to go, what to do, and how to organize your trip."}</p>
+            </div>
           </header>
+          <button
+            type="button"
+            className="planner-pane-side-toggle planner-pane-side-toggle-left"
+            onClick={() => {
+              if (panelOpen) {
+                setIsChatCollapsed((collapsed) => !collapsed);
+                return;
+              }
+              setPanelOpen(true);
+            }}
+            aria-label={
+              panelOpen
+                ? isChatCollapsed
+                  ? "Expand chatbot panel"
+                  : "Collapse chatbot panel"
+                : "Open itinerary panel"
+            }
+            title={
+              panelOpen
+                ? isChatCollapsed
+                  ? "Expand chatbot"
+                  : "Collapse chatbot"
+                : "Open itinerary"
+            }
+          >
+            <span aria-hidden="true">{panelOpen ? (isChatCollapsed ? "←" : "→") : "→"}</span>
+          </button>
 
           <div className="chat-messages" role="log" aria-live="polite">
             {messages.length === 0 && <p className="chat-state">No messages yet.</p>}
@@ -279,19 +317,22 @@ export default function SoloPlannerPage() {
       </section>
 
       <aside className={`solo-itinerary-panel ${panelOpen ? "solo-itinerary-panel-open" : ""}`}>
-        <div className="solo-itinerary-panel-inner">
-          <div className="solo-itinerary-panel-header">
-            <button
-              type="button"
-              className="solo-itinerary-collapse"
-              onClick={() => setIsChatCollapsed((collapsed) => !collapsed)}
-            >
-              {isChatCollapsed ? "Show Chatbot" : "Collapse Chatbot"}
-            </button>
-            <button type="button" className="solo-itinerary-collapse" onClick={() => setPanelOpen(false)}>
-              Collapse
-            </button>
+        <div className="solo-itinerary-panel-inner planner-pane-surface">
+          <div className="solo-itinerary-panel-header planner-pane-header">
+            <div>
+              <h2>Itinerary Builder</h2>
+              <p>{initialPlace ? `Organize stops for ${initialPlace}.` : "Build and save your trip plan."}</p>
+            </div>
           </div>
+          <button
+            type="button"
+            className="planner-pane-side-toggle planner-pane-side-toggle-right"
+            onClick={() => setPanelOpen(false)}
+            aria-label="Collapse itinerary panel"
+            title="Collapse itinerary"
+          >
+            <span aria-hidden="true">←</span>
+          </button>
           {initialPlace && (
             <section className="solo-itinerary-suggested">
               <h3>Suggested for {initialPlace}</h3>

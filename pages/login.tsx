@@ -24,14 +24,14 @@ export default function LoginPage() {
           setError(err.message);
           return;
         }
-        router.push("/home");
+        router.push("/");
       } else {
         const { error: err } = await signUp(email, password, firstName, lastName);
         if (err) {
           setError(err.message);
           return;
         }
-        router.push("/home");
+        router.push("/");
       }
     } finally {
       setLoading(false);
@@ -51,7 +51,13 @@ export default function LoginPage() {
         <button
           type="button"
           className="destinations-login"
-          onClick={() => router.push("/home")}
+          onClick={() => {
+            if (typeof window !== "undefined" && window.history.length > 1) {
+              router.back();
+              return;
+            }
+            router.push("/");
+          }}
         >
           Back to app
         </button>

@@ -1,51 +1,8 @@
-import { useRouter } from "next/router";
-import AuthButton from "../components/AuthButton";
+import AppShell from "../components/AppShell";
 
 export default function AboutPage() {
-  const router = useRouter();
-
   return (
-    <main className="destinations-page">
-      <header className="destinations-topbar">
-        <button
-          type="button"
-          className="destinations-brand destinations-brand-button"
-          onClick={() => router.push("/")}
-        >
-          TravelApp
-        </button>
-        <AuthButton />
-      </header>
-
-      <section className="destinations-layout">
-        <nav className="destinations-sidebar" aria-label="Main navigation">
-          <button type="button" className="destinations-tab" onClick={() => router.push("/home")}>
-            <span aria-hidden="true">🗺️</span>
-            <span>Destinations</span>
-          </button>
-          <button type="button" className="destinations-tab" onClick={() => router.push("/saved-trips")}>
-            <span aria-hidden="true">💾</span>
-            <span>Itinerary</span>
-          </button>
-          <button type="button" className="destinations-tab" onClick={() => router.push("/favorites")}>
-            <span aria-hidden="true">❤</span>
-            <span>Favorites</span>
-          </button>
-          <button type="button" className="destinations-tab" onClick={() => router.push("/collaborate")}>
-            <span aria-hidden="true">👥</span>
-            <span>Collaborate</span>
-          </button>
-          <button type="button" className="destinations-tab" onClick={() => router.push("/ai-chatbot")}>
-            <span aria-hidden="true">✨</span>
-            <span>AI Chatbot</span>
-          </button>
-          <button type="button" className="destinations-tab destinations-tab-active">
-            <span aria-hidden="true">ℹ️</span>
-            <span>About</span>
-          </button>
-        </nav>
-
-        <div className="destinations-content">
+    <AppShell activeTab="about">
           <section className="about-card">
             <h1>About TravelApp</h1>
             <p>
@@ -88,8 +45,6 @@ export default function AboutPage() {
             </ul>
             <p className="about-updated">Last updated: March 4, 2026</p>
           </section>
-        </div>
-      </section>
-    </main>
+    </AppShell>
   );
 }

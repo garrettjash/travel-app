@@ -1,6 +1,6 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/router";
-import AuthButton from "../components/AuthButton";
+import AppShell from "../components/AppShell";
 import PlaceSearchInput from "../components/PlaceSearchInput";
 
 const heroImage =
@@ -44,19 +44,20 @@ export default function PlanningOptionsPage() {
   };
 
   return (
-    <main className="destinations-page">
-      <header className="destinations-topbar">
-        <button
-          type="button"
-          className="destinations-brand destinations-brand-button"
-          onClick={() => router.push("/")}
-        >
-          TravelApp
-        </button>
-        <AuthButton />
-      </header>
-
-      <section className="planning-options-shell" style={{ backgroundImage: `url(${heroImage})` }}>
+    <AppShell
+      activeTab="start"
+      topbarActions={
+        <>
+          <button type="button" className="destinations-login" onClick={() => router.push("/old-version")}>
+            Old Version
+          </button>
+        </>
+      }
+    >
+      <section
+        className="planning-options-shell planning-options-shell-embedded"
+        style={{ backgroundImage: `url(${heroImage})` }}
+      >
         <div className="planning-options-overlay" />
         <div className="planning-options-card">
           <p className="planning-options-eyebrow">How do you want to plan?</p>
@@ -152,6 +153,6 @@ export default function PlanningOptionsPage() {
           )}
         </div>
       </section>
-    </main>
+    </AppShell>
   );
 }

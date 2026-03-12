@@ -1,5 +1,5 @@
 import { useRouter } from "next/router";
-import AuthButton from "../components/AuthButton";
+import AppShell from "../components/AppShell";
 
 const funnyTravelDogImage =
   "https://images.unsplash.com/photo-1544568100-847a948585b9?auto=format&fit=crop&w=1400&q=80";
@@ -15,47 +15,7 @@ export default function ComingSoonPage() {
   const featureLabel = getFeatureLabel(router.query.feature);
 
   return (
-    <main className="destinations-page">
-      <header className="destinations-topbar">
-        <button
-          type="button"
-          className="destinations-brand destinations-brand-button"
-          onClick={() => router.push("/")}
-        >
-          TravelApp
-        </button>
-        <AuthButton />
-      </header>
-
-      <section className="destinations-layout">
-        <nav className="destinations-sidebar" aria-label="Main navigation">
-          <button type="button" className="destinations-tab" onClick={() => router.push("/home")}>
-            <span aria-hidden="true">🗺️</span>
-            <span>Destinations</span>
-          </button>
-          <button type="button" className="destinations-tab" onClick={() => router.push("/saved-trips")}>
-            <span aria-hidden="true">💾</span>
-            <span>Itinerary</span>
-          </button>
-          <button type="button" className="destinations-tab" onClick={() => router.push("/favorites")}>
-            <span aria-hidden="true">❤</span>
-            <span>Favorites</span>
-          </button>
-          <button type="button" className="destinations-tab" onClick={() => router.push("/collaborate")}>
-            <span aria-hidden="true">👥</span>
-            <span>Collaborate</span>
-          </button>
-          <button type="button" className="destinations-tab" onClick={() => router.push("/ai-chatbot")}>
-            <span aria-hidden="true">✨</span>
-            <span>AI Chatbot</span>
-          </button>
-          <button type="button" className="destinations-tab" onClick={() => router.push("/about")}>
-            <span aria-hidden="true">ℹ️</span>
-            <span>About</span>
-          </button>
-        </nav>
-
-        <div className="destinations-content">
+    <AppShell activeTab="destinations">
           <section className="coming-soon-card">
             <img src={funnyTravelDogImage} alt="Funny travel companion" className="coming-soon-image" />
             <h1>{featureLabel} Are Not Here Yet</h1>
@@ -64,8 +24,6 @@ export default function ComingSoonPage() {
               We may be adding {featureLabel.toLowerCase()} later.
             </p>
           </section>
-        </div>
-      </section>
-    </main>
+    </AppShell>
   );
 }
