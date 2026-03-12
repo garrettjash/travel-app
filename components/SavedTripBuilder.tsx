@@ -765,8 +765,11 @@ export default function SavedTripBuilder({
     URL.revokeObjectURL(url);
   }
 
-  async function handleAddExtraLocation(overrideLabel?: string) {
-    const label = overrideLabel ?? newSuggestionLocation.trim();
+  async function handleAddExtraLocation(override?: string | PlaceOption) {
+    const label =
+      typeof override === "object"
+        ? override.label
+        : (override ?? newSuggestionLocation.trim()).trim();
     if (!label) return;
 
     const id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -782,7 +785,18 @@ export default function SavedTripBuilder({
       const params = new URLSearchParams();
       params.set("limit", String(SUGGESTED_LIMIT));
       params.set("offset", "0");
-      params.set("search", label);
+      const city = typeof override === "object" && override.city ? override.city.trim() : null;
+      if (city) {
+        params.set("city", city);
+      } else {
+        const [rawCity] = label.split(",");
+        const cityLike = (rawCity ?? "").trim();
+        if (cityLike) {
+          params.set("city", cityLike);
+        } else {
+          params.set("search", label);
+        }
+      }
       const res = await fetch(`/api/attractions?${params.toString()}`);
       const json = (await res.json()) as { data?: ApiAttraction[]; error?: string };
       if (!cancelled && json.data) {
@@ -925,18 +939,17 @@ export default function SavedTripBuilder({
               )}
             </div>
             <div className="saved-trips-field" aria-label="Add another suggestion location">
-              {!addLocationExpanded ? (
-                <button
-                  type="button"
-                  className="saved-trips-add-location-trigger"
-                  onClick={() => setAddLocationExpanded(true)}
-                  style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", padding: 0, color: "inherit", fontSize: "inherit", cursor: "pointer", fontFamily: "inherit" }}
-                >
-                  <span aria-hidden style={{ fontSize: "1.2em" }}>+</span>
-                  <span>Add another Location</span>
-                </button>
-              ) : (
-                <div className="saved-trips-field saved-trips-field-place" ref={extraPlaceDropdownRef}>
+              <button
+                type="button"
+                className="saved-trips-add-location-trigger"
+                onClick={() => setAddLocationExpanded((e) => !e)}
+                style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", padding: 0, color: "inherit", fontSize: "inherit", cursor: "pointer", fontFamily: "inherit" }}
+              >
+                <span aria-hidden style={{ fontSize: "1.2em" }}>{addLocationExpanded ? "−" : "+"}</span>
+                <span>Add another Location</span>
+              </button>
+              {addLocationExpanded && (
+                <div className="saved-trips-field saved-trips-field-place" ref={extraPlaceDropdownRef} style={{ marginTop: 8 }}>
                   <div className="planning-solo-input-row" style={{ display: "flex", gap: 8, flexWrap: "wrap", position: "relative" }}>
                     <input
                       id="extra-location-input"
@@ -993,7 +1006,7 @@ export default function SavedTripBuilder({
                             className="saved-trips-place-option"
                             onMouseDown={(e) => {
                               e.preventDefault();
-                              handleAddExtraLocation(p.label);
+                              handleAddExtraLocation(p);
                             }}
                           >
                             {p.label}
