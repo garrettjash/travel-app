@@ -128,6 +128,14 @@ type DragSource =
   | { type: "day"; dayIndex: number; slotIndex: number }
   | { type: "unscheduled"; index: number };
 
+type ExtraSuggestionSection = {
+  id: string;
+  label: string;
+  attractions: FavoriteAttraction[];
+  loading: boolean;
+  collapsed: boolean;
+};
+
 function formatLocation(city: string, stateProvince: string, country: string) {
   return [city, stateProvince, country].filter(Boolean).join(", ") || "Location unavailable";
 }
@@ -222,6 +230,9 @@ export default function SavedTripBuilder({
   const [buildTypes, setBuildTypes] = useState<Set<string>>(new Set());
   const [buildShuffle, setBuildShuffle] = useState(false);
   const [shareCode, setShareCode] = useState<string | null>(initialItinerary?.shareCode ?? null);
+  const [extraSuggestionSections, setExtraSuggestionSections] = useState<ExtraSuggestionSection[]>([]);
+  const [newSuggestionLocation, setNewSuggestionLocation] = useState("");
+  const [primarySuggestionsCollapsed, setPrimarySuggestionsCollapsed] = useState(false);
 
   const tripDays = useMemo(() => daysBetween(startDate, endDate), [startDate, endDate]);
 
@@ -707,6 +718,50 @@ export default function SavedTripBuilder({
     URL.revokeObjectURL(url);
   }
 
+  async function handleAddExtraLocation() {
+    const label = newSuggestionLocation.trim();
+    if (!label) return;
+
+    const id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+    setExtraSuggestionSections((current) => [
+      ...current,
+      { id, label, attractions: [], loading: true, collapsed: false }
+    ]);
+    setNewSuggestionLocation("");
+
+    let cancelled = false;
+    try {
+      const params = new URLSearchParams();
+      params.set("limit", String(SUGGESTED_LIMIT));
+      params.set("offset", "0");
+      params.set("search", label);
+      const res = await fetch(`/api/attractions?${params.toString()}`);
+      const json = (await res.json()) as { data?: ApiAttraction[]; error?: string };
+      if (!cancelled && json.data) {
+        const favorites = json.data.map(apiAttractionToFavorite);
+        setExtraSuggestionSections((current) =>
+          current.map((section) =>
+            section.id === id ? { ...section, attractions: favorites, loading: false } : section
+          )
+        );
+      } else if (!cancelled) {
+        setExtraSuggestionSections((current) =>
+          current.map((section) =>
+            section.id === id ? { ...section, attractions: [], loading: false } : section
+          )
+        );
+      }
+    } catch {
+      if (!cancelled) {
+        setExtraSuggestionSections((current) =>
+          current.map((section) =>
+            section.id === id ? { ...section, attractions: [], loading: false } : section
+          )
+        );
+      }
+    }
+  }
+
   async function handleCopyShareLink() {
     if (!shareLink) return;
     try {
@@ -949,76 +1004,239 @@ export default function SavedTripBuilder({
             />
           </section>
 
-          {!router.query.fromCollab && effectiveLocation && (
-            <section className="saved-suggested-section" aria-labelledby="suggested-heading">
-              <h2 id="suggested-heading">Suggested in {effectiveLocation}</h2>
-              <p className="saved-suggested-intro">Click + to add a place to your itinerary.</p>
-              {loadingSuggested ? (
-                <p className="saved-suggested-loading">Loading suggestions…</p>
-              ) : (
-                <div className="saved-suggested-grid">
-                  {suggestedAttractions.map((attraction) => {
-                    const added = isInItinerary(attraction.id);
-                    return (
-                      <article
-                        className="saved-suggested-card saved-suggested-card-clickable"
-                        key={attraction.id}
-                        onClick={() => setSelectedAttraction(attraction)}
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            setSelectedAttraction(attraction);
-                          }
-                        }}
-                      >
-                        {attraction.imageUrl ? (
-                          <img
-                            src={attraction.imageUrl}
-                            alt=""
-                            className="saved-suggested-card-img"
-                          />
-                        ) : (
-                          <div className="saved-suggested-card-img saved-suggested-card-placeholder" aria-hidden />
-                        )}
-                        <div className="saved-suggested-card-body">
-                          <h3>{attraction.name}</h3>
-                          <p className="saved-suggested-card-meta">
-                            {formatLocation(attraction.city, attraction.stateProvince, attraction.country)}
-                            {formatCategoryLabel(attraction.categories) && (
-                              <span className="saved-suggested-card-type"> · {formatCategoryLabel(attraction.categories)}</span>
-                            )}
-                          </p>
-                          {attraction.summary && (
-                            <p className="saved-suggested-card-summary">
-                              {attraction.summary.slice(0, 120)}
-                              {attraction.summary.length > 120 ? "…" : ""}
-                            </p>
-                          )}
-                          <button
-                            type="button"
-                            className={`saved-suggested-add ${added ? "saved-suggested-added" : ""}`}
-                            aria-label={added ? `Remove ${attraction.name} from itinerary` : `Add ${attraction.name} to itinerary`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (added) {
-                                removeFromItinerary(attraction.id);
-                              } else {
-                                addAttraction(attraction);
-                                setUnscheduled((u) => [...u, attraction]);
-                              }
-                            }}
-                          >
-                            {added ? "✓ Added (click to remove)" : "+ Add"}
-                          </button>
+          {!router.query.fromCollab && (
+            <>
+              {effectiveLocation && (
+                <section className="saved-suggested-section" aria-labelledby="suggested-heading">
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      gap: 8
+                    }}
+                  >
+                    <h2 id="suggested-heading">Suggested in {effectiveLocation}</h2>
+                    <button
+                      type="button"
+                      className="saved-trips-button saved-trips-button-muted"
+                      onClick={() => setPrimarySuggestionsCollapsed((c) => !c)}
+                    >
+                      {primarySuggestionsCollapsed ? "Show" : "Hide"}
+                    </button>
+                  </div>
+                  {!primarySuggestionsCollapsed && (
+                    <>
+                      <p className="saved-suggested-intro">Click + to add a place to your itinerary.</p>
+                      {loadingSuggested ? (
+                        <p className="saved-suggested-loading">Loading suggestions…</p>
+                      ) : (
+                        <div className="saved-suggested-grid">
+                          {suggestedAttractions.map((attraction) => {
+                            const added = isInItinerary(attraction.id);
+                            return (
+                              <article
+                                className="saved-suggested-card saved-suggested-card-clickable"
+                                key={attraction.id}
+                                onClick={() => setSelectedAttraction(attraction)}
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter" || e.key === " ") {
+                                    e.preventDefault();
+                                    setSelectedAttraction(attraction);
+                                  }
+                                }}
+                              >
+                                {attraction.imageUrl ? (
+                                  <img
+                                    src={attraction.imageUrl}
+                                    alt=""
+                                    className="saved-suggested-card-img"
+                                  />
+                                ) : (
+                                  <div className="saved-suggested-card-img saved-suggested-card-placeholder" aria-hidden />
+                                )}
+                                <div className="saved-suggested-card-body">
+                                  <h3>{attraction.name}</h3>
+                                  <p className="saved-suggested-card-meta">
+                                    {formatLocation(attraction.city, attraction.stateProvince, attraction.country)}
+                                    {formatCategoryLabel(attraction.categories) && (
+                                      <span className="saved-suggested-card-type">
+                                        {" "}
+                                        · {formatCategoryLabel(attraction.categories)}
+                                      </span>
+                                    )}
+                                  </p>
+                                  {attraction.summary && (
+                                    <p className="saved-suggested-card-summary">
+                                      {attraction.summary.slice(0, 120)}
+                                      {attraction.summary.length > 120 ? "…" : ""}
+                                    </p>
+                                  )}
+                                  <button
+                                    type="button"
+                                    className={`saved-suggested-add ${added ? "saved-suggested-added" : ""}`}
+                                    aria-label={
+                                      added
+                                        ? `Remove ${attraction.name} from itinerary`
+                                        : `Add ${attraction.name} to itinerary`
+                                    }
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (added) {
+                                        removeFromItinerary(attraction.id);
+                                      } else {
+                                        addAttraction(attraction);
+                                        setUnscheduled((u) => [...u, attraction]);
+                                      }
+                                    }}
+                                  >
+                                    {added ? "✓ Added (click to remove)" : "+ Add"}
+                                  </button>
+                                </div>
+                              </article>
+                            );
+                          })}
                         </div>
-                      </article>
-                    );
-                  })}
-                </div>
+                      )}
+                    </>
+                  )}
+                </section>
               )}
-            </section>
+
+              <section className="saved-trips-notes" aria-label="Add another suggestion location">
+                <label htmlFor="extra-location-input">Add another location</label>
+                <div className="planning-solo-input-row">
+                  <input
+                    id="extra-location-input"
+                    className="planning-solo-input"
+                    type="text"
+                    value={newSuggestionLocation}
+                    onChange={(e) => setNewSuggestionLocation(e.target.value)}
+                    placeholder="City, country"
+                  />
+                  <button
+                    type="button"
+                    className="planning-solo-next"
+                    onClick={handleAddExtraLocation}
+                  >
+                    Add Location
+                  </button>
+                </div>
+              </section>
+
+              {extraSuggestionSections.map((section) => (
+                <section
+                  key={section.id}
+                  className="saved-suggested-section"
+                  aria-label={`Suggested in ${section.label}`}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      gap: 8
+                    }}
+                  >
+                    <h2>Suggested in {section.label}</h2>
+                    <button
+                      type="button"
+                      className="saved-trips-button saved-trips-button-muted"
+                      onClick={() =>
+                        setExtraSuggestionSections((current) =>
+                          current.map((s) =>
+                            s.id === section.id ? { ...s, collapsed: !s.collapsed } : s
+                          )
+                        )
+                      }
+                    >
+                      {section.collapsed ? "Show" : "Hide"}
+                    </button>
+                  </div>
+                  {!section.collapsed && (
+                    <>
+                      <p className="saved-suggested-intro">
+                        Click + to add a place from {section.label} to your itinerary.
+                      </p>
+                      {section.loading ? (
+                        <p className="saved-suggested-loading">Loading suggestions…</p>
+                      ) : (
+                        <div className="saved-suggested-grid">
+                          {section.attractions.map((attraction) => {
+                            const added = isInItinerary(attraction.id);
+                            return (
+                              <article
+                                className="saved-suggested-card saved-suggested-card-clickable"
+                                key={attraction.id}
+                                onClick={() => setSelectedAttraction(attraction)}
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter" || e.key === " ") {
+                                    e.preventDefault();
+                                    setSelectedAttraction(attraction);
+                                  }
+                                }}
+                              >
+                                {attraction.imageUrl ? (
+                                  <img
+                                    src={attraction.imageUrl}
+                                    alt=""
+                                    className="saved-suggested-card-img"
+                                  />
+                                ) : (
+                                  <div className="saved-suggested-card-img saved-suggested-card-placeholder" aria-hidden />
+                                )}
+                                <div className="saved-suggested-card-body">
+                                  <h3>{attraction.name}</h3>
+                                  <p className="saved-suggested-card-meta">
+                                    {formatLocation(attraction.city, attraction.stateProvince, attraction.country)}
+                                    {formatCategoryLabel(attraction.categories) && (
+                                      <span className="saved-suggested-card-type">
+                                        {" "}
+                                        · {formatCategoryLabel(attraction.categories)}
+                                      </span>
+                                    )}
+                                  </p>
+                                  {attraction.summary && (
+                                    <p className="saved-suggested-card-summary">
+                                      {attraction.summary.slice(0, 120)}
+                                      {attraction.summary.length > 120 ? "…" : ""}
+                                    </p>
+                                  )}
+                                  <button
+                                    type="button"
+                                    className={`saved-suggested-add ${added ? "saved-suggested-added" : ""}`}
+                                    aria-label={
+                                      added
+                                        ? `Remove ${attraction.name} from itinerary`
+                                        : `Add ${attraction.name} to itinerary`
+                                    }
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (added) {
+                                        removeFromItinerary(attraction.id);
+                                      } else {
+                                        addAttraction(attraction);
+                                        setUnscheduled((u) => [...u, attraction]);
+                                      }
+                                    }}
+                                  >
+                                    {added ? "✓ Added (click to remove)" : "+ Add"}
+                                  </button>
+                                </div>
+                              </article>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </section>
+              ))}
+            </>
           )}
 
           {(unscheduled.length === 0 && !dayPlans.some((d) => d.stops.length > 0)) ? (
