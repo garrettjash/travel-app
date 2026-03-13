@@ -145,6 +145,21 @@ function formatCategoryLabel(categories: string[] | undefined): string {
   return categories.slice(0, 2).join(" • ").trim();
 }
 
+/** Parse "HH:MM" to minutes since midnight. Returns 0 for invalid. */
+function timeToMinutes(hhmm: string): number {
+  const m = (hhmm || "09:00").match(/^(\d{1,2}):(\d{2})$/);
+  if (!m) return 9 * 60;
+  return Math.max(0, Math.min(24 * 60 - 1, Number(m[1]) * 60 + Number(m[2])));
+}
+
+/** Minutes since midnight to "HH:MM". */
+function minutesToTime(minutes: number): string {
+  const m = Math.max(0, Math.min(24 * 60 - 1, Math.floor(minutes)));
+  const h = Math.floor(m / 60);
+  const min = m % 60;
+  return `${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`;
+}
+
 function formatTimeLabel(startTime: string, durationMinutes: number): string {
   const safeTime = startTime && /^\d{2}:\d{2}$/.test(startTime) ? startTime : "09:00";
   const hours = Math.max(0, Math.round(durationMinutes / 60));
@@ -581,18 +596,27 @@ export default function SavedTripBuilder({
               insertIdx = to.insertIndex - 1;
             }
 
-            // If this is coming from Unassigned, suggest a time based on neighbors.
-            if (from.type === "unscheduled") {
-              const before = targetDay.stops[insertIdx - 1];
-              const after = targetDay.stops[insertIdx];
-              if (before) {
-                startTime = before.startTime || "09:00";
-              } else if (after) {
-                startTime = after.startTime || "09:00";
-              } else {
-                startTime = "09:00";
-              }
-              durationMinutes = 90;
+            // Compute smart default time based on neighbors: before = 2h earlier, after = previous end time.
+            const before = targetDay.stops[insertIdx - 1];
+            const after = targetDay.stops[insertIdx];
+            const defaultDuration = 90;
+            if (before && !after) {
+              // Dropping after the last stop: new start = previous end time
+              const prevEnd = timeToMinutes(before.startTime || "09:00") + (before.durationMinutes || 90);
+              startTime = minutesToTime(prevEnd);
+              durationMinutes = from.type === "day" ? (durationMinutes || defaultDuration) : defaultDuration;
+            } else if (after && !before) {
+              // Dropping before the first stop: new start = 9 AM
+              startTime = "09:00";
+              durationMinutes = from.type === "day" ? (durationMinutes || defaultDuration) : defaultDuration;
+            } else if (after && before) {
+              // Dropping between two stops: start right after the previous ends
+              const prevEnd = timeToMinutes(before.startTime || "09:00") + (before.durationMinutes || 90);
+              startTime = minutesToTime(prevEnd);
+              durationMinutes = from.type === "day" ? (durationMinutes || defaultDuration) : defaultDuration;
+            } else {
+              startTime = "09:00";
+              durationMinutes = from.type === "day" ? (durationMinutes || defaultDuration) : defaultDuration;
             }
 
             const newStop: PlannedStop = { attraction, startTime, durationMinutes };

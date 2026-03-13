@@ -31,13 +31,15 @@ type DayPlan = {
   dayNumber: number;
   stops: {
     attraction: FavoriteAttraction;
-    slot: "Morning" | "Afternoon" | "Evening";
+    startTime: string;
+    durationMinutes: number;
   }[];
 };
 
 type DbStop = {
   attractionId: number;
-  slot: "Morning" | "Afternoon" | "Evening";
+  startTime: string;
+  durationMinutes: number;
 };
 
 type DbDayPlan = {
@@ -215,10 +217,15 @@ function toDbShape(days: DayPlan[], unscheduled: FavoriteAttraction[]): { dbDays
       .map((stop) => {
         const id = stop?.attraction?.id;
         if (!Number.isFinite(id)) return null;
-        return {
-          slot: stop.slot ?? "Morning",
-          attractionId: Number(id)
-        } as DbStop;
+        const startTime =
+          typeof (stop as any).startTime === "string" && /^\d{2}:\d{2}$/.test((stop as any).startTime)
+            ? (stop as any).startTime
+            : "09:00";
+        const durationMinutes =
+          typeof (stop as any).durationMinutes === "number" && (stop as any).durationMinutes > 0
+            ? Math.round((stop as any).durationMinutes)
+            : 90;
+        return { attractionId: Number(id), startTime, durationMinutes } as DbStop;
       })
       .filter((s): s is DbStop => Boolean(s));
     return { dayNumber: day.dayNumber, stops };
@@ -571,9 +578,18 @@ export default async function handler(
             if (!Number.isFinite(id)) continue;
             const attraction = byId.get(Number(id));
             if (!attraction) continue;
-            const slot: DayPlan["stops"][number]["slot"] =
-              stop?.slot === "Afternoon" || stop?.slot === "Evening" ? stop.slot : "Morning";
-            stops.push({ slot, attraction });
+            let startTime =
+              typeof stop?.startTime === "string" && /^\d{2}:\d{2}$/.test(stop.startTime)
+                ? stop.startTime
+                : "";
+            if (!startTime && stop?.slot === "Afternoon") startTime = "14:00";
+            else if (!startTime && stop?.slot === "Evening") startTime = "17:00";
+            else if (!startTime) startTime = "09:00";
+            const durationMinutes =
+              typeof stop?.durationMinutes === "number" && stop.durationMinutes > 0
+                ? Math.round(stop.durationMinutes)
+                : 90;
+            stops.push({ attraction, startTime, durationMinutes });
           }
           return { dayNumber, stops };
         });
@@ -605,8 +621,27 @@ export default async function handler(
             .eq("itinerary_id", itineraryId);
         }
       } else {
-        // Legacy shape with full attraction objects already stored.
-        hydratedDays = (data.days ?? []) as DayPlan[];
+        // Legacy shape with full attraction objects (and possibly slot) — normalize to startTime/durationMinutes.
+        const raw = (data.days ?? []) as any[];
+        hydratedDays = raw.map((day): DayPlan => {
+          const stops = (day.stops ?? []).map((stop: any) => {
+            const slot = stop.slot || "Morning";
+            const startTime =
+              typeof stop.startTime === "string" && /^\d{2}:\d{2}$/.test(stop.startTime)
+                ? stop.startTime
+                : slot === "Afternoon"
+                ? "14:00"
+                : slot === "Evening"
+                ? "17:00"
+                : "09:00";
+            const durationMinutes =
+              typeof stop.durationMinutes === "number" && stop.durationMinutes > 0
+                ? Math.round(stop.durationMinutes)
+                : 90;
+            return { attraction: stop.attraction, startTime, durationMinutes };
+          });
+          return { dayNumber: day.dayNumber ?? 1, stops };
+        });
         hydratedUnscheduled = (data.unscheduled ?? []) as FavoriteAttraction[];
       }
 
