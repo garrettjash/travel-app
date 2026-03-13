@@ -35,6 +35,16 @@ type DayPlan = {
   }[];
 };
 
+type DbStop = {
+  attractionId: number;
+  slot: "Morning" | "Afternoon" | "Evening";
+};
+
+type DbDayPlan = {
+  dayNumber: number;
+  stops: DbStop[];
+};
+
 type ItineraryRow = {
   itinerary_id: string;
   trip_name: string | null;
@@ -45,8 +55,9 @@ type ItineraryRow = {
   end_date: string | null;
   pace: string | null;
   notes: string | null;
-  days: DayPlan[] | null;
-  unscheduled: FavoriteAttraction[] | null;
+  // Stored in DB as either legacy (full attraction objects) or new normalized IDs-only shape.
+  days: unknown;
+  unscheduled: unknown;
   created_at: string | null;
   updated_at: string | null;
 };
@@ -143,6 +154,259 @@ function generateItineraryId() {
 function generateShareCode() {
   const num = Math.floor(Math.random() * 1_000_000);
   return num.toString().padStart(6, "0");
+}
+
+/** Helpers copied from /api/attractions to hydrate FavoriteAttraction from the DB by ID */
+type AttractionRow = {
+  attraction_id: number;
+  attraction_name: string | null;
+  attraction_city: string | null;
+  attraction_stateprovince: string | null;
+  attraction_countryregion: string | null;
+  attraction_latitude: number | null;
+  attraction_longitude: number | null;
+  attraction_distancefromplace: number | null;
+  attraction_totalcountratings: number | null;
+  attraction_credibilitytier: number | null;
+  attraction_reviewssummary: string | null;
+  attraction_rawdata: string | null;
+  attraction_lastrefreshed: string | null;
+  attraction_summary: string | null;
+  attraction_vibe: string | null;
+  attraction_normalizedrating: number | null;
+  attraction_pricelevel: string | null;
+  attraction_popularityscore: number | null;
+};
+
+type AttractionImageRow = {
+  attraction_id: number;
+  image_url: string | null;
+};
+
+const ATTRACTION_SELECT =
+  "attraction_id, attraction_name, attraction_city, attraction_stateprovince, attraction_countryregion, attraction_latitude, attraction_longitude, attraction_distancefromplace, attraction_totalcountratings, attraction_credibilitytier, attraction_reviewssummary, attraction_rawdata, attraction_lastrefreshed, attraction_summary, attraction_vibe, attraction_normalizedrating, attraction_pricelevel, attraction_popularityscore";
+
+function normalizeImageUrl(rawValue: string | null | undefined) {
+  const value = normalizeText(rawValue);
+  if (!value) return null;
+
+  if (value.startsWith("http://") || value.startsWith("https://")) return value;
+  if (value.startsWith("//")) return `https:${value}`;
+
+  if (value.startsWith("s3://")) {
+    const withoutScheme = value.slice(5);
+    const firstSlashIndex = withoutScheme.indexOf("/");
+    if (firstSlashIndex <= 0) return null;
+    const bucket = withoutScheme.slice(0, firstSlashIndex);
+    const key = withoutScheme.slice(firstSlashIndex + 1);
+    return `https://${bucket}.s3.amazonaws.com/${key}`;
+  }
+
+  if (value.includes(".s3.amazonaws.com/") || value.includes(".s3.")) {
+    return `https://${value}`;
+  }
+
+  return null;
+}
+
+function toDbShape(days: DayPlan[], unscheduled: FavoriteAttraction[]): { dbDays: DbDayPlan[]; dbUnscheduled: number[] } {
+  const dbDays: DbDayPlan[] = (days ?? []).map((day) => {
+    const stops: DbStop[] = (day.stops ?? [])
+      .map((stop) => {
+        const id = stop?.attraction?.id;
+        if (!Number.isFinite(id)) return null;
+        return {
+          slot: stop.slot ?? "Morning",
+          attractionId: Number(id)
+        } as DbStop;
+      })
+      .filter((s): s is DbStop => Boolean(s));
+    return { dayNumber: day.dayNumber, stops };
+  });
+
+  const seen = new Set<number>();
+  const dbUnscheduled: number[] = [];
+  for (const item of unscheduled ?? []) {
+    const id = item && typeof item.id === "number" ? item.id : NaN;
+    if (!Number.isFinite(id)) continue;
+    const n = Number(id);
+    if (seen.has(n)) continue;
+    seen.add(n);
+    dbUnscheduled.push(n);
+  }
+
+  return { dbDays, dbUnscheduled };
+}
+
+function collectAttractionIds(rawDays: unknown, rawUnscheduled: unknown): { ids: number[]; hasNormalizedIds: boolean } {
+  const idsSet = new Set<number>();
+  let hasNormalizedIds = false;
+
+  const daysArray = Array.isArray(rawDays) ? (rawDays as any[]) : [];
+  for (const day of daysArray) {
+    const stops = Array.isArray(day?.stops) ? day.stops : [];
+    for (const stop of stops) {
+      if (typeof stop?.attractionId === "number") {
+        hasNormalizedIds = true;
+        idsSet.add(stop.attractionId);
+      } else if (stop?.attraction && typeof stop.attraction.id === "number") {
+        idsSet.add(stop.attraction.id);
+      }
+    }
+  }
+
+  const unsArray = Array.isArray(rawUnscheduled) ? (rawUnscheduled as any[]) : [];
+  for (const item of unsArray) {
+    if (typeof item === "number") {
+      hasNormalizedIds = true;
+      idsSet.add(item);
+    } else if (item && typeof item.id === "number") {
+      idsSet.add(item.id);
+    }
+  }
+
+  return { ids: Array.from(idsSet), hasNormalizedIds };
+}
+
+async function hydrateAttractionsById(
+  supabase: ReturnType<typeof createClient>,
+  ids: number[]
+): Promise<Map<number, FavoriteAttraction>> {
+  const map = new Map<number, FavoriteAttraction>();
+  if (ids.length === 0) return map;
+
+  const uniqueIds = Array.from(new Set(ids));
+
+  const { data, error } = await supabase
+    .from("attraction")
+    .select(ATTRACTION_SELECT)
+    .in("attraction_id", uniqueIds)
+    .limit(uniqueIds.length);
+
+  if (error) {
+    return map;
+  }
+
+  const attractionRows = (data ?? []) as unknown as AttractionRow[];
+  const attractionIds = attractionRows.map((row) => row.attraction_id);
+
+  let categoriesByAttraction = new Map<number, string[]>();
+  let imageByAttraction = new Map<number, string[]>();
+
+  if (attractionIds.length > 0) {
+    const [linksResult, imagesResult] = await Promise.all([
+      supabase
+        .from("attraction_categories")
+        .select("attraction_id, category_id")
+        .in("attraction_id", attractionIds)
+        .limit(8000),
+      supabase
+        .from("images")
+        .select("attraction_id, image_url")
+        .in("attraction_id", attractionIds)
+        .limit(8000)
+    ]);
+
+    if (!linksResult.error && !imagesResult.error) {
+      const categoryIds = Array.from(
+        new Set((linksResult.data ?? []).map((row) => Number(row.category_id)).filter(Number.isFinite))
+      );
+
+      const categoryNameById = new Map<number, string>();
+      if (categoryIds.length > 0) {
+        const categoriesResult = await supabase
+          .from("category")
+          .select("category_id, category_name")
+          .in("category_id", categoryIds)
+          .limit(2000);
+
+        if (!categoriesResult.error) {
+          for (const row of categoriesResult.data ?? []) {
+            categoryNameById.set(Number(row.category_id), normalizeText(row.category_name));
+          }
+        }
+      }
+
+      categoriesByAttraction = new Map<number, string[]>();
+      for (const link of linksResult.data ?? []) {
+        const attractionId = Number(link.attraction_id);
+        const categoryName = categoryNameById.get(Number(link.category_id));
+        if (!categoryName) continue;
+        const current = categoriesByAttraction.get(attractionId) ?? [];
+        if (!current.includes(categoryName)) {
+          current.push(categoryName);
+          categoriesByAttraction.set(attractionId, current);
+        }
+      }
+
+      imageByAttraction = new Map<number, string[]>();
+      for (const image of (imagesResult.data ?? []) as AttractionImageRow[]) {
+        const attractionId = Number(image.attraction_id);
+        const imageUrl = normalizeImageUrl(image.image_url);
+        if (!imageUrl) continue;
+        const current = imageByAttraction.get(attractionId) ?? [];
+        if (!current.includes(imageUrl)) {
+          current.push(imageUrl);
+          imageByAttraction.set(attractionId, current);
+        }
+      }
+    }
+  }
+
+  for (const row of attractionRows) {
+    const id = row.attraction_id;
+    const categories = categoriesByAttraction.get(id) ?? [];
+    const imageUrls = imageByAttraction.get(id) ?? [];
+
+    const favorite: FavoriteAttraction = {
+      id,
+      name: normalizeText(row.attraction_name) || "Unnamed attraction",
+      city: normalizeText(row.attraction_city),
+      stateProvince: normalizeText(row.attraction_stateprovince),
+      country: normalizeText(row.attraction_countryregion),
+      latitude:
+        row.attraction_latitude !== null && Number.isFinite(Number(row.attraction_latitude))
+          ? Number(row.attraction_latitude)
+          : null,
+      longitude:
+        row.attraction_longitude !== null && Number.isFinite(Number(row.attraction_longitude))
+          ? Number(row.attraction_longitude)
+          : null,
+      distanceFromPlace:
+        row.attraction_distancefromplace !== null && Number.isFinite(Number(row.attraction_distancefromplace))
+          ? Number(row.attraction_distancefromplace)
+          : null,
+      totalCountRatings:
+        row.attraction_totalcountratings !== null && Number.isFinite(Number(row.attraction_totalcountratings))
+          ? Number(row.attraction_totalcountratings)
+          : null,
+      credibilityTier:
+        row.attraction_credibilitytier !== null && Number.isFinite(Number(row.attraction_credibilitytier))
+          ? Number(row.attraction_credibilitytier)
+          : null,
+      reviewsSummary: normalizeText(row.attraction_reviewssummary),
+      rawData: normalizeText(row.attraction_rawdata),
+      lastRefreshed: normalizeText(row.attraction_lastrefreshed),
+      summary: normalizeText(row.attraction_summary),
+      vibe: normalizeText(row.attraction_vibe),
+      rating:
+        row.attraction_normalizedrating !== null && Number.isFinite(Number(row.attraction_normalizedrating))
+          ? Number(row.attraction_normalizedrating)
+          : null,
+      priceLevel: normalizeText(row.attraction_pricelevel),
+      popularityScore:
+        row.attraction_popularityscore !== null && Number.isFinite(Number(row.attraction_popularityscore))
+          ? Number(row.attraction_popularityscore)
+          : null,
+      categories,
+      imageUrl: imageUrls[0] ?? null,
+      imageUrls
+    };
+
+    map.set(id, favorite);
+  }
+
+  return map;
 }
 
 export default async function handler(
@@ -271,6 +535,73 @@ export default async function handler(
         }
       }
 
+      const rawDays = (data.days ?? []) as unknown;
+      const rawUnscheduled = (data.unscheduled ?? []) as unknown;
+
+      // Collect all attraction IDs referenced in days/unscheduled, supporting both legacy and new formats.
+      const { ids, hasNormalizedIds } = collectAttractionIds(rawDays, rawUnscheduled);
+
+      let hydratedDays: DayPlan[] = [];
+      let hydratedUnscheduled: FavoriteAttraction[] = [];
+
+      if (ids.length > 0 && hasNormalizedIds) {
+        // New normalized shape (IDs only) — hydrate from DB.
+        const byId = await hydrateAttractionsById(supabase, ids);
+
+        const daysArray = Array.isArray(rawDays) ? (rawDays as any[]) : [];
+        hydratedDays = daysArray.map((day): DayPlan => {
+          const dayNumber = Number(day?.dayNumber) || 1;
+          const stopsRaw = Array.isArray(day?.stops) ? day.stops : [];
+          const stops: DayPlan["stops"] = [];
+          for (const stop of stopsRaw) {
+            const id =
+              typeof stop?.attractionId === "number"
+                ? stop.attractionId
+                : stop?.attraction && typeof stop.attraction.id === "number"
+                ? stop.attraction.id
+                : null;
+            if (!Number.isFinite(id)) continue;
+            const attraction = byId.get(Number(id));
+            if (!attraction) continue;
+            const slot: DayPlan["stops"][number]["slot"] =
+              stop?.slot === "Afternoon" || stop?.slot === "Evening" ? stop.slot : "Morning";
+            stops.push({ slot, attraction });
+          }
+          return { dayNumber, stops };
+        });
+
+        const usedInDays = new Set<number>();
+        for (const day of hydratedDays) {
+          for (const stop of day.stops) usedInDays.add(stop.attraction.id);
+        }
+
+        const unsArray = Array.isArray(rawUnscheduled) ? (rawUnscheduled as any[]) : [];
+        const seenUnscheduled = new Set<number>();
+        for (const item of unsArray) {
+          const id = typeof item === "number" ? item : item?.id;
+          if (!Number.isFinite(id)) continue;
+          const n = Number(id);
+          if (usedInDays.has(n) || seenUnscheduled.has(n)) continue;
+          const attraction = byId.get(n);
+          if (!attraction) continue;
+          hydratedUnscheduled.push(attraction);
+          seenUnscheduled.add(n);
+        }
+
+        // Opportunistic in-place migration of legacy rows to IDs-only storage.
+        if (!hasNormalizedIds) {
+          const { dbDays, dbUnscheduled } = toDbShape(hydratedDays, hydratedUnscheduled);
+          await supabase
+            .from("itinerary")
+            .update({ days: dbDays, unscheduled: dbUnscheduled })
+            .eq("itinerary_id", itineraryId);
+        }
+      } else {
+        // Legacy shape with full attraction objects already stored.
+        hydratedDays = (data.days ?? []) as DayPlan[];
+        hydratedUnscheduled = (data.unscheduled ?? []) as FavoriteAttraction[];
+      }
+
       const itinerary: {
         itineraryId: string;
         tripName: string;
@@ -293,8 +624,8 @@ export default async function handler(
         endDate: normalizeText(data.end_date) || "",
         pace: (normalizeText(data.pace) as Pace) || "balanced",
         notes: normalizeText(data.notes),
-        days: (data.days ?? []) as DayPlan[],
-        unscheduled: (data.unscheduled ?? []) as FavoriteAttraction[],
+        days: hydratedDays,
+        unscheduled: hydratedUnscheduled,
         createdAt: data.created_at ?? undefined,
         updatedAt: data.updated_at ?? undefined,
         requiresShareCode: Boolean(data.share_code_required)
@@ -400,6 +731,7 @@ export default async function handler(
 
       if (request.method === "POST") {
         const shareCode = generateShareCode();
+        const { dbDays, dbUnscheduled } = toDbShape(days, unscheduled);
         const insertRow: Record<string, unknown> = {
           itinerary_id: itineraryId,
           trip_name: tripName,
@@ -408,8 +740,8 @@ export default async function handler(
           end_date: endDate,
           pace,
           notes,
-          days,
-          unscheduled,
+          days: dbDays,
+          unscheduled: dbUnscheduled,
           share_code: shareCode,
           share_code_required: true
         };
@@ -431,6 +763,7 @@ export default async function handler(
       }
 
       if (request.method === "PATCH") {
+        const { dbDays, dbUnscheduled } = toDbShape(days, unscheduled);
         const { error } = await supabase
           .from("itinerary")
           .update({
@@ -440,8 +773,8 @@ export default async function handler(
             end_date: endDate,
             pace,
             notes,
-            days,
-            unscheduled
+            days: dbDays,
+            unscheduled: dbUnscheduled
           })
           .eq("itinerary_id", itineraryId);
 
