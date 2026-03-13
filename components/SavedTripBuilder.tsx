@@ -7,7 +7,6 @@ import { FavoriteAttraction, useFavorites } from "../lib/favorites-context";
 import { useItinerary } from "../lib/itinerary-context";
 
 type Pace = "relaxed" | "balanced" | "packed";
-type Slot = "Morning" | "Afternoon" | "Evening";
 
 type PlaceOption = {
   id: number;
@@ -69,7 +68,10 @@ function apiAttractionToFavorite(a: ApiAttraction): FavoriteAttraction {
 
 type PlannedStop = {
   attraction: FavoriteAttraction;
-  slot: Slot;
+  /** Local trip start time as HH:MM (24h) */
+  startTime: string;
+  /** Duration in minutes */
+  durationMinutes: number;
 };
 
 export type DayPlan = {
@@ -101,8 +103,6 @@ type SavedTripBuilderProps = {
   /** Optional starting location when no initialItinerary is provided (e.g. from solo-planner place query). */
   initialTripPlace?: string;
 };
-
-const slotOrder: Slot[] = ["Morning", "Afternoon", "Evening"];
 
 const BUILD_CATEGORIES = [
   "Landmark",
@@ -145,9 +145,20 @@ function formatCategoryLabel(categories: string[] | undefined): string {
   return categories.slice(0, 2).join(" • ").trim();
 }
 
-function getSlotLabel(stopIndex: number, totalInDay: number): string {
-  if (totalInDay > 3) return `Stop ${stopIndex + 1}`;
-  return slotOrder[stopIndex] ?? "Morning";
+function formatTimeLabel(startTime: string, durationMinutes: number): string {
+  const safeTime = startTime && /^\d{2}:\d{2}$/.test(startTime) ? startTime : "09:00";
+  const hours = Math.max(0, Math.round(durationMinutes / 60));
+  const remainingMinutes = Math.max(0, durationMinutes % 60);
+  if (!durationMinutes || durationMinutes <= 0) {
+    return safeTime;
+  }
+  if (hours && remainingMinutes) {
+    return `${safeTime} • ${hours}h ${remainingMinutes}m`;
+  }
+  if (hours) {
+    return `${safeTime} • ${hours}h`;
+  }
+  return `${safeTime} • ${remainingMinutes}m`;
 }
 
 function daysBetween(startDate: string, endDate: string) {
@@ -537,18 +548,19 @@ export default function SavedTripBuilder({
   const moveStop = useCallback(
     (from: DragSource, to: DropTarget) => {
       let attraction: FavoriteAttraction;
-      let slot: Slot = "Morning";
+      let startTime = "09:00";
+      let durationMinutes = 90;
 
       if (from.type === "day") {
         const stop = dayPlans[from.dayIndex]?.stops[from.slotIndex];
         if (!stop) return;
         attraction = stop.attraction;
-        slot = stop.slot;
+        startTime = stop.startTime || "09:00";
+        durationMinutes = stop.durationMinutes || 90;
       } else {
         const item = unscheduled[from.index];
         if (!item) return;
         attraction = item;
-        if (to.type === "day") slot = slotOrder[to.insertIndex % slotOrder.length] ?? "Morning";
       }
 
       setDayPlans((current) => {
@@ -567,7 +579,22 @@ export default function SavedTripBuilder({
             if (from.type === "day" && from.dayIndex === to.dayIndex && from.slotIndex < to.insertIndex) {
               insertIdx = to.insertIndex - 1;
             }
-            const newStop: PlannedStop = { attraction, slot };
+
+            // If this is coming from Unassigned, suggest a time based on neighbors.
+            if (from.type === "unscheduled") {
+              const before = targetDay.stops[insertIdx - 1];
+              const after = targetDay.stops[insertIdx];
+              if (before) {
+                startTime = before.startTime || "09:00";
+              } else if (after) {
+                startTime = after.startTime || "09:00";
+              } else {
+                startTime = "09:00";
+              }
+              durationMinutes = 90;
+            }
+
+            const newStop: PlannedStop = { attraction, startTime, durationMinutes };
             targetDay.stops.splice(insertIdx, 0, newStop);
           }
         }
@@ -646,9 +673,22 @@ export default function SavedTripBuilder({
     }
     picked.forEach((attraction, index) => {
       const dayIndex = Math.floor(index / stopsPerDay);
-      const slotIndex = index % stopsPerDay;
-      const slot = slotOrder[slotIndex] ?? "Morning";
-      if (days[dayIndex]) days[dayIndex].stops.push({ attraction, slot });
+      const indexInDay = index % stopsPerDay;
+      if (!days[dayIndex]) return;
+
+      // Evenly distribute between 09:00 and 21:00 for that day
+      const dayStartMinutes = 9 * 60;
+      const dayEndMinutes = 21 * 60;
+      const span = dayEndMinutes - dayStartMinutes;
+      const step = stopsPerDay > 1 ? Math.floor(span / (stopsPerDay - 1)) : span;
+      const minutesFromStart = dayStartMinutes + step * indexInDay;
+      const startHour = Math.floor(minutesFromStart / 60);
+      const startMinute = minutesFromStart % 60;
+      const startTime = `${String(startHour).padStart(2, "0")}:${String(startMinute).padStart(2, "0")}`;
+
+      const durationMinutes = 90;
+
+      days[dayIndex].stops.push({ attraction, startTime, durationMinutes });
     });
 
     setDayPlans(days);
@@ -740,50 +780,27 @@ export default function SavedTripBuilder({
       const eventDate = new Date(baseDate.getTime() + dayIndex * 24 * 60 * 60 * 1000);
       const datePart = formatDateForIcs(eventDate);
 
-      const stops = day.stops;
-      const total = stops.length;
-      const slotOffsets: Record<Slot, number> = {
-        Morning: 0,
-        Afternoon: 0,
-        Evening: 0
-      };
+      const stops = day.stops
+        .slice()
+        .sort((a, b) => (a.startTime || "").localeCompare(b.startTime || ""));
 
-      for (let i = 0; i < total; i++) {
+      for (let i = 0; i < stops.length; i++) {
         const stop = stops[i];
         const a = stop.attraction;
 
-        let startHour = 10;
+        const timeMatch = (stop.startTime || "09:00").match(/^(\d{2}):(\d{2})$/);
+        let startHour = 9;
         let startMinute = 0;
-
-        if (total <= 3) {
-          // Use Morning / Afternoon / Evening mapping, but stagger duplicates
-          const slotLabel = stop.slot;
-          let baseHour = 10;
-          if (slotLabel === "Morning") baseHour = 10;
-          else if (slotLabel === "Afternoon") baseHour = 14;
-          else if (slotLabel === "Evening") baseHour = 17;
-          const offsetIndex = slotOffsets[slotLabel] ?? 0;
-          startHour = baseHour + offsetIndex;
-          slotOffsets[slotLabel] = offsetIndex + 1;
-        } else {
-          // Evenly space between 9:00 and 20:00
-          const firstMinutes = 9 * 60;
-          const lastMinutes = 20 * 60;
-          const span = lastMinutes - firstMinutes;
-          const step = total > 1 ? Math.floor(span / (total - 1)) : span;
-          const minutesFromStart = firstMinutes + step * i;
-          startHour = Math.floor(minutesFromStart / 60);
-          startMinute = minutesFromStart % 60;
+        if (timeMatch) {
+          startHour = Number(timeMatch[1]);
+          startMinute = Number(timeMatch[2]);
         }
 
+        const durationMinutes = stop.durationMinutes && stop.durationMinutes > 0 ? stop.durationMinutes : 60;
         const startTime = formatTimeForIcs(startHour, startMinute);
-        // default to 1 hour duration
-        let endHour = startHour;
-        let endMinute = startMinute + 60;
-        if (endMinute >= 60) {
-          endHour += Math.floor(endMinute / 60);
-          endMinute = endMinute % 60;
-        }
+        let totalMinutes = startHour * 60 + startMinute + durationMinutes;
+        let endHour = Math.floor(totalMinutes / 60);
+        let endMinute = totalMinutes % 60;
         const endTime = formatTimeForIcs(endHour, endMinute);
 
         const summary = `${cleanedTitle} - ${a.name}`.replace(/[\r\n]+/g, " ");
@@ -1551,7 +1568,7 @@ export default function SavedTripBuilder({
                       >
                         {day.stops.map((stop, slotIndex) => (
                           <div
-                            key={`${day.dayNumber}-${stop.attraction.id}-${stop.slot}`}
+                            key={`${day.dayNumber}-${stop.attraction.id}-${stop.startTime}-${slotIndex}`}
                             className={`saved-schedule-card saved-schedule-card-in-day saved-schedule-card-clickable ${dragSource?.type === "day" && dragSource.dayIndex === dayIndex && dragSource.slotIndex === slotIndex ? "saved-schedule-card-dragging" : ""}`}
                             draggable
                             onClick={() => setSelectedAttraction(stop.attraction)}
@@ -1567,7 +1584,53 @@ export default function SavedTripBuilder({
                               if (dragSource) moveStop(dragSource, { type: "day", dayIndex, insertIndex: slotIndex });
                             }}
                           >
-                            <span className="saved-stop-slot">{getSlotLabel(slotIndex, day.stops.length)}</span>
+                            <div className="saved-stop-slot">
+                              <span>{formatTimeLabel(stop.startTime, stop.durationMinutes)}</span>
+                              <div style={{ display: "flex", gap: 4, marginTop: 4 }}>
+                                <input
+                                  type="time"
+                                  value={stop.startTime || "09:00"}
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    setDayPlans((current) =>
+                                      current.map((d, di) =>
+                                        di !== dayIndex
+                                          ? d
+                                          : {
+                                              ...d,
+                                              stops: d.stops.map((s, si) =>
+                                                si !== slotIndex ? s : { ...s, startTime: value || "09:00" }
+                                              )
+                                            }
+                                      )
+                                    );
+                                  }}
+                                  style={{ width: 80 }}
+                                />
+                                <input
+                                  type="number"
+                                  min={15}
+                                  step={15}
+                                  value={stop.durationMinutes || 60}
+                                  onChange={(e) => {
+                                    const value = Number(e.target.value) || 60;
+                                    setDayPlans((current) =>
+                                      current.map((d, di) =>
+                                        di !== dayIndex
+                                          ? d
+                                          : {
+                                              ...d,
+                                              stops: d.stops.map((s, si) =>
+                                                si !== slotIndex ? s : { ...s, durationMinutes: Math.max(15, value) }
+                                              )
+                                            }
+                                      )
+                                    );
+                                  }}
+                                  style={{ width: 70 }}
+                                />
+                              </div>
+                            </div>
                             {stop.attraction.imageUrl ? (
                               <img src={stop.attraction.imageUrl} alt="" className="saved-schedule-card-img" />
                             ) : (
