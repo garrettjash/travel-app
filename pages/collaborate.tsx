@@ -219,6 +219,7 @@ export default function CollaboratePage() {
 
   return (
     <AppShell activeTab="collaborate">
+          <div className="collaborate-page-content">
           <section className="about-card">
             <h1>Collaborate</h1>
             <p>Create or join a collaborate session.</p>
@@ -322,6 +323,7 @@ export default function CollaboratePage() {
 
             {joinLinkError && <p className="attractions-state">{joinLinkError}</p>}
           </section>
+          </div>
     </AppShell>
   );
 }

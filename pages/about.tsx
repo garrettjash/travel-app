@@ -3,6 +3,7 @@ import AppShell from "../components/AppShell";
 export default function AboutPage() {
   return (
     <AppShell activeTab="about">
+          <div className="about-page-content">
           <section className="about-card">
             <h1>About TravelApp</h1>
             <p>
@@ -45,6 +46,7 @@ export default function AboutPage() {
             </ul>
             <p className="about-updated">Last updated: March 4, 2026</p>
           </section>
+          </div>
     </AppShell>
   );
 }

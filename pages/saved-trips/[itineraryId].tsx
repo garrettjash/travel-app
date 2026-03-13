@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import type { NextPage } from "next";
 import { useRouter } from "next/router";
-import AuthButton from "../../components/AuthButton";
+import AppShell from "../../components/AppShell";
 import SavedTripBuilder, { SavedItinerary } from "../../components/SavedTripBuilder";
 import { useAuth } from "../../lib/auth-context";
 
@@ -95,190 +95,64 @@ const ItineraryPage: NextPage = () => {
 
   if (isLoading) {
     return (
-      <main className="destinations-page">
-        <header className="destinations-topbar">
-          <button
-            type="button"
-            className="destinations-brand destinations-brand-button"
-            onClick={() => router.push("/")}
-          >
-            TravelApp
-          </button>
-          <AuthButton />
-        </header>
-
-        <section className="destinations-layout">
-          <nav className="destinations-sidebar" aria-label="Main navigation">
-            <button type="button" className="destinations-tab" onClick={() => router.push("/home")}>
-              <span aria-hidden="true">🗺️</span>
-              <span>Destinations</span>
-            </button>
-            <button type="button" className="destinations-tab destinations-tab-active">
-              <span aria-hidden="true">💾</span>
-              <span>Itinerary</span>
-            </button>
-            <button type="button" className="destinations-tab" onClick={() => router.push("/favorites")}>
-              <span aria-hidden="true">❤</span>
-              <span>Favorites</span>
-            </button>
-            <button type="button" className="destinations-tab" onClick={() => router.push("/collaborate")}>
-              <span aria-hidden="true">👥</span>
-              <span>Collaborate</span>
-            </button>
-            <button type="button" className="destinations-tab" onClick={() => router.push("/ai-chatbot")}>
-              <span aria-hidden="true">✨</span>
-              <span>AI Chatbot</span>
-            </button>
-            <button type="button" className="destinations-tab" onClick={() => router.push("/about")}>
-              <span aria-hidden="true">ℹ️</span>
-              <span>About</span>
-            </button>
-          </nav>
-
-          <div className="destinations-content">
-            <section className="about-card">
-              <h1>Loading itinerary...</h1>
-              <p>Please wait a moment.</p>
-            </section>
-          </div>
+      <AppShell>
+        <section className="about-card">
+          <h1>Loading itinerary...</h1>
+          <p>Please wait a moment.</p>
         </section>
-      </main>
+      </AppShell>
     );
   }
 
   if (needsShareCode) {
     return (
-      <main className="destinations-page">
-        <header className="destinations-topbar">
-          <button
-            type="button"
-            className="destinations-brand destinations-brand-button"
-            onClick={() => router.push("/")}
-          >
-            TravelApp
-          </button>
-          <AuthButton />
-        </header>
-
-        <section className="destinations-layout">
-          <nav className="destinations-sidebar" aria-label="Main navigation">
-            <button type="button" className="destinations-tab" onClick={() => router.push("/home")}>
-              <span aria-hidden="true">🗺️</span>
-              <span>Destinations</span>
-            </button>
-            <button type="button" className="destinations-tab destinations-tab-active">
-              <span aria-hidden="true">💾</span>
-              <span>Itinerary</span>
-            </button>
-            <button type="button" className="destinations-tab" onClick={() => router.push("/favorites")}>
-              <span aria-hidden="true">❤</span>
-              <span>Favorites</span>
-            </button>
-            <button type="button" className="destinations-tab" onClick={() => router.push("/collaborate")}>
-              <span aria-hidden="true">👥</span>
-              <span>Collaborate</span>
-            </button>
-            <button type="button" className="destinations-tab" onClick={() => router.push("/ai-chatbot")}>
-              <span aria-hidden="true">✨</span>
-              <span>AI Chatbot</span>
-            </button>
-            <button type="button" className="destinations-tab" onClick={() => router.push("/about")}>
-              <span aria-hidden="true">ℹ️</span>
-              <span>About</span>
-            </button>
-          </nav>
-
-          <div className="destinations-content">
-            <section className="about-card">
-              <h1>Enter share code</h1>
-              <p>This itinerary is protected. Ask the owner for the 6-digit share code to view and edit it.</p>
-              <form onSubmit={handleShareCodeSubmit} className="planning-solo-form">
-                <label className="planning-solo-label" htmlFor="itinerary-share-code">
-                  Share code
-                </label>
-                <div className="planning-solo-input-row">
-                  <input
-                    id="itinerary-share-code"
-                    className="planning-solo-input"
-                    value={shareCodeInput}
-                    onChange={(e) => setShareCodeInput(e.target.value)}
-                    maxLength={12}
-                    placeholder="6-digit code"
-                  />
-                  <button type="submit" className="planning-solo-next">
-                    Continue
-                  </button>
-                </div>
-                {shareCodeError && (
-                  <p className="chat-error" style={{ marginTop: 6 }}>
-                    {shareCodeError}
-                  </p>
-                )}
-              </form>
-            </section>
-          </div>
+      <AppShell>
+        <section className="about-card">
+          <h1>Enter share code</h1>
+          <p>This itinerary is protected. Ask the owner for the 6-digit share code to view and edit it.</p>
+          <form onSubmit={handleShareCodeSubmit} className="planning-solo-form">
+            <label className="planning-solo-label" htmlFor="itinerary-share-code">
+              Share code
+            </label>
+            <div className="planning-solo-input-row">
+              <input
+                id="itinerary-share-code"
+                className="planning-solo-input"
+                value={shareCodeInput}
+                onChange={(e) => setShareCodeInput(e.target.value)}
+                maxLength={12}
+                placeholder="6-digit code"
+              />
+              <button type="submit" className="planning-solo-next">
+                Continue
+              </button>
+            </div>
+            {shareCodeError && (
+              <p className="chat-error" style={{ marginTop: 6 }}>
+                {shareCodeError}
+              </p>
+            )}
+          </form>
         </section>
-      </main>
+      </AppShell>
     );
   }
 
   if (loadError) {
     return (
-      <main className="destinations-page">
-        <header className="destinations-topbar">
+      <AppShell>
+        <section className="about-card">
+          <h1>Itinerary not available</h1>
+          <p>{loadError}</p>
           <button
             type="button"
-            className="destinations-brand destinations-brand-button"
-            onClick={() => router.push("/")}
+            className="saved-trips-button saved-trips-button-primary"
+            onClick={() => router.push("/saved-trips")}
           >
-            TravelApp
+            Start a new trip
           </button>
-          <AuthButton />
-        </header>
-
-        <section className="destinations-layout">
-          <nav className="destinations-sidebar" aria-label="Main navigation">
-            <button type="button" className="destinations-tab" onClick={() => router.push("/home")}>
-              <span aria-hidden="true">🗺️</span>
-              <span>Destinations</span>
-            </button>
-            <button type="button" className="destinations-tab destinations-tab-active">
-              <span aria-hidden="true">💾</span>
-              <span>Itinerary</span>
-            </button>
-            <button type="button" className="destinations-tab" onClick={() => router.push("/favorites")}>
-              <span aria-hidden="true">❤</span>
-              <span>Favorites</span>
-            </button>
-            <button type="button" className="destinations-tab" onClick={() => router.push("/collaborate")}>
-              <span aria-hidden="true">👥</span>
-              <span>Collaborate</span>
-            </button>
-            <button type="button" className="destinations-tab" onClick={() => router.push("/ai-chatbot")}>
-              <span aria-hidden="true">✨</span>
-              <span>AI Chatbot</span>
-            </button>
-            <button type="button" className="destinations-tab" onClick={() => router.push("/about")}>
-              <span aria-hidden="true">ℹ️</span>
-              <span>About</span>
-            </button>
-          </nav>
-
-          <div className="destinations-content">
-            <section className="about-card">
-              <h1>Itinerary not available</h1>
-              <p>{loadError}</p>
-              <button
-                type="button"
-                className="saved-trips-button saved-trips-button-primary"
-                onClick={() => router.push("/saved-trips")}
-              >
-                Start a new trip
-              </button>
-            </section>
-          </div>
         </section>
-      </main>
+      </AppShell>
     );
   }
 
@@ -286,4 +160,3 @@ const ItineraryPage: NextPage = () => {
 };
 
 export default ItineraryPage;
-

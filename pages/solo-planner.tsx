@@ -1,7 +1,7 @@
 import { FormEvent, ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import AuthButton from "../components/AuthButton";
-import AppSidebar from "../components/AppSidebar";
+import AppTopNav from "../components/AppTopNav";
 import SavedTripBuilder from "../components/SavedTripBuilder";
 import { FavoriteAttraction } from "../lib/favorites-context";
 import { useAuth } from "../lib/auth-context";
@@ -68,14 +68,12 @@ function formatLocation(city: string, stateProvince: string, country: string) {
 export default function SoloPlannerPage() {
   const { user } = useAuth();
   const router = useRouter();
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const placeQuery = router.query.place;
   const initialPlace = Array.isArray(placeQuery) ? placeQuery[0] : placeQuery;
 
   const { attractions, addAttraction, removeAttraction, clearAttractions, isInItinerary } = useItinerary();
 
-  const [panelOpen, setPanelOpen] = useState(true);
-  const [isChatCollapsed, setIsChatCollapsed] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const [suggestedAttractions, setSuggestedAttractions] = useState<FavoriteAttraction[]>([]);
   const [isLoadingSuggested, setIsLoadingSuggested] = useState(false);
 
@@ -88,11 +86,6 @@ export default function SoloPlannerPage() {
   const previousMessageCountRef = useRef(0);
 
   const canSend = useMemo(() => draft.trim().length > 0 && !isSending, [draft, isSending]);
-
-  useEffect(() => {
-    if (panelOpen) return;
-    setIsChatCollapsed(false);
-  }, [panelOpen]);
 
   const fetchMessages = async (activeSessionId: string) => {
     try {
@@ -125,11 +118,6 @@ export default function SoloPlannerPage() {
   }, []);
 
   useEffect(() => {
-    if (panelOpen) return;
-    setIsChatCollapsed(false);
-  }, [panelOpen]);
-
-  useEffect(() => {
     if (!sessionId) return;
     fetchMessages(sessionId);
   }, [sessionId]);
@@ -155,16 +143,6 @@ export default function SoloPlannerPage() {
     if (!initialPlace || !sessionId) return;
     setDraft(`Show me the best things to do in ${initialPlace}`);
   }, [initialPlace, sessionId]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    setIsSidebarCollapsed(window.localStorage.getItem("travelapp-sidebar-collapsed") === "true");
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem("travelapp-sidebar-collapsed", String(isSidebarCollapsed));
-  }, [isSidebarCollapsed]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -208,59 +186,94 @@ export default function SoloPlannerPage() {
   };
 
   return (
-    <main
-      className={`solo-planner-page ${panelOpen ? "solo-planner-page-panel-open" : ""} ${
-        isChatCollapsed ? "solo-planner-page-chat-collapsed" : ""
-      } ${isSidebarCollapsed ? "solo-planner-page-sidebar-collapsed" : ""}`}
-    >
-      <header className="solo-planner-topbar">
-        <button type="button" className="solo-back-button" onClick={() => router.push("/planning-options")}>
-          ← Back
+    <main className={`solo-planner-page ${isChatOpen ? "solo-planner-page-chat-open" : ""}`}>
+      <header className="destinations-topbar">
+        <button
+          type="button"
+          className="destinations-brand destinations-brand-button"
+          onClick={() => router.push("/")}
+        >
+          TravelApp
         </button>
-        <AuthButton />
+        <AppTopNav activeTab="solo-planner" />
+        <div className="destinations-topbar-actions">
+          <AuthButton />
+        </div>
       </header>
 
-      <AppSidebar
-        activeTab="solo-planner"
-        isCollapsed={isSidebarCollapsed}
-        onToggleCollapse={() => setIsSidebarCollapsed((collapsed) => !collapsed)}
-      />
+      <section className="solo-planner-main">
+      <aside className="solo-itinerary-panel solo-itinerary-panel-open">
+        <div className="solo-itinerary-panel-inner planner-pane-surface">
+          <div className="solo-itinerary-panel-header planner-pane-header">
+            <div>
+              <h2>Itinerary Builder</h2>
+              <p>{initialPlace ? `Organize stops for ${initialPlace}.` : "Build and save your trip plan."}</p>
+            </div>
+            <button
+              type="button"
+              className="solo-chat-launch-button"
+              onClick={() => setIsChatOpen(true)}
+              aria-label="Open AI chat"
+              title="Open AI chat"
+            >
+              <span aria-hidden="true">💬</span>
+            </button>
+          </div>
+          {initialPlace && (
+            <section className="solo-itinerary-suggested">
+              <h3>Suggested for {initialPlace}</h3>
+              {isLoadingSuggested ? (
+                <p className="saved-suggested-loading">Loading suggestions...</p>
+              ) : (
+                <div className="solo-itinerary-list">
+                  {suggestedAttractions.slice(0, 8).map((attraction) => {
+                    const added = isInItinerary(attraction.id);
+                    return (
+                      <article className="solo-itinerary-item" key={attraction.id}>
+                        <div>
+                          <strong>{attraction.name}</strong>
+                          <p>{formatLocation(attraction.city, attraction.stateProvince, attraction.country)}</p>
+                        </div>
+                        <button
+                          type="button"
+                          className={`saved-suggested-add ${added ? "saved-suggested-added" : ""}`}
+                          onClick={() => (added ? removeAttraction(attraction.id) : addAttraction(attraction))}
+                        >
+                          {added ? "Added" : "+ Add"}
+                        </button>
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          )}
+          
+          <SavedTripBuilder
+            embedded
+            initialTripPlace={typeof initialPlace === "string" ? initialPlace : undefined}
+          />
+        </div>
+      </aside>
+      </section>
 
-      <section className="solo-chat-area">
+      <aside className={`solo-chat-panel ${isChatOpen ? "solo-chat-panel-open" : ""}`}>
         <section className="chat-shell solo-chat-shell planner-pane-surface">
           <header className="chat-header planner-pane-header">
             <div>
               <h1>AI Travel Chatbot</h1>
               <p>{initialPlace ? `Planning for ${initialPlace}.` : "Ask where to go, what to do, and how to organize your trip."}</p>
             </div>
+            <button
+              type="button"
+              className="planner-pane-close-button"
+              onClick={() => setIsChatOpen(false)}
+              aria-label="Close AI chat"
+              title="Close AI chat"
+            >
+              ×
+            </button>
           </header>
-          <button
-            type="button"
-            className="planner-pane-side-toggle planner-pane-side-toggle-left"
-            onClick={() => {
-              if (panelOpen) {
-                setIsChatCollapsed((collapsed) => !collapsed);
-                return;
-              }
-              setPanelOpen(true);
-            }}
-            aria-label={
-              panelOpen
-                ? isChatCollapsed
-                  ? "Expand chatbot panel"
-                  : "Collapse chatbot panel"
-                : "Open itinerary panel"
-            }
-            title={
-              panelOpen
-                ? isChatCollapsed
-                  ? "Expand chatbot"
-                  : "Collapse chatbot"
-                : "Open itinerary"
-            }
-          >
-            <span aria-hidden="true">{panelOpen ? (isChatCollapsed ? "←" : "→") : "→"}</span>
-          </button>
 
           <div className="chat-messages" role="log" aria-live="polite">
             {messages.length === 0 && <p className="chat-state">No messages yet.</p>}
@@ -314,60 +327,6 @@ export default function SoloPlannerPage() {
             {chatError && <p className="chat-error">{chatError}</p>}
           </form>
         </section>
-      </section>
-
-      <aside className={`solo-itinerary-panel ${panelOpen ? "solo-itinerary-panel-open" : ""}`}>
-        <div className="solo-itinerary-panel-inner planner-pane-surface">
-          <div className="solo-itinerary-panel-header planner-pane-header">
-            <div>
-              <h2>Itinerary Builder</h2>
-              <p>{initialPlace ? `Organize stops for ${initialPlace}.` : "Build and save your trip plan."}</p>
-            </div>
-          </div>
-          <button
-            type="button"
-            className="planner-pane-side-toggle planner-pane-side-toggle-right"
-            onClick={() => setPanelOpen(false)}
-            aria-label="Collapse itinerary panel"
-            title="Collapse itinerary"
-          >
-            <span aria-hidden="true">←</span>
-          </button>
-          {initialPlace && (
-            <section className="solo-itinerary-suggested">
-              <h3>Suggested for {initialPlace}</h3>
-              {isLoadingSuggested ? (
-                <p className="saved-suggested-loading">Loading suggestions...</p>
-              ) : (
-                <div className="solo-itinerary-list">
-                  {suggestedAttractions.slice(0, 8).map((attraction) => {
-                    const added = isInItinerary(attraction.id);
-                    return (
-                      <article className="solo-itinerary-item" key={attraction.id}>
-                        <div>
-                          <strong>{attraction.name}</strong>
-                          <p>{formatLocation(attraction.city, attraction.stateProvince, attraction.country)}</p>
-                        </div>
-                        <button
-                          type="button"
-                          className={`saved-suggested-add ${added ? "saved-suggested-added" : ""}`}
-                          onClick={() => (added ? removeAttraction(attraction.id) : addAttraction(attraction))}
-                        >
-                          {added ? "Added" : "+ Add"}
-                        </button>
-                      </article>
-                    );
-                  })}
-                </div>
-              )}
-            </section>
-          )}
-          
-          <SavedTripBuilder
-            embedded
-            initialTripPlace={typeof initialPlace === "string" ? initialPlace : undefined}
-          />
-        </div>
       </aside>
     </main>
   );

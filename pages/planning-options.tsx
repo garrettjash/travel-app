@@ -41,7 +41,6 @@ export default function PlanningOptionsPage() {
   return (
     <AppShell
       activeTab="start"
-      hiddenTabs={["start"]}
       topbarActions={
         <>
           <button type="button" className="destinations-login" onClick={() => router.push("/old-version")}>
