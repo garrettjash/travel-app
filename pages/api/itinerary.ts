@@ -308,8 +308,12 @@ async function hydrateAttractionsById(
     ]);
 
     if (!linksResult.error && !imagesResult.error) {
+      const linkRows = (linksResult.data ?? []) as {
+        attraction_id: number;
+        category_id: number;
+      }[];
       const categoryIds = Array.from(
-        new Set((linksResult.data ?? []).map((row) => Number(row.category_id)).filter(Number.isFinite))
+        new Set(linkRows.map((row) => Number(row.category_id)).filter(Number.isFinite))
       );
 
       const categoryNameById = new Map<number, string>();
@@ -328,7 +332,7 @@ async function hydrateAttractionsById(
       }
 
       categoriesByAttraction = new Map<number, string[]>();
-      for (const link of linksResult.data ?? []) {
+      for (const link of linkRows) {
         const attractionId = Number(link.attraction_id);
         const categoryName = categoryNameById.get(Number(link.category_id));
         if (!categoryName) continue;
