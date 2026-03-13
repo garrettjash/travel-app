@@ -248,6 +248,7 @@ export default function SavedTripBuilder({
   const [extraPlacesOptions, setExtraPlacesOptions] = useState<PlaceOption[]>([]);
   const [extraPlaceDropdownOpen, setExtraPlaceDropdownOpen] = useState(false);
   const extraPlaceDropdownRef = useRef<HTMLDivElement>(null);
+  const [editingStopKey, setEditingStopKey] = useState<string | null>(null);
 
   const tripDays = useMemo(() => daysBetween(startDate, endDate), [startDate, endDate]);
 
@@ -1584,55 +1585,75 @@ export default function SavedTripBuilder({
                               if (dragSource) moveStop(dragSource, { type: "day", dayIndex, insertIndex: slotIndex });
                             }}
                           >
-                            <div className="saved-stop-slot">
-                              <span>{formatTimeLabel(stop.startTime, stop.durationMinutes)}</span>
-                              <div className="saved-stop-time-inputs">
-                                <input
-                                  type="time"
-                                  className="saved-stop-time-input"
-                                  value={stop.startTime || "09:00"}
-                                  onChange={(e) => {
-                                    const value = e.target.value;
-                                    setDayPlans((current) =>
-                                      current.map((d, di) =>
-                                        di !== dayIndex
-                                          ? d
-                                          : {
-                                              ...d,
-                                              stops: d.stops.map((s, si) =>
-                                                si !== slotIndex ? s : { ...s, startTime: value || "09:00" }
-                                              )
-                                            }
-                                      )
-                                    );
-                                  }}
-                                />
-                                <select
-                                  className="saved-stop-duration-select"
-                                  value={stop.durationMinutes || 60}
-                                  onChange={(e) => {
-                                    const value = Number(e.target.value) || 60;
-                                    setDayPlans((current) =>
-                                      current.map((d, di) =>
-                                        di !== dayIndex
-                                          ? d
-                                          : {
-                                              ...d,
-                                              stops: d.stops.map((s, si) =>
-                                                si !== slotIndex ? s : { ...s, durationMinutes: value }
-                                              )
-                                            }
-                                      )
-                                    );
-                                  }}
+                            <div
+                              className="saved-stop-slot"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {editingStopKey === `${dayIndex}-${slotIndex}` ? (
+                                <div className="saved-stop-time-inputs">
+                                  <input
+                                    type="time"
+                                    className="saved-stop-time-input"
+                                    value={stop.startTime || "09:00"}
+                                    onChange={(e) => {
+                                      const value = e.target.value;
+                                      setDayPlans((current) =>
+                                        current.map((d, di) =>
+                                          di !== dayIndex
+                                            ? d
+                                            : {
+                                                ...d,
+                                                stops: d.stops.map((s, si) =>
+                                                  si !== slotIndex ? s : { ...s, startTime: value || "09:00" }
+                                                )
+                                              }
+                                        )
+                                      );
+                                    }}
+                                  />
+                                  <select
+                                    className="saved-stop-duration-select"
+                                    value={stop.durationMinutes || 60}
+                                    onChange={(e) => {
+                                      const value = Number(e.target.value) || 60;
+                                      setDayPlans((current) =>
+                                        current.map((d, di) =>
+                                          di !== dayIndex
+                                            ? d
+                                            : {
+                                                ...d,
+                                                stops: d.stops.map((s, si) =>
+                                                  si !== slotIndex ? s : { ...s, durationMinutes: value }
+                                                )
+                                              }
+                                        )
+                                      );
+                                    }}
+                                  >
+                                    {[15, 30, 45, 60, 90, 120, 180].map((mins) => (
+                                      <option key={mins} value={mins}>
+                                        {mins < 60 ? `${mins}m` : mins === 60 ? "1h" : `${mins / 60}h`}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <button
+                                    type="button"
+                                    className="saved-stop-time-done"
+                                    onClick={() => setEditingStopKey(null)}
+                                  >
+                                    Done
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="saved-stop-time-display"
+                                  onClick={() => setEditingStopKey(`${dayIndex}-${slotIndex}`)}
+                                  title="Click to edit time and duration"
                                 >
-                                  {[15, 30, 45, 60, 90, 120, 180].map((mins) => (
-                                    <option key={mins} value={mins}>
-                                      {mins < 60 ? `${mins}m` : mins === 60 ? "1h" : `${mins / 60}h`}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
+                                  {formatTimeLabel(stop.startTime, stop.durationMinutes)}
+                                </button>
+                              )}
                             </div>
                             {stop.attraction.imageUrl ? (
                               <img src={stop.attraction.imageUrl} alt="" className="saved-schedule-card-img" />

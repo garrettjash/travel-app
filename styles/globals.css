@@ -1951,8 +1951,12 @@ body {
 
 .saved-days-drag {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 14px;
+}
+
+.saved-days-drag > * {
+  min-width: 0;
 }
 
 .saved-day-card {
@@ -1960,6 +1964,7 @@ body {
   background: rgba(255, 255, 255, 0.94);
   border-radius: 16px;
   padding: 12px;
+  min-width: 0;
 }
 
 .saved-day-card.saved-day-droppable {
@@ -1985,6 +1990,7 @@ body {
   flex-direction: column;
   gap: 10px;
   min-height: 52px;
+  min-width: 0;
 }
 
 .saved-day-stops:has(.saved-day-empty) {
@@ -2004,6 +2010,7 @@ body {
   background: #f8fcff;
   padding: 8px 10px;
   cursor: grab;
+  min-width: 0;
 }
 
 .saved-schedule-card:active {
@@ -2098,13 +2105,32 @@ body {
   background: #e8f4ff;
   font-weight: 600;
   flex-shrink: 0;
+  min-width: 0;
+}
+
+.saved-stop-time-display {
+  font-size: 0.78rem;
+  padding: 4px 8px;
+  border: 1px solid #a8cce8;
+  border-radius: 8px;
+  background: #fff;
+  color: #1b3350;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.saved-stop-time-display:hover {
+  border-color: #5f9dd4;
+  background: #f5fbff;
 }
 
 .saved-stop-time-inputs {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  width: 100%;
+  min-width: 100px;
 }
 
 .saved-stop-time-input,
@@ -2130,6 +2156,23 @@ body {
   outline: none;
   border-color: #1f5b8b;
   box-shadow: 0 0 0 2px rgba(31, 91, 139, 0.15);
+}
+
+.saved-stop-time-done {
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  border: 1px solid #1f5b8b;
+  border-radius: 6px;
+  background: #1f5b8b;
+  color: #fff;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.saved-stop-time-done:hover {
+  background: #113d68;
+  border-color: #113d68;
 }
 
 .saved-stop {
