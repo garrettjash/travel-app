@@ -2086,15 +2086,50 @@ body {
 }
 
 .saved-schedule-card-in-day .saved-stop-slot {
-  width: fit-content;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
   border: 1px solid #bad6ef;
-  border-radius: 999px;
-  padding: 2px 8px;
+  border-radius: 10px;
+  padding: 6px 10px;
   font-size: 0.72rem;
   color: #1f5b8b;
   background: #e8f4ff;
   font-weight: 600;
   flex-shrink: 0;
+}
+
+.saved-stop-time-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.saved-stop-time-input,
+.saved-stop-duration-select {
+  font-size: 0.8rem;
+  padding: 6px 8px;
+  border: 1px solid #a8cce8;
+  border-radius: 8px;
+  background: #fff;
+  color: #1b3350;
+  font-family: inherit;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.saved-stop-time-input:hover,
+.saved-stop-duration-select:hover {
+  border-color: #5f9dd4;
+}
+
+.saved-stop-time-input:focus,
+.saved-stop-duration-select:focus {
+  outline: none;
+  border-color: #1f5b8b;
+  box-shadow: 0 0 0 2px rgba(31, 91, 139, 0.15);
 }
 
 .saved-stop {

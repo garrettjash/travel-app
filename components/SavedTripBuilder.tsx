@@ -1586,9 +1586,10 @@ export default function SavedTripBuilder({
                           >
                             <div className="saved-stop-slot">
                               <span>{formatTimeLabel(stop.startTime, stop.durationMinutes)}</span>
-                              <div style={{ display: "flex", gap: 4, marginTop: 4 }}>
+                              <div className="saved-stop-time-inputs">
                                 <input
                                   type="time"
+                                  className="saved-stop-time-input"
                                   value={stop.startTime || "09:00"}
                                   onChange={(e) => {
                                     const value = e.target.value;
@@ -1605,12 +1606,9 @@ export default function SavedTripBuilder({
                                       )
                                     );
                                   }}
-                                  style={{ width: 80 }}
                                 />
-                                <input
-                                  type="number"
-                                  min={15}
-                                  step={15}
+                                <select
+                                  className="saved-stop-duration-select"
                                   value={stop.durationMinutes || 60}
                                   onChange={(e) => {
                                     const value = Number(e.target.value) || 60;
@@ -1621,14 +1619,19 @@ export default function SavedTripBuilder({
                                           : {
                                               ...d,
                                               stops: d.stops.map((s, si) =>
-                                                si !== slotIndex ? s : { ...s, durationMinutes: Math.max(15, value) }
+                                                si !== slotIndex ? s : { ...s, durationMinutes: value }
                                               )
                                             }
                                       )
                                     );
                                   }}
-                                  style={{ width: 70 }}
-                                />
+                                >
+                                  {[15, 30, 45, 60, 90, 120, 180].map((mins) => (
+                                    <option key={mins} value={mins}>
+                                      {mins < 60 ? `${mins}m` : mins === 60 ? "1h" : `${mins / 60}h`}
+                                    </option>
+                                  ))}
+                                </select>
                               </div>
                             </div>
                             {stop.attraction.imageUrl ? (
