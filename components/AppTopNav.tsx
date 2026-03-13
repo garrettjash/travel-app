@@ -13,7 +13,7 @@ export type AppTabKey =
   | "about";
 
 type AppTopNavProps = {
-  activeTab: AppTabKey;
+  activeTab?: AppTabKey;
 };
 
 const NAV_ITEMS: Array<{ key: AppTabKey; label: string; href: string }> = [
