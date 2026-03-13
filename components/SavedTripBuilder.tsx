@@ -328,6 +328,59 @@ export default function SavedTripBuilder({
     };
   }, [newSuggestionLocation]);
 
+  /**
+   * When viewing an existing itinerary, infer additional locations from the
+   * cities/countries used in its stops and unscheduled places, and bootstrap
+   * extra suggestion sections (and Trip location text rows) for them.
+   */
+  useEffect(() => {
+    if (!initialItinerary) return;
+    if (extraSuggestionSections.length > 0) return;
+
+    const primaryLabel = (initialItinerary.tripPlace ?? "").trim();
+    const primaryCityKey = primaryLabel.split(",")[0]?.trim().toLowerCase() ?? "";
+
+    const seen = new Set<string>();
+    const candidates: { label: string; city: string; countryRegion: string }[] = [];
+
+    const addFromAttraction = (a: FavoriteAttraction) => {
+      const city = (a.city ?? "").trim();
+      const country = (a.country ?? "").trim();
+      if (!city && !country) return;
+
+      const label = city && country ? `${city}, ${country}` : city || country;
+      if (!label) return;
+
+      const cityKey = city.toLowerCase();
+      if (primaryCityKey && cityKey && cityKey === primaryCityKey) return;
+
+      const key = label.toLowerCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+      candidates.push({ label, city, countryRegion: country });
+    };
+
+    for (const day of initialItinerary.days ?? []) {
+      for (const stop of day.stops) addFromAttraction(stop.attraction);
+    }
+    for (const a of initialItinerary.unscheduled ?? []) addFromAttraction(a);
+
+    if (candidates.length === 0) return;
+
+    for (const c of candidates) {
+      const place: PlaceOption = {
+        id: -1,
+        label: c.label,
+        city: c.city,
+        countryRegion: c.countryRegion
+      };
+      // fire-and-forget; this will create the section and load suggestions
+      // for the inferred location.
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      handleAddExtraLocation(place);
+    }
+  }, [initialItinerary?.itineraryId, initialItinerary?.tripPlace, initialItinerary?.days, initialItinerary?.unscheduled, extraSuggestionSections.length]);
+
   /** Effective trip location: from dropdown selection, input, or saved/prop value */
   const effectiveLocation = useMemo(
     () =>
@@ -942,15 +995,38 @@ export default function SavedTripBuilder({
                 )}
               </div>
               {extraSuggestionSections.map((section) => (
-                <input
+                <div
                   key={section.id}
-                  type="text"
-                  readOnly
-                  value={section.label}
-                  className="planning-solo-input"
-                  style={{ opacity: 0.9 }}
-                  aria-label={`Additional location: ${section.label}`}
-                />
+                  className="saved-trips-extra-location-row"
+                  style={{ display: "flex", alignItems: "center", gap: 8 }}
+                >
+                  <input
+                    type="text"
+                    readOnly
+                    value={section.label}
+                    className="planning-solo-input"
+                    style={{ opacity: 0.9 }}
+                    aria-label={`Additional location: ${section.label}`}
+                  />
+                  <button
+                    type="button"
+                    className="saved-schedule-card-remove"
+                    aria-label={`Remove ${section.label}`}
+                    onClick={() =>
+                      setExtraSuggestionSections((current) =>
+                        current.filter((s) => s.id !== section.id)
+                      )
+                    }
+                  >
+                    <img
+                      src="https://img.icons8.com/fluent-systems-regular/24/FA5252/trash.png"
+                      alt=""
+                      width={18}
+                      height={18}
+                      className="saved-schedule-card-remove-icon"
+                    />
+                  </button>
+                </div>
               ))}
               <button
                 type="button"
