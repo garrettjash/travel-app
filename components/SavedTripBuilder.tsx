@@ -465,15 +465,24 @@ export default function SavedTripBuilder({
     setActiveItineraryId(id);
   }, [initialItinerary]);
 
+  /**
+   * When switching itineraries (or creating new), reset the shared itinerary context
+   * so places are scoped to the current itinerary only. Clear first, then seed from
+   * the itinerary we're viewing (if any).
+   */
   useEffect(() => {
+    clearAttractions();
+    setExtraSuggestionSections([]);
+
     if (!initialItinerary) return;
+
     const all: FavoriteAttraction[] = [];
     for (const day of initialItinerary.days ?? []) {
       for (const stop of day.stops) all.push(stop.attraction);
     }
     for (const a of initialItinerary.unscheduled ?? []) all.push(a);
     all.forEach((a) => addAttraction(a));
-  }, [initialItinerary?.itineraryId]);
+  }, [initialItinerary?.itineraryId, itineraryIdFromRoute, clearAttractions]);
 
   // Sync unscheduled so items added from Destinations (or elsewhere) appear in Unassigned (deduplicated by id)
   useEffect(() => {
