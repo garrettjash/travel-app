@@ -1,6 +1,7 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import AuthButton from "../components/AuthButton";
+import { useAuth } from "../lib/auth-context";
 
 const heroImage =
   "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&q=80";
@@ -8,6 +9,7 @@ const COOKIE_CONSENT_KEY = "travelapp-cookie-consent";
 
 export default function MarketingHomePage() {
   const router = useRouter();
+  const { user, loading } = useAuth();
   const [showCookieNotice, setShowCookieNotice] = useState(false);
 
   useEffect(() => {
@@ -34,7 +36,7 @@ export default function MarketingHomePage() {
         <div className="marketing-home-overlay" />
         <div className="marketing-home-content">
           <p className="marketing-home-eyebrow">Trip planning in one workspace</p>
-          <h1 className="marketing-home-title">Start planning your trip, collaborate with friends, and save itineraries that you can revisit anytime.</h1>
+          <h1 className="marketing-home-title">Plan trips without the clutter.</h1>
           <p className="marketing-home-copy">
             Explore destinations, build solo plans, spin up group sessions, and keep everything organized in one place.
           </p>
@@ -46,25 +48,23 @@ export default function MarketingHomePage() {
             <button
               type="button"
               className="marketing-home-secondary"
-              onClick={() => router.push("/login?next=%2Fmy-itineraries")}
+              onClick={() => router.push(user ? "/my-itineraries" : "/login?next=%2Fmy-itineraries")}
+              disabled={loading}
             >
-              Login
+              {loading ? "Loading..." : user ? "View My Trips" : "Login"}
             </button>
           </div>
 
           <div className="marketing-home-feature-grid">
             <article className="marketing-home-feature-card">
-              <span className="marketing-home-feature-icon" aria-hidden="true">🗺️</span>
               <h2>Plan Faster</h2>
               <p>Choose a solo trip flow or jump straight into destination discovery.</p>
             </article>
             <article className="marketing-home-feature-card">
-              <span className="marketing-home-feature-icon" aria-hidden="true">🤝</span>
               <h2>Collaborate</h2>
               <p>Create group planning sessions and coordinate ideas with friends.</p>
             </article>
             <article className="marketing-home-feature-card">
-              <span className="marketing-home-feature-icon" aria-hidden="true">💾</span>
               <h2>Save Itineraries</h2>
               <p>Keep favorite stops and saved trip plans ready for the next time you return.</p>
             </article>
