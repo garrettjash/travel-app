@@ -22,6 +22,13 @@ type SessionAttractionResult = {
   totalVotes: number;
 };
 
+type CollabSessionRow = {
+  collab_session_id: string;
+  collab_place_id: number | string | null;
+  created_at: string | null;
+  itinerary_id?: string | null;
+};
+
 type CollabSessionResponse =
   | {
       sessionId: string;
@@ -115,6 +122,10 @@ function normalizeImageUrl(rawValue: unknown) {
   if (value.startsWith("http://") || value.startsWith("https://")) return value;
   if (value.startsWith("//")) return `https:${value}`;
   return null;
+}
+
+function isMissingColumnError(message: string) {
+  return /column\s+collab_session\.itinerary_id\s+does\s+not\s+exist/i.test(message);
 }
 
 export default async function handler(
@@ -232,12 +243,21 @@ export default async function handler(
         return;
       }
 
-      const sessionResult = await supabase
+      let sessionResult = await supabase
         .from("collab_session")
         .select("collab_session_id, collab_place_id, created_at, itinerary_id")
         .eq("collab_session_id", sessionId)
         .limit(1)
-        .maybeSingle();
+        .maybeSingle<CollabSessionRow>();
+
+      if (sessionResult.error && isMissingColumnError(sessionResult.error.message)) {
+        sessionResult = await supabase
+          .from("collab_session")
+          .select("collab_session_id, collab_place_id, created_at")
+          .eq("collab_session_id", sessionId)
+          .limit(1)
+          .maybeSingle<CollabSessionRow>();
+      }
 
       if (sessionResult.error) {
         res.status(500).json({ error: sessionResult.error.message });
@@ -446,7 +466,7 @@ export default async function handler(
       let itineraryPath: string | undefined;
 
       if (isExpired && results.length > 0) {
-        const existingItineraryId = (sessionResult.data as { itinerary_id?: string | null } | null)?.itinerary_id;
+        const existingItineraryId = sessionResult.data.itinerary_id;
         if (existingItineraryId) {
           itineraryPath = `/saved-trips/${encodeURIComponent(existingItineraryId)}?fromCollab=1`;
         } else {
@@ -502,10 +522,16 @@ export default async function handler(
             });
 
             if (!insertErr) {
-              await supabase
+              const updateSessionResult = await supabase
                 .from("collab_session")
                 .update({ itinerary_id: itineraryId })
                 .eq("collab_session_id", sessionId);
+
+              if (updateSessionResult.error && !isMissingColumnError(updateSessionResult.error.message)) {
+                res.status(500).json({ error: updateSessionResult.error.message });
+                return;
+              }
+
               itineraryPath = `/saved-trips/${encodeURIComponent(itineraryId)}?fromCollab=1`;
             }
           }
