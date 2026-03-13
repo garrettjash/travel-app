@@ -39,7 +39,16 @@ export default function PlanningOptionsPage() {
   };
 
   return (
-    <AppShell activeTab="start">
+    <AppShell
+      activeTab="start"
+      topbarActions={
+        <>
+          <button type="button" className="destinations-login" onClick={() => router.push("/old-version")}>
+            Old Version
+          </button>
+        </>
+      }
+    >
       <section
         className="planning-options-shell planning-options-shell-embedded"
         style={{ backgroundImage: `url(${heroImage})` }}
