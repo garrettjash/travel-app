@@ -325,7 +325,11 @@ async function hydrateAttractionsById(
           .limit(2000);
 
         if (!categoriesResult.error) {
-          for (const row of categoriesResult.data ?? []) {
+          const categoryRows = (categoriesResult.data ?? []) as {
+            category_id: number;
+            category_name: string | null;
+          }[];
+          for (const row of categoryRows) {
             categoryNameById.set(Number(row.category_id), normalizeText(row.category_name));
           }
         }
