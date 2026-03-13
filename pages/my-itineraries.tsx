@@ -61,15 +61,18 @@ export default function MyItinerariesPage() {
   if (loading || !user) {
     return (
       <AppShell activeTab="my-itineraries">
-        <section className="about-card">
-          <p>Loading…</p>
-        </section>
+        <div className="my-itineraries-page-content">
+          <section className="about-card">
+            <p>Loading…</p>
+          </section>
+        </div>
       </AppShell>
     );
   }
 
   return (
     <AppShell activeTab="my-itineraries">
+          <div className="my-itineraries-page-content">
           <section className="about-card">
             <h1>My Itineraries</h1>
             {isLoading ? (
@@ -107,6 +110,7 @@ export default function MyItinerariesPage() {
               </ul>
             )}
           </section>
+          </div>
     </AppShell>
   );
 }

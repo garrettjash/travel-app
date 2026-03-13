@@ -1577,6 +1577,10 @@ body {
   max-width: none;
 }
 
+.my-itineraries-page-content .about-card {
+  max-width: none;
+}
+
 .about-list {
   margin: 10px 0 0;
   padding-left: 20px;
