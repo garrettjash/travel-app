@@ -33,6 +33,30 @@ function formatLocation(city: string, stateProvince: string, country: string) {
   return [city, stateProvince, country].filter(Boolean).join(", ") || "Location unavailable";
 }
 
+const PRICE_LEVEL_LABELS: Record<string, string> = {
+  "0": "Free",
+  "1": "Cheap",
+  "2": "Moderate",
+  "3": "Expensive",
+  "4": "Luxury",
+};
+
+function priceLevelLabel(value: string | null | undefined): string {
+  if (!value && value !== "0") return "N/A";
+  return PRICE_LEVEL_LABELS[value] ?? value;
+}
+
+function capitalizeCommaList(value: string): string {
+  return value
+    .split(",")
+    .map((item) => {
+      const trimmed = item.trim();
+      return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+    })
+    .filter(Boolean)
+    .join(", ");
+}
+
 function parseRawData(rawData: string) {
   if (!rawData) return null;
   try {
@@ -107,16 +131,11 @@ export default function AttractionDetailsModal({
         {attraction.summary && <p className="attraction-modal-summary">{attraction.summary}</p>}
 
         <dl className="attraction-modal-grid">
-          <div><dt>Vibe</dt><dd>{attraction.vibe || "N/A"}</dd></div>
-          <div><dt>Rating</dt><dd>{attraction.rating !== null ? attraction.rating.toFixed(2) : "N/A"}</dd></div>
+          <div><dt>Vibe</dt><dd>{attraction.vibe ? capitalizeCommaList(attraction.vibe) : "N/A"}</dd></div>
+          <div><dt>Rating</dt><dd>{attraction.rating !== null ? `${attraction.rating.toFixed(2)}/10` : "N/A"}</dd></div>
           <div><dt>Total Ratings</dt><dd>{attraction.totalCountRatings ?? "N/A"}</dd></div>
-          <div><dt>Price</dt><dd>{attraction.priceLevel || "N/A"}</dd></div>
+          <div><dt>Price</dt><dd>{priceLevelLabel(attraction.priceLevel)}</dd></div>
           <div><dt>Popularity</dt><dd>{attraction.popularityScore ?? "N/A"}</dd></div>
-          <div><dt>Credibility Tier</dt><dd>{attraction.credibilityTier ?? "N/A"}</dd></div>
-          <div><dt>Latitude</dt><dd>{attraction.latitude ?? "N/A"}</dd></div>
-          <div><dt>Longitude</dt><dd>{attraction.longitude ?? "N/A"}</dd></div>
-          <div><dt>Distance</dt><dd>{attraction.distanceFromPlace !== null ? attraction.distanceFromPlace.toFixed(2) : "N/A"}</dd></div>
-          <div><dt>Last Refreshed</dt><dd>{attraction.lastRefreshed || "N/A"}</dd></div>
         </dl>
 
         {attraction.reviewsSummary && (

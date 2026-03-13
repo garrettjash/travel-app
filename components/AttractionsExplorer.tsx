@@ -117,10 +117,26 @@ function formatLocation(city: string, country: string) {
   return city || country || "Location unavailable";
 }
 
-function formatCommaList(value: string) {
+const PRICE_LEVEL_LABELS: Record<string, string> = {
+  "0": "Free",
+  "1": "Cheap",
+  "2": "Moderate",
+  "3": "Expensive",
+  "4": "Luxury",
+};
+
+function priceLevelLabel(value: string | null | undefined): string {
+  if (!value && value !== "0") return "N/A";
+  return PRICE_LEVEL_LABELS[value] ?? value;
+}
+
+function capitalizeCommaList(value: string): string {
   return value
     .split(",")
-    .map((item) => item.trim())
+    .map((item) => {
+      const trimmed = item.trim();
+      return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+    })
     .filter(Boolean)
     .join(", ");
 }
@@ -467,7 +483,7 @@ export default function AttractionsExplorer({ title, subtitle, initialPlace }: A
             <option value="">All price levels</option>
             {options.priceLevels.map((priceLevel) => (
               <option key={priceLevel} value={priceLevel}>
-                {priceLevel}
+                {priceLevelLabel(priceLevel)}
               </option>
             ))}
           </select>
@@ -694,15 +710,15 @@ export default function AttractionsExplorer({ title, subtitle, initialPlace }: A
                   <dl className="attraction-card-details">
                     <div>
                       <dt>Vibe</dt>
-                      <dd>{attraction.vibe ? formatCommaList(attraction.vibe) : "N/A"}</dd>
+                      <dd>{attraction.vibe ? capitalizeCommaList(attraction.vibe) : "N/A"}</dd>
                     </div>
                     <div>
                       <dt>Rating</dt>
-                      <dd>{attraction.rating !== null ? attraction.rating.toFixed(2) : "N/A"}</dd>
+                      <dd>{attraction.rating !== null ? `${attraction.rating.toFixed(2)}/10` : "N/A"}</dd>
                     </div>
                     <div>
                       <dt>Price</dt>
-                      <dd>{attraction.priceLevel || "N/A"}</dd>
+                      <dd>{priceLevelLabel(attraction.priceLevel)}</dd>
                     </div>
                   </dl>
                 </article>

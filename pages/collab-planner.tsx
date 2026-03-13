@@ -20,15 +20,15 @@ type ChatMessage = {
 };
 
 const LINK_DURATION_OPTIONS = [
-  { label: "5m", minutes: 5 },
-  { label: "10m", minutes: 10 },
-  { label: "15m", minutes: 15 },
-  { label: "30m", minutes: 30 },
-  { label: "1 hr", minutes: 60 },
-  { label: "2 hr", minutes: 120 },
-  { label: "5 hr", minutes: 300 },
-  { label: "12 hr", minutes: 720 },
-  { label: "1 day", minutes: 1440 }
+  { label: "5 Minutes", minutes: 5 },
+  { label: "10 Minutes", minutes: 10 },
+  { label: "15 Minutes", minutes: 15 },
+  { label: "30 Minutes", minutes: 30 },
+  { label: "1 Hour", minutes: 60 },
+  { label: "2 Hours", minutes: 120 },
+  { label: "5 Hours", minutes: 300 },
+  { label: "12 Hours", minutes: 720 },
+  { label: "1 Day", minutes: 1440 }
 ] as const;
 
 function sanitizePlainText(rawValue: string) {
