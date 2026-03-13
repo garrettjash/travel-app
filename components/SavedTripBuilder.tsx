@@ -374,10 +374,9 @@ export default function SavedTripBuilder({
         city: c.city,
         countryRegion: c.countryRegion
       };
-      // fire-and-forget; this will create the section and load suggestions
-      // for the inferred location.
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      handleAddExtraLocation(place);
+      // Fire-and-forget; this will create the section and load suggestions
+      // for the inferred location without blocking initial render.
+      void handleAddExtraLocation(place);
     }
   }, [initialItinerary?.itineraryId, initialItinerary?.tripPlace, initialItinerary?.days, initialItinerary?.unscheduled, extraSuggestionSections.length]);
 
