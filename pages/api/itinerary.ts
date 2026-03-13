@@ -269,7 +269,7 @@ function collectAttractionIds(rawDays: unknown, rawUnscheduled: unknown): { ids:
 }
 
 async function hydrateAttractionsById(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   ids: number[]
 ): Promise<Map<number, FavoriteAttraction>> {
   const map = new Map<number, FavoriteAttraction>();
