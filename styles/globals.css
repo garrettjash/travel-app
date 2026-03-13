@@ -827,14 +827,12 @@ body {
   gap: 16px;
 }
 
-.solo-itinerary-panel-inner h2 {
-  padding: 0 24px;
+.saved-trips-content {
+  padding: 0 24px 24px;
 }
 
-.solo-itinerary-panel-inner > p {
-  margin: 8px 0 0;
-  color: #52606d;
-  padding: 0 24px;
+.saved-trips-content-embedded {
+  padding-top: 0;
 }
 
 .solo-itinerary-field {
@@ -1146,7 +1144,7 @@ body {
   backdrop-filter: blur(8px);
   position: sticky;
   top: 0;
-  z-index: 5;
+  z-index: 70;
 }
 
 .destinations-topbar-actions {
@@ -1154,6 +1152,8 @@ body {
   align-items: center;
   justify-content: flex-end;
   gap: 10px;
+  position: relative;
+  z-index: 71;
 }
 
 .app-top-nav {
@@ -1600,9 +1600,17 @@ body {
   color: #123d68;
 }
 
+.saved-trips-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
 .saved-trips-header p {
   margin: 8px 0 0;
   color: #49627e;
+  max-width: 64ch;
 }
 
 .saved-trips-builder {
@@ -1613,13 +1621,9 @@ body {
   padding: 16px;
   box-shadow: 0 10px 24px rgba(17, 61, 104, 0.08);
   display: grid;
-  gap: 12px;
-  grid-template-columns: repeat(4, minmax(120px, 1fr));
-}
-
-/* Make embedded itinerary (e.g., solo planner) use a denser but readable grid */
-.solo-itinerary-panel .saved-trips-builder {
-  grid-template-columns: repeat(2, minmax(160px, 1fr));
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
 }
 
 .solo-itinerary-panel .saved-trips-stats {
@@ -1628,7 +1632,16 @@ body {
 
 .saved-trips-field {
   display: grid;
-  gap: 6px;
+  gap: 8px;
+  min-width: 0;
+}
+
+.saved-trips-field-full {
+  grid-column: 1 / -1;
+}
+
+.saved-trips-field-stack {
+  align-content: start;
 }
 
 .saved-trips-field label {
@@ -1646,13 +1659,60 @@ body {
   border: 1px solid #c6d8ec;
   border-radius: 10px;
   background: #fff;
-  padding: 10px 12px;
+  padding: 12px 14px;
   font: inherit;
   color: #1a2a3b;
+  min-height: 50px;
 }
 
 .saved-trips-field-place {
   position: relative;
+}
+
+.saved-trips-extra-location-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.saved-trips-extra-location-row .planning-solo-input {
+  opacity: 0.9;
+}
+
+.saved-trips-add-location-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+  align-self: flex-start;
+}
+
+.saved-trips-extra-location-editor {
+  margin-top: 4px;
+}
+
+.saved-trips-extra-location-controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  position: relative;
+}
+
+.saved-trips-extra-location-controls .planning-solo-input {
+  flex: 1 1 260px;
+}
+
+.saved-trips-inline-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .saved-trips-place-listbox {
@@ -1698,6 +1758,7 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  justify-content: flex-start;
 }
 
 /* Build for me panel */
@@ -1780,6 +1841,13 @@ body {
   padding: 9px 14px;
   font-weight: 600;
   cursor: pointer;
+}
+
+.saved-trips-header-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .saved-trips-button-primary {
@@ -2428,12 +2496,25 @@ body {
 }
 
 @media (max-width: 620px) {
+  .saved-trips-content {
+    padding: 0 16px 16px;
+  }
+
+  .saved-trips-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
   .saved-trips-builder {
     grid-template-columns: 1fr;
   }
 
   .saved-trips-stats {
     grid-template-columns: 1fr;
+  }
+
+  .saved-trips-header-action {
+    align-self: flex-start;
   }
 }
 

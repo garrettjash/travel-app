@@ -909,20 +909,16 @@ export default function SavedTripBuilder({
   }
 
   const body = (
-    <>
-          <section
-            className="saved-trips-header"
-            style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}
-          >
+    <div className={`saved-trips-content${embedded ? " saved-trips-content-embedded" : ""}`}>
+          <section className="saved-trips-header">
             <div>
               <h1>Itinerary</h1>
               <p>Turn your favorites into a ready-to-go itinerary in one click and save it with a shareable link.</p>
             </div>
             <button
               type="button"
-              className="saved-trips-button"
+              className="saved-trips-button saved-trips-header-action"
               onClick={handleExport}
-              style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
             >
               <img
                 src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJQAAACUCAMAAABC4vDmAAAAXVBMVEX///8AAACbm5tQUFDv7+94eHi1tbV9fX1ERETQ0NCpqank5OQzMzMqKirJycnExMQXFxcICAj4+PglJSUeHh5hYWE5OTnb29u7u7sRERGRkZFKSkpVVVVsbGyKioovde/pAAACaElEQVR4nO3ca5OCIBQG4INprZey0i7W7v7/n7maylHCQkehmX3fLzXVwDNABF4imifxLct+45kKmyn+WZQ5+64d3YRb8UhycS3hxIloknxMD7btVGUbutbUuXRMpeojejDMRS/ZB7RVuBVK3Pfgbq+ahNjvHJuyZ1PZg05VqY5UJXVoyodQuTMVt9O+mT0THmGOVNdCCsJN/bgJ5UvF1YmJ608pqJ8FlLLUgWotKz+U85JEUXiQb6xtmzrtVH3/GUU7Z20V8Rh/zN8dFIU82iObpn7fKShHPejJSvNmTdBD0YXnL8+WiftOtL+9fRTxzGCrrW6ywq1cZyooinntcLNh4nY68HpORdGFx5WF0c5jvLsef0J11u0WZoZTW1XR3SM8oyiW89VpcVRbVX+Pp0E1e8GKvziqaamsv+/UocjPbLVU/W2/K3thLYr8e2/eWFJVduBJ3Z/rUeSf7JjKHJ9fGkDpP2wrwyiHAco0QJkGKNMAZRqgTAOUaSygYm/zJoFy+EmPSoN35XjGJwOugwfoOMq+SY+KXpdRJTfc6vjvi5oPJYTZSSajouZDme1VvfcFzYkyOwQC1EhU8fUiiXKER49aJ6/KKCagvsdsjiZMnsfvCajVmBPCE1D+CiiggAIKKKCAAgoooIACCiiggAIKKKCAAgoooOZHtZd+fxSqub55zHWKy6Pq/ht1ttYCiq5BMO56Thuo0QEKKKCAAgoooIACCiiggAIKKKCAAgoooIACCiiggHKEGnWLyoRMukXlvF445wkoWwHqH6AG/2dumRj+I9uPTdOPmYmOkcHttfMkj3Sz4R8cySgb1UR8OgAAAABJRU5ErkJggg=="
@@ -935,7 +931,7 @@ export default function SavedTripBuilder({
           </section>
 
           <form className="saved-trips-builder" onSubmit={handleSave}>
-            <div className="saved-trips-field">
+            <div className="saved-trips-field saved-trips-field-full">
               <label htmlFor="trip-name">Trip Name</label>
               <input
                 id="trip-name"
@@ -945,7 +941,7 @@ export default function SavedTripBuilder({
                 placeholder="Name your trip"
               />
             </div>
-            <div className="saved-trips-field" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div className="saved-trips-field saved-trips-field-full saved-trips-field-stack">
               <label htmlFor="trip-place">Trip location</label>
               <div ref={placeDropdownRef} className="saved-trips-field-place">
                 <input
@@ -1003,17 +999,12 @@ export default function SavedTripBuilder({
                 )}
               </div>
               {extraSuggestionSections.map((section) => (
-                <div
-                  key={section.id}
-                  className="saved-trips-extra-location-row"
-                  style={{ display: "flex", alignItems: "center", gap: 8 }}
-                >
+                <div key={section.id} className="saved-trips-extra-location-row">
                   <input
                     type="text"
                     readOnly
                     value={section.label}
                     className="planning-solo-input"
-                    style={{ opacity: 0.9 }}
                     aria-label={`Additional location: ${section.label}`}
                   />
                   <button
@@ -1040,14 +1031,13 @@ export default function SavedTripBuilder({
                 type="button"
                 className="saved-trips-add-location-trigger"
                 onClick={() => setAddLocationExpanded((e) => !e)}
-                style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", padding: 0, color: "inherit", fontSize: "inherit", cursor: "pointer", fontFamily: "inherit", alignSelf: "flex-start" }}
               >
                 <span aria-hidden style={{ fontSize: "1.2em" }}>{addLocationExpanded ? "−" : "+"}</span>
                 <span>Add another Location</span>
               </button>
               {addLocationExpanded && (
-                <div className="saved-trips-field-place" ref={extraPlaceDropdownRef} style={{ marginTop: 4 }}>
-                  <div className="planning-solo-input-row" style={{ display: "flex", gap: 8, flexWrap: "wrap", position: "relative" }}>
+                <div className="saved-trips-field-place saved-trips-extra-location-editor" ref={extraPlaceDropdownRef}>
+                  <div className="planning-solo-input-row saved-trips-extra-location-controls">
                     <input
                       id="extra-location-input"
                       className="planning-solo-input"
@@ -1061,9 +1051,8 @@ export default function SavedTripBuilder({
                       onBlur={() => setTimeout(() => setExtraPlaceDropdownOpen(false), 180)}
                       placeholder="Type to search destinations…"
                       autoComplete="off"
-                      style={{ flex: "1 1 160px" }}
                     />
-                    <div style={{ display: "flex", gap: 6 }}>
+                    <div className="saved-trips-inline-actions">
                       <button
                         type="button"
                         className="planning-solo-next"
@@ -1089,7 +1078,7 @@ export default function SavedTripBuilder({
                       className="saved-trips-place-listbox"
                       role="listbox"
                       aria-label="Available destinations for suggestions"
-                      style={{ marginTop: 4, maxHeight: 200, overflowY: "auto" }}
+                      style={{ maxHeight: 200, overflowY: "auto" }}
                     >
                       {filteredExtraPlaces.length === 0 ? (
                         <li className="saved-trips-place-option saved-trips-place-option-empty" role="option">
@@ -1672,7 +1661,7 @@ export default function SavedTripBuilder({
         onToggleFavorite={toggleFavorite}
         onClose={() => setSelectedAttraction(null)}
       />
-    </>
+    </div>
   );
 
   if (embedded) {
