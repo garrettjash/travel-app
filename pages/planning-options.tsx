@@ -30,12 +30,7 @@ export default function PlanningOptionsPage() {
   };
 
   const goToCollabPlanner = () => {
-    const place = groupDestination.trim();
-    if (!place) {
-      router.push({ pathname: "/collab-planner", query: { chat: "open" } });
-      return;
-    }
-    router.push({ pathname: "/collab-planner", query: { place } });
+    router.push("/collaborate");
   };
 
   const handleGroupSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -46,6 +41,7 @@ export default function PlanningOptionsPage() {
   return (
     <AppShell
       activeTab="start"
+      hiddenTabs={["start"]}
       topbarActions={
         <>
           <button type="button" className="destinations-login" onClick={() => router.push("/old-version")}>

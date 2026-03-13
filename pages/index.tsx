@@ -1,11 +1,19 @@
 import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
 import AuthButton from "../components/AuthButton";
 
 const heroImage =
   "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&q=80";
+const COOKIE_CONSENT_KEY = "travelapp-cookie-consent";
 
 export default function MarketingHomePage() {
   const router = useRouter();
+  const [showCookieNotice, setShowCookieNotice] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setShowCookieNotice(window.localStorage.getItem(COOKIE_CONSENT_KEY) !== "accepted");
+  }, []);
 
   return (
     <main className="marketing-home-shell">
@@ -18,7 +26,7 @@ export default function MarketingHomePage() {
           TravelApp
         </button>
         <div className="landing-topbar-actions">
-          <AuthButton />
+          <AuthButton loginHref="/login?next=%2Fmy-itineraries" />
         </div>
       </header>
 
@@ -35,7 +43,11 @@ export default function MarketingHomePage() {
             <button type="button" className="marketing-home-primary" onClick={() => router.push("/planning-options")}>
               Browse the App
             </button>
-            <button type="button" className="marketing-home-secondary" onClick={() => router.push("/login")}>
+            <button
+              type="button"
+              className="marketing-home-secondary"
+              onClick={() => router.push("/login?next=%2Fmy-itineraries")}
+            >
               Login
             </button>
           </div>
@@ -59,6 +71,29 @@ export default function MarketingHomePage() {
           </div>
         </div>
       </section>
+      {showCookieNotice && (
+        <div className="cookie-banner" role="dialog" aria-live="polite" aria-label="Cookie notice">
+          <div className="cookie-banner-copy">
+            <strong>Cookies notice</strong>
+            <p>
+              This site uses cookies to support login, saved preferences, and a smoother trip-planning experience.
+              Please accept cookies to continue using the app.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="cookie-banner-accept"
+            onClick={() => {
+              if (typeof window !== "undefined") {
+                window.localStorage.setItem(COOKIE_CONSENT_KEY, "accepted");
+              }
+              setShowCookieNotice(false);
+            }}
+          >
+            Accept
+          </button>
+        </div>
+      )}
     </main>
   );
 }

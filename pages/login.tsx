@@ -5,6 +5,9 @@ import { useAuth } from "../lib/auth-context";
 export default function LoginPage() {
   const router = useRouter();
   const { signIn, signUp } = useAuth();
+  const nextQuery = Array.isArray(router.query.next) ? router.query.next[0] : router.query.next;
+  const redirectPath =
+    typeof nextQuery === "string" && nextQuery.startsWith("/") ? nextQuery : "/";
   const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -24,14 +27,14 @@ export default function LoginPage() {
           setError(err.message);
           return;
         }
-        router.push("/");
+        router.push(redirectPath);
       } else {
         const { error: err } = await signUp(email, password, firstName, lastName);
         if (err) {
           setError(err.message);
           return;
         }
-        router.push("/");
+        router.push(redirectPath);
       }
     } finally {
       setLoading(false);

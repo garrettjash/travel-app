@@ -7,11 +7,12 @@ type AppShellProps = {
   activeTab: AppTabKey;
   children: ReactNode;
   topbarActions?: ReactNode;
+  hiddenTabs?: AppTabKey[];
 };
 
 const SIDEBAR_STORAGE_KEY = "travelapp-sidebar-collapsed";
 
-export default function AppShell({ activeTab, children, topbarActions }: AppShellProps) {
+export default function AppShell({ activeTab, children, topbarActions, hiddenTabs }: AppShellProps) {
   const router = useRouter();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
@@ -46,6 +47,7 @@ export default function AppShell({ activeTab, children, topbarActions }: AppShel
           activeTab={activeTab}
           isCollapsed={isSidebarCollapsed}
           onToggleCollapse={() => setIsSidebarCollapsed((collapsed) => !collapsed)}
+          hiddenTabs={hiddenTabs}
         />
 
         <div className="destinations-content">{children}</div>

@@ -2,7 +2,11 @@ import { useRouter } from "next/router";
 import { useCallback, useRef, useState } from "react";
 import { useAuth } from "../lib/auth-context";
 
-export default function AuthButton() {
+type AuthButtonProps = {
+  loginHref?: string;
+};
+
+export default function AuthButton({ loginHref = "/login" }: AuthButtonProps) {
   const router = useRouter();
   const { user, loading, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -26,7 +30,7 @@ export default function AuthButton() {
       <button
         type="button"
         className="destinations-login"
-        onClick={() => router.push("/login")}
+        onClick={() => router.push(loginHref)}
       >
         Login
       </button>
@@ -43,12 +47,18 @@ export default function AuthButton() {
     <div className="auth-button-wrap" ref={menuRef}>
       <button
         type="button"
-        className="destinations-login"
+        className="destinations-login auth-button-trigger"
         onClick={() => setMenuOpen((o) => !o)}
         aria-expanded={menuOpen}
         aria-haspopup="true"
       >
-        {displayName}
+        <span>{displayName}</span>
+        <span
+          className={`auth-button-chevron ${menuOpen ? "auth-button-chevron-open" : ""}`}
+          aria-hidden="true"
+        >
+          ▾
+        </span>
       </button>
       {menuOpen && (
         <>
@@ -70,6 +80,17 @@ export default function AuthButton() {
               }}
             >
               My Itineraries
+            </button>
+            <button
+              type="button"
+              className="auth-button-menu-item"
+              role="menuitem"
+              onClick={() => {
+                router.push("/favorites");
+                setMenuOpen(false);
+              }}
+            >
+              Favorites
             </button>
             <button
               type="button"

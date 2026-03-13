@@ -16,23 +16,19 @@ type AppSidebarProps = {
   activeTab: AppTabKey;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
+  hiddenTabs?: AppTabKey[];
 };
 
 const NAV_ITEMS: Array<{ key: AppTabKey; label: string; icon: string; href: string }> = [
-  { key: "start", label: "Start Planning", icon: "🧭", href: "/planning-options" },
   { key: "solo-planner", label: "Plan My Trip", icon: "🧳", href: "/solo-planner" },
-  { key: "collab-planner", label: "Group Collab", icon: "🤝", href: "/collab-planner" },
-  { key: "destinations", label: "Destinations", icon: "🗺️", href: "/home" },
-  { key: "itinerary", label: "Itinerary", icon: "💾", href: "/saved-trips" },
-  { key: "my-itineraries", label: "My Itineraries", icon: "📋", href: "/my-itineraries" },
-  { key: "favorites", label: "Favorites", icon: "❤", href: "/favorites" },
   { key: "collaborate", label: "Collaborate", icon: "👥", href: "/collaborate" },
-  { key: "ai-chatbot", label: "AI Chatbot", icon: "✨", href: "/ai-chatbot" },
+  { key: "destinations", label: "Destinations", icon: "🗺️", href: "/home" },
   { key: "about", label: "About", icon: "ℹ️", href: "/about" }
 ];
 
-export default function AppSidebar({ activeTab, isCollapsed, onToggleCollapse }: AppSidebarProps) {
+export default function AppSidebar({ activeTab, isCollapsed, onToggleCollapse, hiddenTabs = [] }: AppSidebarProps) {
   const router = useRouter();
+  const visibleItems = NAV_ITEMS.filter((item) => !hiddenTabs.includes(item.key));
 
   return (
     <nav
@@ -50,7 +46,7 @@ export default function AppSidebar({ activeTab, isCollapsed, onToggleCollapse }:
         <span className="destinations-tab-label">Collapse</span>
       </button>
 
-      {NAV_ITEMS.map((item) => (
+      {visibleItems.map((item) => (
         <button
           key={item.key}
           type="button"
