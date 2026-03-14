@@ -162,8 +162,9 @@ function minutesToTime(minutes: number): string {
 
 function formatTimeLabel(startTime: string, durationMinutes: number): string {
   const safeTime = startTime && /^\d{2}:\d{2}$/.test(startTime) ? startTime : "09:00";
-  const hours = Math.max(0, Math.round(durationMinutes / 60));
-  const remainingMinutes = Math.max(0, durationMinutes % 60);
+  const total = Math.max(0, Math.floor(durationMinutes || 0));
+  const hours = Math.floor(total / 60);
+  const remainingMinutes = total % 60;
   if (!durationMinutes || durationMinutes <= 0) {
     return safeTime;
   }
@@ -598,28 +599,35 @@ export default function SavedTripBuilder({
               insertIdx = to.insertIndex - 1;
             }
 
-            // Compute smart default: dropping before a stop = 2h earlier; after a stop = previous end time.
+            // Compute time: prefer keeping moved stop's time when it fits; else use smart default.
             const before = targetDay.stops[insertIdx - 1];
             const after = targetDay.stops[insertIdx];
             const defaultDuration = 90;
-            if (before && !after) {
-              // Dropping after the last stop: start when previous ends (e.g. 11am+2h → 1pm)
-              const prevEnd = timeToMinutes(before.startTime || "09:00") + (before.durationMinutes || 90);
-              startTime = minutesToTime(prevEnd);
-              durationMinutes = from.type === "day" ? (durationMinutes || defaultDuration) : defaultDuration;
+            const dur = from.type === "day" ? (durationMinutes || defaultDuration) : defaultDuration;
+            durationMinutes = dur;
+
+            const prevEndMin = before
+              ? timeToMinutes(before.startTime || "09:00") + (before.durationMinutes || 90)
+              : 0;
+            const nextStartMin = after ? timeToMinutes(after.startTime || "09:00") : 24 * 60;
+            const currentStartMin = from.type === "day" ? timeToMinutes(startTime || "09:00") : 0;
+            const currentEndMin = currentStartMin + dur;
+            const fits =
+              from.type === "day" &&
+              currentStartMin >= prevEndMin &&
+              currentEndMin <= nextStartMin;
+
+            if (fits) {
+              startTime = startTime || "09:00";
+            } else if (before && !after) {
+              startTime = minutesToTime(prevEndMin);
             } else if (after && !before) {
-              // Dropping before the first stop: 2h before that stop (e.g. before 11am → 9am)
               const nextStart = timeToMinutes(after.startTime || "09:00");
               startTime = minutesToTime(Math.max(9 * 60, nextStart - 120));
-              durationMinutes = from.type === "day" ? (durationMinutes || defaultDuration) : defaultDuration;
             } else if (after && before) {
-              // Dropping between two stops: start right after the previous ends
-              const prevEnd = timeToMinutes(before.startTime || "09:00") + (before.durationMinutes || 90);
-              startTime = minutesToTime(prevEnd);
-              durationMinutes = from.type === "day" ? (durationMinutes || defaultDuration) : defaultDuration;
+              startTime = minutesToTime(prevEndMin);
             } else {
               startTime = "09:00";
-              durationMinutes = from.type === "day" ? (durationMinutes || defaultDuration) : defaultDuration;
             }
 
             const newStop: PlannedStop = { attraction, startTime, durationMinutes };
