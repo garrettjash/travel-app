@@ -258,12 +258,7 @@ function toDbShape(days: DayPlan[], unscheduled: FavoriteAttraction[]): {
   const seen = new Set<number>();
   const dbUnscheduled: DbUnscheduledItem[] = [];
   for (const item of unscheduled ?? []) {
-    const id =
-      item && typeof item.attractionId === "number"
-        ? item.attractionId
-        : item && typeof item.id === "number"
-        ? item.id
-        : NaN;
+    const id = item && typeof item.id === "number" ? item.id : NaN;
     if (!Number.isFinite(id)) continue;
     const n = Number(id);
     if (seen.has(n)) continue;
