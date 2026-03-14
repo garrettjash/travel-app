@@ -534,7 +534,9 @@ export default function SavedTripBuilder({
     if (initialItinerary) seededFromDestinationsRef.current = false;
 
     clearAttractions();
-    setExtraSuggestionSections([]);
+    if (!(initialItinerary?.extraPlaces?.length ?? 0)) {
+      setExtraSuggestionSections([]);
+    }
 
     if (!initialItinerary) return;
 
