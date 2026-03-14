@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import AppShell from "./AppShell";
 import AttractionDetailsModal from "./AttractionDetailsModal";
 import { useAuth } from "../lib/auth-context";
+import { useCart } from "../lib/cart-context";
 import { FavoriteAttraction, useFavorites } from "../lib/favorites-context";
 import { useItinerary } from "../lib/itinerary-context";
 
@@ -202,6 +203,7 @@ export default function SavedTripBuilder({
   const { user } = useAuth();
   const { toggleFavorite, isFavorite } = useFavorites();
   const { attractions, addAttraction, removeAttraction, clearAttractions, isInItinerary } = useItinerary();
+  const { cart, moveCartToItinerary } = useCart();
 
   const [selectedAttraction, setSelectedAttraction] = useState<FavoriteAttraction | null>(null);
 
@@ -1363,7 +1365,18 @@ export default function SavedTripBuilder({
                     if (dragSource) moveStop(dragSource, { type: "unscheduled", insertIndex: unscheduled.length });
                   }}
                 >
-                  <h2 className="saved-unassigned-title">Unassigned</h2>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+                    <h2 className="saved-unassigned-title">Unassigned</h2>
+                    {cart.length > 0 && (
+                      <button
+                        type="button"
+                        className="saved-trips-button saved-trips-button-primary"
+                        onClick={() => moveCartToItinerary(addAttraction)}
+                      >
+                        Add from cart ({cart.length})
+                      </button>
+                    )}
+                  </div>
                   <p className="saved-unassigned-intro">Drag places here or into a day. Drag between days to reorder.</p>
                   <div className="saved-unassigned-cards">
                     {unscheduled.map((attraction, idx) => (

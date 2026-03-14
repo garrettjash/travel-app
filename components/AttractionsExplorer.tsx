@@ -1,7 +1,7 @@
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import AttractionDetailsModal from "./AttractionDetailsModal";
 import { FavoriteAttraction, useFavorites } from "../lib/favorites-context";
-import { useItinerary } from "../lib/itinerary-context";
+import { useCart } from "../lib/cart-context";
 
 type Attraction = {
   id: number;
@@ -154,7 +154,7 @@ function dedupeAttractionsById(list: Attraction[]) {
 
 export default function AttractionsExplorer({ title, subtitle, initialPlace }: AttractionsExplorerProps) {
   const { toggleFavorite, isFavorite } = useFavorites();
-  const { addAttraction, removeAttraction, isInItinerary } = useItinerary();
+  const { addToCart, removeFromCart, isInCart } = useCart();
   const [filters, setFilters] = useState<Filters>(defaultFilters);
   const [visibleFilters, setVisibleFilters] = useState<FilterKey[]>(defaultVisibleFilters);
   const [selectedFilterToAdd, setSelectedFilterToAdd] = useState<FilterKey | "">("");
@@ -681,18 +681,18 @@ export default function AttractionsExplorer({ title, subtitle, initialPlace }: A
                         <button
                           type="button"
                           className={`attractions-view-more ${
-                            isInItinerary(attraction.id) ? "attractions-view-more-disabled" : ""
+                            isInCart(attraction.id) ? "attractions-view-more-disabled" : ""
                           }`}
                           onClick={(event) => {
                             event.stopPropagation();
-                            if (isInItinerary(attraction.id)) {
-                              removeAttraction(attraction.id);
+                            if (isInCart(attraction.id)) {
+                              removeFromCart(attraction.id);
                             } else {
-                              addAttraction(toFavoriteAttraction(attraction));
+                              addToCart(toFavoriteAttraction(attraction));
                             }
                           }}
                         >
-                          {isInItinerary(attraction.id) ? "Added (click to remove)" : "Add to itinerary"}
+                          {isInCart(attraction.id) ? "In cart (click to remove)" : "Add to itinerary"}
                         </button>
                       </div>
                     </div>
