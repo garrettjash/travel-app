@@ -476,7 +476,7 @@ export default async function handler(
       if (isExpired && results.length > 0) {
         const existingItineraryId = sessionResult.data.itinerary_id;
         if (existingItineraryId) {
-          // Only return itineraryPath to the owner (logged-in user who created it)
+          // Return itineraryPath to owner; if itinerary has no user_id, let logged-in user claim it
           if (userId) {
             const itineraryResult = await supabase
               .from("itinerary")
@@ -485,11 +485,53 @@ export default async function handler(
               .limit(1)
               .maybeSingle<{ user_id: string | null }>();
 
-            if (!itineraryResult.error && itineraryResult.data?.user_id === userId) {
-              itineraryPath = `/saved-trips/${encodeURIComponent(existingItineraryId)}?fromCollab=1`;
+            if (!itineraryResult.error) {
+              const ownerId = itineraryResult.data?.user_id ?? null;
+              if (ownerId === userId) {
+                itineraryPath = `/saved-trips/${encodeURIComponent(existingItineraryId)}?fromCollab=1`;
+              } else if (!ownerId) {
+                // Itinerary has no owner (created by guest) - let this user claim it
+                await supabase
+                  .from("itinerary")
+                  .update({ user_id: userId })
+                  .eq("itinerary_id", existingItineraryId);
+                itineraryPath = `/saved-trips/${encodeURIComponent(existingItineraryId)}?fromCollab=1`;
+              }
             }
           }
         } else {
+          // Re-check itinerary_id in case a concurrent request already created one
+          const { data: freshSession } = await supabase
+            .from("collab_session")
+            .select("itinerary_id")
+            .eq("collab_session_id", sessionId)
+            .limit(1)
+            .maybeSingle<{ itinerary_id: string | null }>();
+
+          const alreadyLinked = freshSession?.itinerary_id;
+          if (alreadyLinked) {
+            if (userId) {
+              const itineraryResult = await supabase
+                .from("itinerary")
+                .select("user_id")
+                .eq("itinerary_id", alreadyLinked)
+                .limit(1)
+                .maybeSingle<{ user_id: string | null }>();
+
+              if (!itineraryResult.error) {
+                const ownerId = itineraryResult.data?.user_id ?? null;
+                if (ownerId === userId) {
+                  itineraryPath = `/saved-trips/${encodeURIComponent(alreadyLinked)}?fromCollab=1`;
+                } else if (!ownerId) {
+                  await supabase
+                    .from("itinerary")
+                    .update({ user_id: userId })
+                    .eq("itinerary_id", alreadyLinked);
+                  itineraryPath = `/saved-trips/${encodeURIComponent(alreadyLinked)}?fromCollab=1`;
+                }
+              }
+            }
+          } else {
           const votedIds = results
             .filter((r) => r.yesVotes > r.noVotes)
             .sort((a, b) => b.yesVotes - b.noVotes - (a.yesVotes - a.noVotes))
@@ -523,18 +565,25 @@ export default async function handler(
               const updateSessionResult = await supabase
                 .from("collab_session")
                 .update({ itinerary_id: itineraryId })
-                .eq("collab_session_id", sessionId);
+                .eq("collab_session_id", sessionId)
+                .is("itinerary_id", null)
+                .select("itinerary_id")
+                .maybeSingle();
 
-              if (updateSessionResult.error && !isMissingColumnError(updateSessionResult.error.message)) {
-                res.status(500).json({ error: updateSessionResult.error.message });
+              const updateErr = updateSessionResult.error;
+              if (updateErr && !isMissingColumnError(updateErr.message)) {
+                res.status(500).json({ error: updateErr.message });
                 return;
               }
 
-              // Only return path to the creator (logged-in user who owns the itinerary)
-              if (userId) {
-                itineraryPath = `/saved-trips/${encodeURIComponent(itineraryId)}?fromCollab=1`;
+              if (updateSessionResult.data) {
+                // We won the race - our itinerary is linked
+                if (userId) {
+                  itineraryPath = `/saved-trips/${encodeURIComponent(itineraryId)}?fromCollab=1`;
+                }
               }
             }
+          }
           }
         }
       }
