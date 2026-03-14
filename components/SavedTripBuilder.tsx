@@ -1609,7 +1609,10 @@ export default function SavedTripBuilder({
                             onDrop={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              if (dragSource) moveStop(dragSource, { type: "day", dayIndex, insertIndex: slotIndex });
+                              // Dropping on last card = append after (gives "previous end" time); else insert before
+                              const insertIndex =
+                                slotIndex === day.stops.length - 1 ? day.stops.length : slotIndex;
+                              if (dragSource) moveStop(dragSource, { type: "day", dayIndex, insertIndex });
                             }}
                           >
                             <div
