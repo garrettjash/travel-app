@@ -80,10 +80,18 @@ export type DayPlan = {
   stops: PlannedStop[];
 };
 
+export type ExtraPlaceItem = {
+  placeId?: number;
+  label: string;
+  city: string;
+  countryRegion: string;
+};
+
 export type SavedItinerary = {
   itineraryId: string;
   tripName: string;
   tripPlace?: string;
+  extraPlaces?: ExtraPlaceItem[];
   startDate: string;
   endDate: string;
   pace: Pace;
@@ -331,13 +339,26 @@ export default function SavedTripBuilder({
   }, [newSuggestionLocation]);
 
   /**
-   * When viewing an existing itinerary, infer additional locations from the
-   * cities/countries used in its stops and unscheduled places, and bootstrap
-   * extra suggestion sections (and Trip location text rows) for them.
+   * When viewing an existing itinerary, seed extra suggestion sections from
+   * saved extraPlaces (if any), or infer from attraction cities.
    */
   useEffect(() => {
     if (!initialItinerary) return;
     if (extraSuggestionSections.length > 0) return;
+
+    const savedExtra = initialItinerary.extraPlaces ?? [];
+    if (savedExtra.length > 0) {
+      for (const ep of savedExtra) {
+        const place: PlaceOption = {
+          id: ep.placeId ?? -1,
+          label: ep.label,
+          city: ep.city,
+          countryRegion: ep.countryRegion
+        };
+        void handleAddExtraLocation(place);
+      }
+      return;
+    }
 
     const primaryLabel = (initialItinerary.tripPlace ?? "").trim();
     const primaryCityKey = primaryLabel.split(",")[0]?.trim().toLowerCase() ?? "";
@@ -380,7 +401,14 @@ export default function SavedTripBuilder({
       // for the inferred location without blocking initial render.
       void handleAddExtraLocation(place);
     }
-  }, [initialItinerary?.itineraryId, initialItinerary?.tripPlace, initialItinerary?.days, initialItinerary?.unscheduled, extraSuggestionSections.length]);
+  }, [
+    initialItinerary?.itineraryId,
+    initialItinerary?.tripPlace,
+    initialItinerary?.days,
+    initialItinerary?.unscheduled,
+    initialItinerary?.extraPlaces,
+    extraSuggestionSections.length
+  ]);
 
   /** Effective trip location: from dropdown selection, input, or saved/prop value */
   const effectiveLocation = useMemo(
@@ -681,12 +709,23 @@ export default function SavedTripBuilder({
     setIsShareCopied(false);
     setIsShareCodeCopied(false);
 
+    const extraPlacesPayload: ExtraPlaceItem[] = extraSuggestionSections
+      .map((s) => s.place)
+      .filter((p) => p.label?.trim())
+      .map((p) => ({
+        placeId: p.id > 0 ? p.id : undefined,
+        label: p.label.trim(),
+        city: p.city ?? "",
+        countryRegion: p.countryRegion ?? ""
+      }));
+
     const payload: any = {
       itineraryId: activeItineraryId || undefined,
       userId: user?.id ?? undefined,
       tripName: activeTripName,
       tripPlace: tripPlace.trim(),
       placeId: selectedPlace?.id ?? undefined,
+      extraPlaces: extraPlacesPayload,
       startDate,
       endDate,
       pace,

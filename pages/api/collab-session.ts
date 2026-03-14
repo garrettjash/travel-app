@@ -552,7 +552,7 @@ export default async function handler(
             const insertRow: Record<string, unknown> = {
               itinerary_id: itineraryId,
               trip_name: `Collab: ${place}`,
-              place_id: placeId,
+              place: [{ placeId, placeName: place }],
               start_date: startDate,
               end_date: endDate,
               pace: "balanced",
