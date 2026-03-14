@@ -15,6 +15,38 @@ export default function MyItinerariesPage() {
   const [itineraries, setItineraries] = useState<ItineraryListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  async function handleDelete(e: React.MouseEvent, item: ItineraryListItem) {
+    e.stopPropagation();
+    if (
+      !window.confirm(
+        "Are you sure you want to delete this itinerary? This cannot be undone."
+      )
+    ) {
+      return;
+    }
+    setDeletingId(item.itineraryId);
+    try {
+      const params = new URLSearchParams();
+      params.set("itineraryId", item.itineraryId);
+      params.set("userId", user!.id);
+      const response = await fetch(`/api/itinerary?${params.toString()}`, {
+        method: "DELETE"
+      });
+      const data = (await response.json()) as { error?: string };
+      if (!response.ok) throw new Error(data.error || "Failed to delete.");
+      setItineraries((prev) =>
+        prev.filter((i) => i.itineraryId !== item.itineraryId)
+      );
+    } catch (err) {
+      if (err instanceof Error) {
+        window.alert(err.message);
+      }
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   useEffect(() => {
     if (loading || !user?.id) {
@@ -94,7 +126,7 @@ export default function MyItinerariesPage() {
             ) : (
               <ul className="my-itineraries-list">
                 {itineraries.map((item) => (
-                  <li key={item.itineraryId}>
+                  <li key={item.itineraryId} className="my-itineraries-row">
                     <button
                       type="button"
                       className="my-itineraries-item"
@@ -104,6 +136,20 @@ export default function MyItinerariesPage() {
                       {item.location && (
                         <span className="my-itineraries-location">{item.location}</span>
                       )}
+                    </button>
+                    <button
+                      type="button"
+                      className="my-itineraries-delete"
+                      onClick={(e) => handleDelete(e, item)}
+                      disabled={deletingId === item.itineraryId}
+                      aria-label="Delete itinerary"
+                    >
+                      <img
+                        src="https://img.icons8.com/fluent-systems-regular/24/FA5252/trash.png"
+                        alt=""
+                        width={24}
+                        height={24}
+                      />
                     </button>
                   </li>
                 ))}

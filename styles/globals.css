@@ -3115,11 +3115,17 @@ body {
   margin: 0;
   padding: 0;
 }
+.my-itineraries-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
 .my-itineraries-item {
+  flex: 1;
   display: block;
   width: 100%;
   padding: 14px 16px;
-  margin-bottom: 8px;
   border: 1px solid #d5e3f1;
   border-radius: 12px;
   background: #fff;
@@ -3142,6 +3148,25 @@ body {
   margin-top: 4px;
   font-size: 0.9rem;
   color: #4d6883;
+}
+.my-itineraries-delete {
+  flex-shrink: 0;
+  padding: 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.my-itineraries-delete:hover:not(:disabled) {
+  background: #fef2f2;
+}
+.my-itineraries-delete:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .attraction-modal-image,

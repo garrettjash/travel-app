@@ -834,7 +834,61 @@ export default async function handler(
       }
     }
 
-    response.setHeader("Allow", "GET, POST, PATCH");
+    if (request.method === "DELETE") {
+      const rawUserId = request.query.userId;
+      const userId =
+        typeof rawUserId === "string" &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawUserId)
+          ? rawUserId
+          : null;
+
+      const rawId = request.query.itineraryId;
+      const itineraryId = sanitizeItineraryId(
+        Array.isArray(rawId) ? rawId[0] : rawId ?? ""
+      );
+
+      if (!itineraryId || !userId) {
+        response.status(400).json({ error: "itineraryId and userId are required." });
+        return;
+      }
+
+      const { data, error: fetchErr } = await supabase
+        .from("itinerary")
+        .select("user_id")
+        .eq("itinerary_id", itineraryId)
+        .limit(1)
+        .maybeSingle<{ user_id: string | null }>();
+
+      if (fetchErr) {
+        response.status(500).json({ error: fetchErr.message });
+        return;
+      }
+
+      if (!data) {
+        response.status(404).json({ error: "Itinerary not found." });
+        return;
+      }
+
+      if (data.user_id !== userId) {
+        response.status(403).json({ error: "You can only delete your own itineraries." });
+        return;
+      }
+
+      const { error: deleteErr } = await supabase
+        .from("itinerary")
+        .delete()
+        .eq("itinerary_id", itineraryId);
+
+      if (deleteErr) {
+        response.status(500).json({ error: deleteErr.message });
+        return;
+      }
+
+      response.status(200).json({ success: true });
+      return;
+    }
+
+    response.setHeader("Allow", "GET, POST, PATCH, DELETE");
     response.status(405).json({ error: "Method Not Allowed" });
   } catch (err) {
     response.status(500).json({
