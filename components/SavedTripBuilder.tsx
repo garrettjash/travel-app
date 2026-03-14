@@ -104,26 +104,6 @@ type SavedTripBuilderProps = {
   initialTripPlace?: string;
 };
 
-const BUILD_CATEGORIES = [
-  "Landmark",
-  "Restaurant",
-  "Food",
-  "Activity",
-  "Shopping",
-  "Nature",
-  "Museum",
-  "Show",
-  "Nightlife",
-  "Outdoor",
-  "Attraction",
-  "Entertainment"
-];
-
-/** Map user-facing type (e.g. Food) to category values we match in attraction.categories. Enables future AI-driven mapping. */
-const BUILD_TYPE_ALIASES: Record<string, string[]> = {
-  Food: ["Restaurant", "Food", "Dining", "Cafe", "Bar"]
-};
-
 type DragSource =
   | { type: "day"; dayIndex: number; slotIndex: number }
   | { type: "unscheduled"; index: number };
@@ -255,9 +235,6 @@ export default function SavedTripBuilder({
   const [isShareCopied, setIsShareCopied] = useState(false);
   const [isShareCodeCopied, setIsShareCodeCopied] = useState(false);
   const [dragSource, setDragSource] = useState<DragSource | null>(null);
-  const [buildForMeOpen, setBuildForMeOpen] = useState(false);
-  const [buildTypes, setBuildTypes] = useState<Set<string>>(new Set());
-  const [buildShuffle, setBuildShuffle] = useState(false);
   const [shareCode, setShareCode] = useState<string | null>(initialItinerary?.shareCode ?? null);
   const [extraSuggestionSections, setExtraSuggestionSections] = useState<ExtraSuggestionSection[]>([]);
   const [newSuggestionLocation, setNewSuggestionLocation] = useState("");
@@ -278,19 +255,6 @@ export default function SavedTripBuilder({
     }
     return next.slice(0, tripDays);
   }, [dayPlans, tripDays]);
-
-  /** Type options for Build for me: categories that actually appear in unassigned, so the list is always relevant */
-  const buildTypeOptions = useMemo(() => {
-    const seen = new Set<string>();
-    for (const a of unscheduled) {
-      for (const c of a.categories ?? []) {
-        const t = c.trim();
-        if (t) seen.add(t);
-      }
-    }
-    const list = Array.from(seen).sort((a, b) => a.localeCompare(b));
-    return list.length > 0 ? list : BUILD_CATEGORIES;
-  }, [unscheduled]);
 
   const totalStops = dayPlans.reduce((sum, day) => sum + day.stops.length, 0);
   const activeTripName = tripName.trim() || "Untitled Trip";
@@ -677,60 +641,6 @@ export default function SavedTripBuilder({
     setUnscheduled((c) => c.filter((x) => x.id !== attractionId));
     setDayPlans((c) => c.map((d) => ({ ...d, stops: d.stops.filter((s) => s.attraction.id !== attractionId) })));
   }, [removeAttraction]);
-
-  /** Build itinerary from unassigned items matching selected types (and pace). Structured for future AI hook. */
-  const handleBuildForMeApply = useCallback(() => {
-    const stopsPerDay = pace === "relaxed" ? 1 : pace === "packed" ? 3 : 2;
-    const capacity = tripDays * stopsPerDay;
-    let pool = unscheduled.filter((a) => {
-      if (buildTypes.size === 0) return true;
-      const cats = (a.categories ?? []).map((c) => c.toLowerCase());
-      return [...buildTypes].some((t) => {
-        const aliases = BUILD_TYPE_ALIASES[t] ?? [t];
-        return aliases.some((alias) => cats.includes(alias.toLowerCase()));
-      });
-    });
-    if (buildShuffle) {
-      const next = [...pool];
-      for (let i = next.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [next[i], next[j]] = [next[j], next[i]];
-      }
-      pool = next;
-    }
-    const picked = pool.slice(0, capacity);
-    const remaining = pool.slice(capacity);
-    const notInPool = unscheduled.filter((a) => !pool.some((p) => p.id === a.id));
-    const newUnscheduled = [...remaining, ...notInPool];
-
-    const days: DayPlan[] = [];
-    for (let d = 0; d < tripDays; d++) {
-      days.push({ dayNumber: d + 1, stops: [] });
-    }
-    picked.forEach((attraction, index) => {
-      const dayIndex = Math.floor(index / stopsPerDay);
-      const indexInDay = index % stopsPerDay;
-      if (!days[dayIndex]) return;
-
-      // Evenly distribute between 09:00 and 21:00 for that day
-      const dayStartMinutes = 9 * 60;
-      const dayEndMinutes = 21 * 60;
-      const span = dayEndMinutes - dayStartMinutes;
-      const step = stopsPerDay > 1 ? Math.floor(span / (stopsPerDay - 1)) : span;
-      const minutesFromStart = dayStartMinutes + step * indexInDay;
-      const startHour = Math.floor(minutesFromStart / 60);
-      const startMinute = minutesFromStart % 60;
-      const startTime = `${String(startHour).padStart(2, "0")}:${String(startMinute).padStart(2, "0")}`;
-
-      const durationMinutes = 90;
-
-      days[dayIndex].stops.push({ attraction, startTime, durationMinutes });
-    });
-
-    setDayPlans(days);
-    setUnscheduled(newUnscheduled);
-    setBuildForMeOpen(false);
-  }, [pace, tripDays, unscheduled, buildTypes, buildShuffle]);
 
   async function handleSave(event?: FormEvent) {
     if (event) event.preventDefault();
@@ -1176,83 +1086,10 @@ export default function SavedTripBuilder({
               />
             </div>
             <div className="saved-trips-actions">
-              <button
-                type="button"
-                className="saved-trips-button saved-trips-button-primary"
-                onClick={() => setBuildForMeOpen((o) => !o)}
-                aria-expanded={buildForMeOpen}
-              >
-                Build for me
-              </button>
               <button type="button" className="saved-trips-button saved-trips-button-muted" onClick={clearPlan}>
                 Clear schedule
               </button>
             </div>
-
-            {buildForMeOpen && (
-              <section className="saved-build-for-me-panel" aria-label="Build for me options">
-                <h3 className="saved-build-for-me-title">Auto-fill your days</h3>
-                <p className="saved-build-for-me-intro">
-                  Apply will automatically put your unassigned places into the days above. Choose pace (stops per day). Optionally filter by type—only checked types are used; if none are checked, all unassigned places are used.
-                </p>
-                <div className="saved-build-for-me-row">
-                  <label className="saved-build-for-me-label">Pace</label>
-                  <select
-                    value={pace}
-                    onChange={(e) => setPace(e.target.value as Pace)}
-                    className="saved-build-for-me-select"
-                  >
-                    <option value="relaxed">Relaxed (1 stop/day)</option>
-                    <option value="balanced">Balanced (2 stops/day)</option>
-                    <option value="packed">Packed (3 stops/day)</option>
-                  </select>
-                </div>
-                <div className="saved-build-for-me-row">
-                  <span className="saved-build-for-me-label">Types (from your unassigned list)</span>
-                  <div className="saved-build-for-me-types">
-                    {buildTypeOptions.map((cat) => (
-                      <label key={cat} className="saved-build-for-me-check">
-                        <input
-                          type="checkbox"
-                          checked={buildTypes.has(cat)}
-                          onChange={(e) => {
-                            setBuildTypes((prev) => {
-                              const next = new Set(prev);
-                              if (e.target.checked) next.add(cat);
-                              else next.delete(cat);
-                              return next;
-                            });
-                          }}
-                        />
-                        <span>{cat}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-                <div className="saved-build-for-me-row">
-                  <label className="saved-build-for-me-check saved-build-for-me-shuffle">
-                    <input
-                      type="checkbox"
-                      checked={buildShuffle}
-                      onChange={(e) => setBuildShuffle(e.target.checked)}
-                    />
-                    <span>Shuffle order before assigning</span>
-                  </label>
-                </div>
-                <div className="saved-build-for-me-actions">
-                  <button
-                    type="button"
-                    className="saved-trips-button saved-trips-button-primary"
-                    onClick={handleBuildForMeApply}
-                  >
-                    Apply
-                  </button>
-                  <button type="button" className="saved-trips-button saved-trips-button-muted" onClick={() => setBuildForMeOpen(false)}>
-                    Cancel
-                  </button>
-                </div>
-              </section>
-            )}
           </form>
 
           <section className="saved-trips-stats">

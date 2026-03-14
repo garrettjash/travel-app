@@ -14,30 +14,9 @@ type ItineraryContextValue = {
 
 const ItineraryContext = createContext<ItineraryContextValue | undefined>(undefined);
 
-const STORAGE_KEY = "travel-app-itinerary-attractions";
-
 export function ItineraryProvider({ children }: { children: ReactNode }) {
+  // Session-only: no persistence. Avoids buildup when starting new itineraries.
   const [attractions, setAttractions] = useState<ItineraryAttraction[]>([]);
-
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as unknown;
-      if (!Array.isArray(parsed)) return;
-      setAttractions(parsed as ItineraryAttraction[]);
-    } catch {
-      setAttractions([]);
-    }
-  }, []);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(attractions));
-    } catch {
-      // ignore storage errors
-    }
-  }, [attractions]);
 
   const addAttraction = useCallback((attraction: ItineraryAttraction) => {
     setAttractions((current) => {
