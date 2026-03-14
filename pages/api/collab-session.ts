@@ -475,39 +475,14 @@ export default async function handler(
             .sort((a, b) => b.yesVotes - b.noVotes - (a.yesVotes - a.noVotes))
             .map((r) => r.attractionId);
 
-          const votedAttractions = votedIds
-            .map((id) => attractions.find((a) => a.id === id))
-            .filter((a): a is AttractionItem => Boolean(a));
-
-          if (votedAttractions.length > 0) {
+          if (votedIds.length > 0) {
             const itineraryId = crypto.randomUUID();
             const today = new Date();
             const startDate = today.toISOString().slice(0, 10);
             const endDate = new Date(today.getTime() + 1000 * 60 * 60 * 24).toISOString().slice(0, 10);
 
-            const unscheduled = votedAttractions.map((a) => ({
-              id: a.id,
-              name: a.name,
-              city: a.city,
-              stateProvince: "",
-              country: a.country,
-              latitude: null,
-              longitude: null,
-              distanceFromPlace: null,
-              summary: a.summary,
-              vibe: a.vibe,
-              rating: a.rating,
-              totalCountRatings: null,
-              credibilityTier: null,
-              reviewsSummary: "",
-              priceLevel: a.priceLevel,
-              popularityScore: null,
-              rawData: "",
-              lastRefreshed: "",
-              categories: a.categories,
-              imageUrl: a.imageUrl,
-              imageUrls: a.imageUrls ?? []
-            }));
+            // Store IDs only (normalized format), no full objects or slot
+            const unscheduled = votedIds;
 
             const { error: insertErr } = await supabase.from("itinerary").insert({
               itinerary_id: itineraryId,

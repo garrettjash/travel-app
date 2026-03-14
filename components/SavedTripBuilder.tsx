@@ -596,18 +596,19 @@ export default function SavedTripBuilder({
               insertIdx = to.insertIndex - 1;
             }
 
-            // Compute smart default time based on neighbors: before = 2h earlier, after = previous end time.
+            // Compute smart default: dropping before a stop = 2h earlier; after a stop = previous end time.
             const before = targetDay.stops[insertIdx - 1];
             const after = targetDay.stops[insertIdx];
             const defaultDuration = 90;
             if (before && !after) {
-              // Dropping after the last stop: new start = previous end time
+              // Dropping after the last stop: start when previous ends (e.g. 11am+2h → 1pm)
               const prevEnd = timeToMinutes(before.startTime || "09:00") + (before.durationMinutes || 90);
               startTime = minutesToTime(prevEnd);
               durationMinutes = from.type === "day" ? (durationMinutes || defaultDuration) : defaultDuration;
             } else if (after && !before) {
-              // Dropping before the first stop: new start = 9 AM
-              startTime = "09:00";
+              // Dropping before the first stop: 2h before that stop (e.g. before 11am → 9am)
+              const nextStart = timeToMinutes(after.startTime || "09:00");
+              startTime = minutesToTime(Math.max(9 * 60, nextStart - 120));
               durationMinutes = from.type === "day" ? (durationMinutes || defaultDuration) : defaultDuration;
             } else if (after && before) {
               // Dropping between two stops: start right after the previous ends
