@@ -240,6 +240,11 @@ export default async function handler(
 
     if (req.method === "GET") {
       const sessionId = sanitizeSessionId(asString(req.query.sessionId));
+      const rawUserId = asString(req.query.userId);
+      const userId =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawUserId)
+          ? rawUserId
+          : null;
 
       if (!sessionId) {
         res.status(400).json({ error: "sessionId is required." });
@@ -471,7 +476,19 @@ export default async function handler(
       if (isExpired && results.length > 0) {
         const existingItineraryId = sessionResult.data.itinerary_id;
         if (existingItineraryId) {
-          itineraryPath = `/saved-trips/${encodeURIComponent(existingItineraryId)}?fromCollab=1`;
+          // Only return itineraryPath to the owner (logged-in user who created it)
+          if (userId) {
+            const itineraryResult = await supabase
+              .from("itinerary")
+              .select("user_id")
+              .eq("itinerary_id", existingItineraryId)
+              .limit(1)
+              .maybeSingle<{ user_id: string | null }>();
+
+            if (!itineraryResult.error && itineraryResult.data?.user_id === userId) {
+              itineraryPath = `/saved-trips/${encodeURIComponent(existingItineraryId)}?fromCollab=1`;
+            }
+          }
         } else {
           const votedIds = results
             .filter((r) => r.yesVotes > r.noVotes)
@@ -486,12 +503,6 @@ export default async function handler(
 
             // Store IDs only (normalized format), no full objects or slot
             const unscheduled = votedIds;
-
-            const rawUserId = asString(req.query.userId);
-            const userId =
-              /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawUserId)
-                ? rawUserId
-                : null;
 
             const insertRow: Record<string, unknown> = {
               itinerary_id: itineraryId,
@@ -519,7 +530,10 @@ export default async function handler(
                 return;
               }
 
-              itineraryPath = `/saved-trips/${encodeURIComponent(itineraryId)}?fromCollab=1`;
+              // Only return path to the creator (logged-in user who owns the itinerary)
+              if (userId) {
+                itineraryPath = `/saved-trips/${encodeURIComponent(itineraryId)}?fromCollab=1`;
+              }
             }
           }
         }
