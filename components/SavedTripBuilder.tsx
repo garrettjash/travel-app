@@ -462,6 +462,7 @@ export default function SavedTripBuilder({
   }, [initialItinerary]);
 
   const OPEN_NEW_WITH_DESTINATIONS = "travel-app-open-new-with-destinations";
+  const seededFromDestinationsRef = useRef(false);
 
   /**
    * When switching itineraries (or creating new), reset the shared itinerary context.
@@ -476,8 +477,16 @@ export default function SavedTripBuilder({
       clearAttractions();
       setExtraSuggestionSections([]);
       moveCartToItinerary(addAttraction);
+      seededFromDestinationsRef.current = true;
       return;
     }
+
+    // Avoid clearing when we just seeded from cart (effect can run again before next tick)
+    if (seededFromDestinationsRef.current && !initialItinerary) {
+      seededFromDestinationsRef.current = false;
+      return;
+    }
+    if (initialItinerary) seededFromDestinationsRef.current = false;
 
     clearAttractions();
     setExtraSuggestionSections([]);
