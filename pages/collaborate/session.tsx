@@ -360,6 +360,7 @@ export default function CollaborateSessionPage() {
   }
 
   function handleTouchEnd(event: TouchEvent<HTMLElement>) {
+    if (isSessionExpired) return;
     const endX = event.changedTouches[0]?.clientX;
     if (touchStartX === null || typeof endX !== "number") return;
 
@@ -384,7 +385,19 @@ export default function CollaborateSessionPage() {
         <AuthButton />
       </header>
 
-      <section className="destinations-content" style={{ padding: "24px" }}>
+      <section
+        className="destinations-content"
+        style={{
+          padding: "24px",
+          display: "flex",
+          flexDirection: "row",
+          gap: 24,
+          alignItems: "flex-start",
+          maxWidth: 1200,
+          margin: "0 auto"
+        }}
+      >
+        <div style={{ flex: 1, minWidth: 0 }}>
         <section className="about-card">
           <h1>
             Welcome to your collab session for <span className="destinations-brand">{destination}</span>
@@ -400,22 +413,6 @@ export default function CollaborateSessionPage() {
         {error && (
           <section className="about-card">
             <p className="attractions-state attractions-state-error">Error: {error}</p>
-          </section>
-        )}
-
-        {!isLoading && !error && isSessionExpired && itineraryPath && (
-          <section className="about-card" style={{ marginBottom: 24 }}>
-            <h2 style={{ margin: "0 0 12px", fontSize: "1.25rem" }}>Session results</h2>
-            <p style={{ margin: "0 0 16px", color: "#52606d" }}>
-              An itinerary was created with the top-voted places. View it to organize your trip.
-            </p>
-            <button
-              type="button"
-              className="saved-trips-button saved-trips-button-primary"
-              onClick={() => router.push(itineraryPath)}
-            >
-              View itinerary
-            </button>
           </section>
         )}
 
@@ -567,6 +564,31 @@ export default function CollaborateSessionPage() {
               </button>
             </div>
           </section>
+        )}
+        </div>
+        {!isLoading && !error && isSessionExpired && itineraryPath && (
+          <aside
+            className="about-card"
+            style={{
+              flex: "0 0 220px",
+              position: "sticky",
+              top: 88,
+              padding: 20
+            }}
+          >
+            <h2 style={{ margin: "0 0 8px", fontSize: "1.1rem" }}>Session ended</h2>
+            <p style={{ margin: "0 0 16px", fontSize: "0.9rem", color: "#52606d" }}>
+              View your itinerary with the top-voted places.
+            </p>
+            <button
+              type="button"
+              className="saved-trips-button saved-trips-button-primary"
+              style={{ width: "100%" }}
+              onClick={() => router.push(itineraryPath)}
+            >
+              View itinerary →
+            </button>
+          </aside>
         )}
       </section>
     </main>
