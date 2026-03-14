@@ -498,13 +498,15 @@ export default function SavedTripBuilder({
   const filteredExtraPlaces = useMemo(() => extraPlacesOptions.slice(0, 50), [extraPlacesOptions]);
 
   useEffect(() => {
-    if (!initialItinerary || !initialItinerary.itineraryId) return;
-    const id = sanitizeItineraryId(initialItinerary.itineraryId);
+    const id =
+      initialItinerary?.itineraryId
+        ? sanitizeItineraryId(initialItinerary.itineraryId)
+        : sanitizeItineraryId(itineraryIdFromRoute ?? "");
     if (!id) return;
     const url = `${window.location.origin}/saved-trips/${encodeURIComponent(id)}`;
     setShareLink(url);
     setActiveItineraryId(id);
-  }, [initialItinerary]);
+  }, [initialItinerary?.itineraryId, itineraryIdFromRoute]);
 
   const OPEN_NEW_WITH_DESTINATIONS = "travel-app-open-new-with-destinations";
   const seededFromDestinationsRef = useRef(false);
@@ -715,7 +717,7 @@ export default function SavedTripBuilder({
   async function handleSave(event?: FormEvent) {
     if (event) event.preventDefault();
 
-    const isNew = !activeItineraryId;
+    const isNewTrip = !initialItinerary;
 
     setIsSaving(true);
     setSaveError(null);
@@ -754,7 +756,7 @@ export default function SavedTripBuilder({
 
     try {
       const response = await fetch("/api/itinerary", {
-        method: activeItineraryId ? "PATCH" : "POST",
+        method: initialItinerary ? "PATCH" : "POST",
         headers: {
           "Content-Type": "application/json"
         },
@@ -782,7 +784,7 @@ export default function SavedTripBuilder({
         setShareCode(data.shareCode);
       }
 
-      if (isNew) {
+      if (isNewTrip) {
         clearAttractions();
       }
 

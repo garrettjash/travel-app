@@ -46,8 +46,19 @@ const ItineraryPage: NextPage = () => {
           return;
         }
 
-        if (!response.ok || !data.itinerary) {
+        if (!response.ok) {
+          if (response.status === 404) {
+            setInitialItinerary(null);
+            setLoadError(null);
+            return;
+          }
           throw new Error(data.error || "Unable to load itinerary.");
+        }
+
+        if (!data.itinerary) {
+          setInitialItinerary(null);
+          setLoadError(null);
+          return;
         }
 
         setInitialItinerary(data.itinerary);
@@ -139,6 +150,10 @@ const ItineraryPage: NextPage = () => {
   }
 
   if (loadError) {
+    const newId =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
     return (
       <AppShell>
         <section className="about-card">
@@ -147,7 +162,7 @@ const ItineraryPage: NextPage = () => {
           <button
             type="button"
             className="saved-trips-button saved-trips-button-primary"
-            onClick={() => router.push("/saved-trips")}
+            onClick={() => router.push(`/saved-trips/${encodeURIComponent(newId)}`)}
           >
             Start a new trip
           </button>
@@ -156,7 +171,13 @@ const ItineraryPage: NextPage = () => {
     );
   }
 
-  return <SavedTripBuilder initialItinerary={initialItinerary} itineraryIdFromRoute={String(itineraryId ?? "")} />;
+  const idParam = Array.isArray(itineraryId) ? itineraryId[0] : itineraryId;
+  return (
+    <SavedTripBuilder
+      initialItinerary={initialItinerary}
+      itineraryIdFromRoute={String(idParam ?? "")}
+    />
+  );
 };
 
 export default ItineraryPage;
