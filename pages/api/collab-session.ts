@@ -484,7 +484,13 @@ export default async function handler(
             // Store IDs only (normalized format), no full objects or slot
             const unscheduled = votedIds;
 
-            const { error: insertErr } = await supabase.from("itinerary").insert({
+            const rawUserId = asString(req.query.userId);
+            const userId =
+              /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawUserId)
+                ? rawUserId
+                : null;
+
+            const insertRow: Record<string, unknown> = {
               itinerary_id: itineraryId,
               trip_name: `Collab: ${place}`,
               place_id: placeId,
@@ -494,7 +500,10 @@ export default async function handler(
               notes: "",
               days: [],
               unscheduled
-            });
+            };
+            if (userId) insertRow.user_id = userId;
+
+            const { error: insertErr } = await supabase.from("itinerary").insert(insertRow);
 
             if (!insertErr) {
               const updateSessionResult = await supabase

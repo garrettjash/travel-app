@@ -1,6 +1,7 @@
 import { TouchEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
 import AuthButton from "../../components/AuthButton";
+import { useAuth } from "../../lib/auth-context";
 
 type Attraction = {
   id: number;
@@ -159,11 +160,13 @@ function saveLocalVotes(sessionId: string, votes: VotesByAttraction) {
 
 export default function CollaborateSessionPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const destinationFromUrl = useMemo(() => sanitizeDestination(router.query.place), [router.query.place]);
   const sessionId = useMemo(() => sanitizeSessionId(router.query.session), [router.query.session]);
 
   const [guestId, setGuestId] = useState("");
   const [destination, setDestination] = useState(destinationFromUrl);
+  const [itineraryPath, setItineraryPath] = useState<string | null>(null);
   const [attractions, setAttractions] = useState<Attraction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -189,7 +192,10 @@ export default function CollaborateSessionPage() {
       setVoteSavedMessage(null);
 
       try {
-        const response = await fetch(`/api/collab-session?sessionId=${encodeURIComponent(sessionId)}`);
+        const params = new URLSearchParams();
+        params.set("sessionId", sessionId);
+        if (user?.id) params.set("userId", user.id);
+        const response = await fetch(`/api/collab-session?${params.toString()}`);
         const payload = (await response.json()) as SessionPayload;
 
         if (!isActive) return;
@@ -204,6 +210,7 @@ export default function CollaborateSessionPage() {
           setAttractions([]);
           setIsSessionExpired(true);
           setResultsByAttraction({});
+          setItineraryPath(null);
           setCurrentIndex(0);
           return;
         }
@@ -215,14 +222,11 @@ export default function CollaborateSessionPage() {
         setDestination(payload.place || destinationFromUrl);
         setAttractions(payload.attractions ?? []);
         setIsSessionExpired(Boolean(payload.isExpired));
+        setItineraryPath(payload.itineraryPath ?? null);
         setResultsByAttraction(
           Object.fromEntries((payload.results ?? []).map((item) => [item.attractionId, item]))
         );
         setCurrentIndex(0);
-        if (payload.isExpired && payload.itineraryPath) {
-          router.replace(payload.itineraryPath);
-          return;
-        }
       } catch (loadError) {
         if (!isActive) return;
         setAttractions([]);
@@ -239,7 +243,7 @@ export default function CollaborateSessionPage() {
     return () => {
       isActive = false;
     };
-  }, [destinationFromUrl, router.isReady, sessionId]);
+  }, [destinationFromUrl, router.isReady, sessionId, user?.id]);
 
   useEffect(() => {
     if (!sessionId) return;
@@ -399,11 +403,29 @@ export default function CollaborateSessionPage() {
           </section>
         )}
 
+        {!isLoading && !error && isSessionExpired && itineraryPath && (
+          <section className="about-card" style={{ marginBottom: 24 }}>
+            <h2 style={{ margin: "0 0 12px", fontSize: "1.25rem" }}>Session results</h2>
+            <p style={{ margin: "0 0 16px", color: "#52606d" }}>
+              An itinerary was created with the top-voted places. View it to organize your trip.
+            </p>
+            <button
+              type="button"
+              className="saved-trips-button saved-trips-button-primary"
+              onClick={() => router.push(itineraryPath)}
+            >
+              View itinerary
+            </button>
+          </section>
+        )}
+
         {!isLoading && !error && !currentAttraction && (
           <section className="about-card">
             <p className="attractions-state">
               {isSessionExpired
-                ? "Polling is closed. No attractions met the YES-over-NO results criteria."
+                ? itineraryPath
+                  ? "Use the button above to view your itinerary."
+                  : "Polling is closed. No attractions met the YES-over-NO results criteria."
                 : "No attractions found for this session."}
             </p>
           </section>
@@ -489,8 +511,11 @@ export default function CollaborateSessionPage() {
                   </div>
                   {isSessionExpired && currentResult && (
                     <div>
-                      <dt>Result</dt>
-                      <dd>Recommended by group vote</dd>
+                      <dt>Group votes</dt>
+                      <dd>
+                        👍 {currentResult.yesVotes} · 👎 {currentResult.noVotes}
+                        {currentResult.yesVotes > currentResult.noVotes && " — Recommended"}
+                      </dd>
                     </div>
                   )}
                 </dl>
@@ -509,6 +534,17 @@ export default function CollaborateSessionPage() {
               )}
             </div>
 
+            {isSessionExpired && itineraryPath && (
+              <div style={{ marginTop: 16, textAlign: "center" }}>
+                <button
+                  type="button"
+                  className="saved-trips-button saved-trips-button-primary"
+                  onClick={() => router.push(itineraryPath)}
+                >
+                  View itinerary
+                </button>
+              </div>
+            )}
             <div className="saved-trips-actions" style={{ marginTop: 12, justifyContent: "center", alignItems: "center" }}>
               <button
                 type="button"
