@@ -543,8 +543,11 @@ export default async function handler(
             const startDate = today.toISOString().slice(0, 10);
             const endDate = new Date(today.getTime() + 1000 * 60 * 60 * 24).toISOString().slice(0, 10);
 
-            // Store IDs only (normalized format), no full objects or slot
-            const unscheduled = votedIds;
+            const nameById = new Map(attractions.map((a) => [a.id, normalizeText(a.name) || "Unnamed attraction"]));
+            const unscheduled = votedIds.map((id) => ({
+              attractionId: id,
+              attractionName: nameById.get(id) ?? "Unnamed attraction"
+            }));
 
             const insertRow: Record<string, unknown> = {
               itinerary_id: itineraryId,

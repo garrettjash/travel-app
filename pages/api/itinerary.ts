@@ -38,8 +38,14 @@ type DayPlan = {
 
 type DbStop = {
   attractionId: number;
+  attractionName: string;
   startTime: string;
   durationMinutes: number;
+};
+
+type DbUnscheduledItem = {
+  attractionId: number;
+  attractionName: string;
 };
 
 type DbDayPlan = {
@@ -212,12 +218,17 @@ function normalizeImageUrl(rawValue: string | null | undefined) {
   return null;
 }
 
-function toDbShape(days: DayPlan[], unscheduled: FavoriteAttraction[]): { dbDays: DbDayPlan[]; dbUnscheduled: number[] } {
+function toDbShape(days: DayPlan[], unscheduled: FavoriteAttraction[]): {
+  dbDays: DbDayPlan[];
+  dbUnscheduled: DbUnscheduledItem[];
+} {
   const dbDays: DbDayPlan[] = (days ?? []).map((day) => {
     const stops: DbStop[] = (day.stops ?? [])
       .map((stop) => {
-        const id = stop?.attraction?.id;
+        const attr = stop?.attraction;
+        const id = attr?.id;
         if (!Number.isFinite(id)) return null;
+        const name = typeof attr?.name === "string" ? attr.name.trim() || "Unnamed attraction" : "Unnamed attraction";
         const startTime =
           typeof (stop as any).startTime === "string" && /^\d{2}:\d{2}$/.test((stop as any).startTime)
             ? (stop as any).startTime
@@ -226,21 +237,27 @@ function toDbShape(days: DayPlan[], unscheduled: FavoriteAttraction[]): { dbDays
           typeof (stop as any).durationMinutes === "number" && (stop as any).durationMinutes > 0
             ? Math.round((stop as any).durationMinutes)
             : 90;
-        return { attractionId: Number(id), startTime, durationMinutes } as DbStop;
+        return { attractionId: Number(id), attractionName: name, startTime, durationMinutes } as DbStop;
       })
       .filter((s): s is DbStop => Boolean(s));
     return { dayNumber: day.dayNumber, stops };
   });
 
   const seen = new Set<number>();
-  const dbUnscheduled: number[] = [];
+  const dbUnscheduled: DbUnscheduledItem[] = [];
   for (const item of unscheduled ?? []) {
-    const id = item && typeof item.id === "number" ? item.id : NaN;
+    const id =
+      item && typeof item.attractionId === "number"
+        ? item.attractionId
+        : item && typeof item.id === "number"
+        ? item.id
+        : NaN;
     if (!Number.isFinite(id)) continue;
     const n = Number(id);
     if (seen.has(n)) continue;
     seen.add(n);
-    dbUnscheduled.push(n);
+    const name = typeof item.name === "string" ? item.name.trim() || "Unnamed attraction" : "Unnamed attraction";
+    dbUnscheduled.push({ attractionId: n, attractionName: name });
   }
 
   return { dbDays, dbUnscheduled };
@@ -268,6 +285,9 @@ function collectAttractionIds(rawDays: unknown, rawUnscheduled: unknown): { ids:
     if (typeof item === "number") {
       hasNormalizedIds = true;
       idsSet.add(item);
+    } else if (item && typeof item.attractionId === "number") {
+      hasNormalizedIds = true;
+      idsSet.add(item.attractionId);
     } else if (item && typeof item.id === "number") {
       idsSet.add(item.id);
     }
@@ -577,7 +597,34 @@ export default async function handler(
                 ? stop.attraction.id
                 : null;
             if (!Number.isFinite(id)) continue;
-            const attraction = byId.get(Number(id));
+            const n = Number(id);
+            const storedName = stop?.attractionName ?? stop?.attraction?.name;
+            let attraction = byId.get(n);
+            if (!attraction && typeof storedName === "string" && storedName.trim()) {
+              attraction = {
+                id: n,
+                name: storedName.trim(),
+                city: "",
+                stateProvince: "",
+                country: "",
+                latitude: null,
+                longitude: null,
+                distanceFromPlace: null,
+                summary: "",
+                vibe: "",
+                rating: null,
+                totalCountRatings: null,
+                credibilityTier: null,
+                reviewsSummary: "",
+                priceLevel: "",
+                popularityScore: null,
+                rawData: "",
+                lastRefreshed: "",
+                categories: [],
+                imageUrl: null,
+                imageUrls: []
+              } as FavoriteAttraction;
+            }
             if (!attraction) continue;
             let startTime =
               typeof stop?.startTime === "string" && /^\d{2}:\d{2}$/.test(stop.startTime)
@@ -603,13 +650,40 @@ export default async function handler(
         const unsArray = Array.isArray(rawUnscheduled) ? (rawUnscheduled as any[]) : [];
         const seenUnscheduled = new Set<number>();
         for (const item of unsArray) {
-          const id = typeof item === "number" ? item : item?.id;
+          const id = typeof item === "number" ? item : item?.attractionId ?? item?.id;
           if (!Number.isFinite(id)) continue;
           const n = Number(id);
           if (usedInDays.has(n) || seenUnscheduled.has(n)) continue;
-          const attraction = byId.get(n);
-          if (!attraction) continue;
-          hydratedUnscheduled.push(attraction);
+          const storedName = item?.attractionName ?? item?.name;
+          let attraction = byId.get(n);
+          if (attraction) {
+            hydratedUnscheduled.push(attraction);
+          } else if (typeof storedName === "string" && storedName.trim()) {
+            // Fallback: attraction not in DB, use stored name as minimal display
+            hydratedUnscheduled.push({
+              id: n,
+              name: storedName.trim(),
+              city: "",
+              stateProvince: "",
+              country: "",
+              latitude: null,
+              longitude: null,
+              distanceFromPlace: null,
+              summary: "",
+              vibe: "",
+              rating: null,
+              totalCountRatings: null,
+              credibilityTier: null,
+              reviewsSummary: "",
+              priceLevel: "",
+              popularityScore: null,
+              rawData: "",
+              lastRefreshed: "",
+              categories: [],
+              imageUrl: null,
+              imageUrls: []
+            } as FavoriteAttraction);
+          }
           seenUnscheduled.add(n);
         }
 
