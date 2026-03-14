@@ -710,14 +710,19 @@ export default function SavedTripBuilder({
     setIsShareCodeCopied(false);
 
     const extraPlacesPayload: ExtraPlaceItem[] = extraSuggestionSections
-      .map((s) => s.place)
-      .filter((p) => p.label?.trim())
-      .map((p) => ({
-        placeId: p.id > 0 ? p.id : undefined,
-        label: p.label.trim(),
-        city: p.city ?? "",
-        countryRegion: p.countryRegion ?? ""
-      }));
+      .filter((s) => s.label?.trim())
+      .map((s) => {
+        const label = s.label.trim();
+        const parts = label.split(",").map((p) => p.trim());
+        const city = parts[0] ?? "";
+        const countryRegion = parts.slice(1).join(", ").trim() || "";
+        return {
+          placeId: undefined,
+          label,
+          city,
+          countryRegion
+        };
+      });
 
     const payload: any = {
       itineraryId: activeItineraryId || undefined,
