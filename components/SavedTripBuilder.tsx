@@ -348,15 +348,26 @@ export default function SavedTripBuilder({
 
     const savedExtra = initialItinerary.extraPlaces ?? [];
     if (savedExtra.length > 0) {
-      for (const ep of savedExtra) {
+      const sections: ExtraSuggestionSection[] = savedExtra
+        .filter((ep) => ep?.label?.trim())
+        .map((ep) => ({
+          id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+          label: ep.label.trim(),
+          attractions: [],
+          loading: true,
+          collapsed: false
+        }));
+      setExtraSuggestionSections(sections);
+      sections.forEach((section, idx) => {
+        const ep = savedExtra[idx]!;
         const place: PlaceOption = {
           id: ep.placeId ?? -1,
           label: ep.label,
-          city: ep.city,
-          countryRegion: ep.countryRegion
+          city: ep.city ?? "",
+          countryRegion: ep.countryRegion ?? ""
         };
-        void handleAddExtraLocation(place);
-      }
+        void handleAddExtraLocationForSection(section.id, place);
+      });
       return;
     }
 
@@ -860,6 +871,50 @@ export default function SavedTripBuilder({
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  }
+
+  async function handleAddExtraLocationForSection(
+    sectionId: string,
+    place: PlaceOption
+  ) {
+    const label = place.label?.trim();
+    if (!label) return;
+    let cancelled = false;
+    try {
+      const params = new URLSearchParams();
+      params.set("limit", String(SUGGESTED_LIMIT));
+      params.set("offset", "0");
+      const city = place.city?.trim() || null;
+      const countryRegion = place.countryRegion?.trim() || null;
+      if (city) params.set("city", city);
+      if (countryRegion) params.set("countryRegion", countryRegion);
+      if (!city) {
+        const [rawCity] = label.split(",");
+        const cityLike = (rawCity ?? "").trim();
+        if (cityLike) params.set("city", cityLike);
+        else if (!countryRegion) params.set("search", label);
+      }
+      const res = await fetch(`/api/attractions?${params.toString()}`);
+      const json = (await res.json()) as { data?: ApiAttraction[]; error?: string };
+      if (!cancelled && json.data) {
+        const favorites = json.data.map(apiAttractionToFavorite);
+        setExtraSuggestionSections((prev) =>
+          prev.map((s) =>
+            s.id === sectionId ? { ...s, attractions: favorites, loading: false } : s
+          )
+        );
+      } else if (!cancelled) {
+        setExtraSuggestionSections((prev) =>
+          prev.map((s) => (s.id === sectionId ? { ...s, attractions: [], loading: false } : s))
+        );
+      }
+    } catch {
+      if (!cancelled) {
+        setExtraSuggestionSections((prev) =>
+          prev.map((s) => (s.id === sectionId ? { ...s, attractions: [], loading: false } : s))
+        );
+      }
+    }
   }
 
   async function handleAddExtraLocation(override?: string | PlaceOption) {

@@ -548,15 +548,19 @@ export default async function handler(
         }
       }
 
-      const placeArr = Array.isArray(data.place)
-        ? (data.place as PlaceEntry[])
-        : (typeof data.place === "object" && data.place !== null
-          ? [data.place as PlaceEntry]
-          : []);
+      const rawPlaceArr = Array.isArray(data.place)
+        ? (data.place as any[])
+        : typeof data.place === "object" && data.place !== null
+        ? [data.place as any]
+        : [];
+      const placeArr: PlaceEntry[] = rawPlaceArr
+        .filter((p) => p && (p.placeName || p.place_name))
+        .map((p) => ({
+          placeId: typeof (p.placeId ?? p.place_id) === "number" ? (p.placeId ?? p.place_id) : undefined,
+          placeName: String(p.placeName ?? p.place_name ?? "").trim()
+        }));
       const primaryPlace = placeArr[0];
-      const tripPlace = primaryPlace && typeof primaryPlace.placeName === "string"
-        ? primaryPlace.placeName.trim()
-        : "";
+      const tripPlace = primaryPlace?.placeName ?? "";
 
       const rawDays = (data.days ?? []) as unknown;
       const rawUnscheduled = (data.unscheduled ?? []) as unknown;
