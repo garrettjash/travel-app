@@ -1,8 +1,11 @@
-import { FormEvent, ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import AuthButton from "../../components/AuthButton";
 import AppTopNav from "../../components/AppTopNav";
-import SavedTripBuilder from "../../components/SavedTripBuilder";
+import SavedTripBuilder, {
+  SavedItinerary,
+  type SavedTripBuilderHandle
+} from "../../components/SavedTripBuilder";
 import { FavoriteAttraction } from "../../lib/favorites-context";
 import { useAuth } from "../../lib/auth-context";
 import { useItinerary } from "../../lib/itinerary-context";
@@ -86,10 +89,27 @@ export default function SoloPlannerItineraryPage() {
   const [chatError, setChatError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const previousMessageCountRef = useRef(0);
+  const builderRef = useRef<SavedTripBuilderHandle | null>(null);
+
+  const [refreshedItinerary, setRefreshedItinerary] = useState<SavedItinerary | null>(null);
 
   const canSend = useMemo(() => draft.trim().length > 0 && !isSending, [draft, isSending]);
 
   const itineraryIdFromRoute = Array.isArray(itineraryId) ? itineraryId[0] : itineraryId;
+
+  const fetchItinerary = useCallback(async () => {
+    if (!itineraryIdFromRoute) return null;
+    try {
+      const params = new URLSearchParams({ itineraryId: itineraryIdFromRoute });
+      if (user?.id) params.set("userId", user.id);
+      const res = await fetch(`/api/itinerary?${params.toString()}`);
+      const data = (await res.json()) as { itinerary?: SavedItinerary; error?: string };
+      if (res.ok && data.itinerary) return data.itinerary;
+    } catch {
+      /* ignore */
+    }
+    return null;
+  }, [itineraryIdFromRoute, user?.id]);
 
   const fetchMessages = async (activeSessionId: string) => {
     try {
@@ -159,6 +179,12 @@ export default function SoloPlannerItineraryPage() {
     setDraft("");
     setChatError(null);
 
+    try {
+      await builderRef.current?.save();
+    } catch {
+      /* save errors surfaced in builder */
+    }
+
     const userMessage: ChatMessage = {
       message_id: crypto.randomUUID(),
       role: "user",
@@ -189,6 +215,11 @@ export default function SoloPlannerItineraryPage() {
         createdAt: agentData.createdAt ?? new Date().toISOString()
       };
       setMessages((prev) => [...prev, agentMessage]);
+
+      if (agentData.itinerary_modified && itineraryIdFromRoute) {
+        const fresh = await fetchItinerary();
+        if (fresh) setRefreshedItinerary(fresh);
+      }
     } catch (err) {
       setChatError(err instanceof Error ? err.message : "Failed to send message");
     } finally {
@@ -273,9 +304,12 @@ export default function SoloPlannerItineraryPage() {
             )}
 
             <SavedTripBuilder
+              ref={builderRef}
               embedded
+              initialItinerary={refreshedItinerary ?? undefined}
               initialTripPlace={typeof initialPlace === "string" ? initialPlace : undefined}
               itineraryIdFromRoute={String(itineraryIdFromRoute ?? "")}
+              key={refreshedItinerary ? `refresh-${refreshedItinerary.updatedAt ?? refreshedItinerary.itineraryId}` : "new"}
             />
           </div>
         </aside>

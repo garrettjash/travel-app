@@ -1,4 +1,4 @@
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import AppShell from "./AppShell";
 import AttractionDetailsModal from "./AttractionDetailsModal";
@@ -201,12 +201,16 @@ function sanitizeItineraryId(raw: string | null | undefined) {
 
 const SUGGESTED_LIMIT = 24;
 
-export default function SavedTripBuilder({
-  initialItinerary,
-  itineraryIdFromRoute,
-  embedded,
-  initialTripPlace
-}: SavedTripBuilderProps) {
+export type SavedTripBuilderHandle = {
+  save: () => Promise<void>;
+  isSaving: boolean;
+};
+
+const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBuilderProps>(
+  function SavedTripBuilder(
+    { initialItinerary, itineraryIdFromRoute, embedded, initialTripPlace },
+    ref
+  ) {
   const router = useRouter();
   const { user } = useAuth();
   const { toggleFavorite, isFavorite } = useFavorites();
@@ -241,6 +245,7 @@ export default function SavedTripBuilder({
   const [activeItineraryId, setActiveItineraryId] = useState<string>(
     sanitizeItineraryId(initialItinerary?.itineraryId ?? itineraryIdFromRoute ?? "")
   );
+  const hasBeenSavedRef = useRef(false);
   const [shareLink, setShareLink] = useState<string | null>(null);
   const [isShareCopied, setIsShareCopied] = useState(false);
   const [isShareCodeCopied, setIsShareCodeCopied] = useState(false);
@@ -717,7 +722,9 @@ export default function SavedTripBuilder({
   async function handleSave(event?: FormEvent) {
     if (event) event.preventDefault();
 
-    const isNewTrip = !initialItinerary;
+    const isExisting =
+      !!initialItinerary || hasBeenSavedRef.current;
+    const isNewTrip = !isExisting;
 
     setIsSaving(true);
     setSaveError(null);
@@ -756,7 +763,7 @@ export default function SavedTripBuilder({
 
     try {
       const response = await fetch("/api/itinerary", {
-        method: initialItinerary ? "PATCH" : "POST",
+        method: isExisting ? "PATCH" : "POST",
         headers: {
           "Content-Type": "application/json"
         },
@@ -779,18 +786,21 @@ export default function SavedTripBuilder({
 
       setActiveItineraryId(sanitizedId);
       setShareLink(fullShareLink);
+      hasBeenSavedRef.current = true;
 
       if (data.shareCode) {
         setShareCode(data.shareCode);
       }
 
-      if (isNewTrip) {
+      if (isNewTrip && !embedded) {
         clearAttractions();
       }
 
-      const currentPath = router.asPath;
-      if (!currentPath.includes(`/saved-trips/${sanitizedId}`)) {
-        router.push(`/saved-trips/${encodeURIComponent(sanitizedId)}`, undefined, { shallow: false });
+      if (!embedded) {
+        const currentPath = router.asPath;
+        if (!currentPath.includes(`/saved-trips/${sanitizedId}`)) {
+          router.push(`/saved-trips/${encodeURIComponent(sanitizedId)}`, undefined, { shallow: false });
+        }
       }
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : "Unknown error saving itinerary.");
@@ -798,6 +808,47 @@ export default function SavedTripBuilder({
       setIsSaving(false);
     }
   }
+
+  const handleSaveRef = useRef(handleSave);
+  handleSaveRef.current = handleSave;
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      save: () => handleSaveRef.current(),
+      get isSaving() {
+        return isSaving;
+      }
+    }),
+    [isSaving]
+  );
+
+  /** Debounced auto-save when embedded with an itinerary ID (e.g. solo-planner) */
+  const autoSaveDeps = [
+    dayPlans,
+    unscheduled,
+    tripName,
+    startDate,
+    endDate,
+    pace,
+    tripPlace,
+    placeInputValue,
+    selectedPlace?.id,
+    notes,
+    extraSuggestionSections.map((s) => s.label).join(",")
+  ];
+  const isFirstMountRef = useRef(true);
+  useEffect(() => {
+    if (!embedded || !activeItineraryId) return;
+    if (isFirstMountRef.current) {
+      isFirstMountRef.current = false;
+      return;
+    }
+    const timer = setTimeout(() => {
+      void handleSaveRef.current();
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, autoSaveDeps);
 
   async function handleExport() {
     if (!startDate || dayPlans.length === 0) return;
@@ -1759,4 +1810,6 @@ export default function SavedTripBuilder({
   }
 
   return <AppShell activeTab="itinerary">{body}</AppShell>;
-}
+});
+
+export default SavedTripBuilderComponent;

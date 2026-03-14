@@ -18,6 +18,7 @@ export default async function handler(
   const prompt = request.body?.prompt ?? "";
   const sessionId = request.body?.session_id ?? "";
   const userId = typeof request.body?.user_id === "string" ? request.body.user_id : undefined;
+  const itineraryId = typeof request.body?.itinerary_id === "string" ? request.body.itinerary_id : undefined;
   const agentApiKey = process.env.AGENT_API_KEY;
 
   if (!prompt.trim()) {
@@ -42,7 +43,8 @@ export default async function handler(
       body: JSON.stringify({
         prompt,
         session_id: sessionId,
-        ...(userId && { user_id: userId })
+        ...(userId && { user_id: userId }),
+        ...(itineraryId && { itinerary_id: itineraryId })
       })
     });
     
