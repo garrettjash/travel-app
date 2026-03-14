@@ -90,6 +90,7 @@ type ItineraryResponse =
       path: string;
       shareCode?: string;
     }
+  | { success: true }
   | {
       itinerary?: {
         itineraryId: string;
