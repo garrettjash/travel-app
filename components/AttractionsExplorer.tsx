@@ -692,7 +692,7 @@ export default function AttractionsExplorer({ title, subtitle, initialPlace }: A
                             }
                           }}
                         >
-                          {isInCart(attraction.id) ? "In cart (click to remove)" : "Add to itinerary"}
+                          {isInCart(attraction.id) ? "In itinerary (click to remove)" : "Add to itinerary"}
                         </button>
                       </div>
                     </div>

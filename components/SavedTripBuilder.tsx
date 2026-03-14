@@ -203,7 +203,7 @@ export default function SavedTripBuilder({
   const { user } = useAuth();
   const { toggleFavorite, isFavorite } = useFavorites();
   const { attractions, addAttraction, removeAttraction, clearAttractions, isInItinerary } = useItinerary();
-  const { cart, moveCartToItinerary } = useCart();
+  const { moveCartToItinerary } = useCart();
 
   const [selectedAttraction, setSelectedAttraction] = useState<FavoriteAttraction | null>(null);
 
@@ -461,12 +461,24 @@ export default function SavedTripBuilder({
     setActiveItineraryId(id);
   }, [initialItinerary]);
 
+  const OPEN_NEW_WITH_DESTINATIONS = "travel-app-open-new-with-destinations";
+
   /**
-   * When switching itineraries (or creating new), reset the shared itinerary context
-   * so places are scoped to the current itinerary only. Clear first, then seed from
-   * the itinerary we're viewing (if any).
+   * When switching itineraries (or creating new), reset the shared itinerary context.
+   * If coming from "View itinerary" (Destinations), seed from cart. Else clear or seed from itinerary.
    */
   useEffect(() => {
+    const fromDestinations =
+      typeof window !== "undefined" && window.sessionStorage.getItem(OPEN_NEW_WITH_DESTINATIONS) === "1";
+
+    if (fromDestinations) {
+      if (typeof window !== "undefined") window.sessionStorage.removeItem(OPEN_NEW_WITH_DESTINATIONS);
+      clearAttractions();
+      setExtraSuggestionSections([]);
+      moveCartToItinerary(addAttraction);
+      return;
+    }
+
     clearAttractions();
     setExtraSuggestionSections([]);
 
@@ -478,7 +490,7 @@ export default function SavedTripBuilder({
     }
     for (const a of initialItinerary.unscheduled ?? []) all.push(a);
     all.forEach((a) => addAttraction(a));
-  }, [initialItinerary?.itineraryId, itineraryIdFromRoute, clearAttractions]);
+  }, [initialItinerary?.itineraryId, itineraryIdFromRoute, clearAttractions, moveCartToItinerary, addAttraction]);
 
   // Sync unscheduled so items added from Destinations (or elsewhere) appear in Unassigned (deduplicated by id)
   useEffect(() => {
@@ -1365,18 +1377,7 @@ export default function SavedTripBuilder({
                     if (dragSource) moveStop(dragSource, { type: "unscheduled", insertIndex: unscheduled.length });
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-                    <h2 className="saved-unassigned-title">Unassigned</h2>
-                    {cart.length > 0 && (
-                      <button
-                        type="button"
-                        className="saved-trips-button saved-trips-button-primary"
-                        onClick={() => moveCartToItinerary(addAttraction)}
-                      >
-                        Add from cart ({cart.length})
-                      </button>
-                    )}
-                  </div>
+                  <h2 className="saved-unassigned-title">Unassigned</h2>
                   <p className="saved-unassigned-intro">Drag places here or into a day. Drag between days to reorder.</p>
                   <div className="saved-unassigned-cards">
                     {unscheduled.map((attraction, idx) => (
