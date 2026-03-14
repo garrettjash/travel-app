@@ -240,6 +240,8 @@ export default function SavedTripBuilder({
   const [shareCode, setShareCode] = useState<string | null>(initialItinerary?.shareCode ?? null);
   const [extraSuggestionSections, setExtraSuggestionSections] = useState<ExtraSuggestionSection[]>([]);
   const [newSuggestionLocation, setNewSuggestionLocation] = useState("");
+  const isCollabItinerary =
+    router.query.fromCollab || (initialItinerary?.tripName?.startsWith?.("Collab: ") ?? false);
   const [primarySuggestionsCollapsed, setPrimarySuggestionsCollapsed] = useState(false);
   const [addLocationExpanded, setAddLocationExpanded] = useState(false);
   const [extraPlacesOptions, setExtraPlacesOptions] = useState<PlaceOption[]>([]);
@@ -260,6 +262,10 @@ export default function SavedTripBuilder({
 
   const totalStops = dayPlans.reduce((sum, day) => sum + day.stops.length, 0);
   const activeTripName = tripName.trim() || "Untitled Trip";
+
+  useEffect(() => {
+    if (isCollabItinerary) setPrimarySuggestionsCollapsed(true);
+  }, [isCollabItinerary]);
 
   useEffect(() => {
     const q = placeInputValue.trim();
@@ -1145,9 +1151,7 @@ export default function SavedTripBuilder({
             />
           </section>
 
-          {!router.query.fromCollab && (
-            <>
-              {effectiveLocation && (
+          {effectiveLocation && (
                 <section className="saved-suggested-section" aria-labelledby="suggested-heading">
                   <div
                     style={{
@@ -1246,7 +1250,7 @@ export default function SavedTripBuilder({
                 </section>
               )}
 
-              {extraSuggestionSections.map((section) => (
+          {extraSuggestionSections.map((section) => (
                 <section
                   key={section.id}
                   className="saved-suggested-section"
@@ -1356,8 +1360,6 @@ export default function SavedTripBuilder({
                   )}
                 </section>
               ))}
-            </>
-          )}
 
           {(unscheduled.length === 0 && !dayPlans.some((d) => d.stops.length > 0)) ? (
             <section className="saved-trips-empty">

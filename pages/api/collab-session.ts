@@ -125,7 +125,10 @@ function normalizeImageUrl(rawValue: unknown) {
 }
 
 function isMissingColumnError(message: string) {
-  return /column\s+collab_session\.itinerary_id\s+does\s+not\s+exist/i.test(message);
+  return (
+    /column\s+collab_session\.itinerary_id\s+does\s+not\s+exist/i.test(message) ||
+    /could not find.*itinerary_id.*collab_session/i.test(message)
+  );
 }
 
 export default async function handler(

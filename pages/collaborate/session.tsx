@@ -402,6 +402,38 @@ export default function CollaborateSessionPage() {
           <h1>
             Welcome to your collab session for <span className="destinations-brand">{destination}</span>
           </h1>
+          {!isLoading && !error && isSessionExpired && (
+            <div
+              style={{
+                marginTop: 16,
+                padding: 16,
+                background: "#f0f7ff",
+                borderLeft: "4px solid #2563eb",
+                borderRadius: 8
+              }}
+            >
+              <p style={{ margin: "0 0 8px", fontWeight: 600, color: "#1e40af" }}>
+                Voting link expired
+              </p>
+              <p style={{ margin: 0, color: "#374151" }}>
+                You can view the results below.
+                {itineraryPath && (
+                  <>
+                    {" "}
+                    Or{" "}
+                    <button
+                      type="button"
+                      className="saved-trips-button saved-trips-button-primary"
+                      style={{ marginLeft: 4, display: "inline-block" }}
+                      onClick={() => router.push(itineraryPath)}
+                    >
+                      view your itinerary
+                    </button>
+                  </>
+                )}
+              </p>
+            </div>
+          )}
         </section>
 
         {isLoading && (
@@ -421,7 +453,7 @@ export default function CollaborateSessionPage() {
             <p className="attractions-state">
               {isSessionExpired
                 ? itineraryPath
-                  ? "Use the button above to view your itinerary."
+                  ? "Use the link above or the button on the right to view your itinerary."
                   : "Polling is closed. No attractions met the YES-over-NO results criteria."
                 : "No attractions found for this session."}
             </p>
