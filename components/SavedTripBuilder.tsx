@@ -242,6 +242,8 @@ export default function SavedTripBuilder({
   const [pace, setPace] = useState<Pace>(initialItinerary?.pace ?? "balanced");
   const [notes, setNotes] = useState(initialItinerary?.notes ?? "");
   const [dayPlans, setDayPlans] = useState<DayPlan[]>(initialItinerary?.days ?? []);
+  const dayPlansRef = useRef(dayPlans);
+  dayPlansRef.current = dayPlans;
   const [unscheduled, setUnscheduled] = useState<FavoriteAttraction[]>(initialItinerary?.unscheduled ?? []);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -742,7 +744,7 @@ export default function SavedTripBuilder({
       endDate,
       pace,
       notes,
-      days: dayPlans,
+      days: dayPlansRef.current,
       unscheduled
     };
 
