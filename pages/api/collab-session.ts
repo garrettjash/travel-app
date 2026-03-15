@@ -44,6 +44,7 @@ type CollabSessionResponse =
       isExpired?: boolean;
       results?: SessionAttractionResult[];
       itineraryPath?: string;
+      expiresAt?: string;
     }
   | { error: string };
 
@@ -328,9 +329,11 @@ export default async function handler(
       const createdAt = Date.parse(createdAtIso);
 
       let isExpired = false;
+      let expiresAtIso: string | undefined;
       if (Number.isFinite(createdAt)) {
         const expiresAt = createdAt + durationMinutes * 60 * 1000;
         isExpired = Date.now() > expiresAt;
+        expiresAtIso = new Date(expiresAt).toISOString();
       }
 
       // Resolve place ids from join table
@@ -412,7 +415,7 @@ export default async function handler(
       const results = Array.from(resultByAttraction.values());
 
       if (attractionIds.length === 0) {
-        res.status(200).json({ sessionId, placeId: resolvedPlaceIds[0] ?? null, place, attractions: [], isExpired, results });
+        res.status(200).json({ sessionId, placeId: resolvedPlaceIds[0] ?? null, place, attractions: [], isExpired, results, expiresAt: expiresAtIso });
         return;
       }
 
@@ -511,7 +514,7 @@ export default async function handler(
       filteredAttractionIds.forEach((id, index) => positionById.set(id, index));
 
       if (filteredAttractionIds.length === 0) {
-        res.status(200).json({ sessionId, placeId: resolvedPlaceIds[0] ?? null, place, attractions: [], isExpired, results });
+        res.status(200).json({ sessionId, placeId: resolvedPlaceIds[0] ?? null, place, attractions: [], isExpired, results, expiresAt: expiresAtIso });
         return;
       }
 
@@ -663,7 +666,7 @@ export default async function handler(
         }
       }
 
-      res.status(200).json({ sessionId, placeId: resolvedPlaceIds[0] ?? null, place, attractions, isExpired, results, itineraryPath });
+      res.status(200).json({ sessionId, placeId: resolvedPlaceIds[0] ?? null, place, attractions, isExpired, results, itineraryPath, expiresAt: expiresAtIso });
       return;
     }
 

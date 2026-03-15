@@ -35,6 +35,7 @@ type SessionPayload = {
   isExpired?: boolean;
   results?: SessionAttractionResult[];
   itineraryPath?: string;
+  expiresAt?: string;
   error?: string;
 };
 
@@ -80,6 +81,37 @@ function sanitizeSessionId(rawValue: string | string[] | undefined) {
 function formatLocation(city: string, country: string) {
   if (city && country) return `${city}, ${country}`;
   return city || country || "Location unavailable";
+}
+
+function formatExpiryIsoToLocal(iso: string | null) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (!Number.isFinite(d.getTime())) return null;
+
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const day = pad(d.getDate());
+  const monthNames = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December"
+  ];
+  const month = monthNames[d.getMonth()];
+  const year = d.getFullYear();
+  const hours = d.getHours();
+  const minutes = pad(d.getMinutes());
+  const ampm = hours >= 12 ? "PM" : "AM";
+  const hour12 = hours % 12 === 0 ? 12 : hours % 12;
+
+  return `${day}-${month}-${year}, ${hour12}:${minutes} ${ampm}`;
 }
 
 function formatCommaList(value: string) {
@@ -167,6 +199,7 @@ export default function CollaborateSessionPage() {
   const [guestId, setGuestId] = useState("");
   const [destination, setDestination] = useState(destinationFromUrl);
   const [itineraryPath, setItineraryPath] = useState<string | null>(null);
+  const [expiresAtIso, setExpiresAtIso] = useState<string | null>(null);
   const [attractions, setAttractions] = useState<Attraction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -221,6 +254,7 @@ export default function CollaborateSessionPage() {
 
         setDestination(payload.place || destinationFromUrl);
         setAttractions(payload.attractions ?? []);
+        setExpiresAtIso(payload.expiresAt ?? null);
         setIsSessionExpired(Boolean(payload.isExpired));
         setItineraryPath(payload.itineraryPath ?? null);
         setResultsByAttraction(
@@ -382,7 +416,10 @@ export default function CollaborateSessionPage() {
         >
           TravelApp
         </button>
-        <AuthButton />
+        <div />
+        <div className="destinations-topbar-actions">
+          <AuthButton />
+        </div>
       </header>
 
       <section
@@ -402,6 +439,11 @@ export default function CollaborateSessionPage() {
           <h1>
             Welcome to your collab session for <span className="destinations-brand">{destination}</span>
           </h1>
+          {!isLoading && expiresAtIso && (
+            <p style={{ marginTop: 8, color: "#6b7280", fontSize: 13 }}>
+              Link expires: {formatExpiryIsoToLocal(expiresAtIso)}
+            </p>
+          )}
           {!isLoading && !error && isSessionExpired && (
             <div
               style={{
@@ -416,7 +458,7 @@ export default function CollaborateSessionPage() {
                 Voting link expired
               </p>
               <p style={{ margin: 0, color: "#374151" }}>
-                You can view the results below.
+                You can view the results below. The user who created the session can view these results in the 'My Itineraries' section of their profile, and can share the itinerary from there as well.
                 {itineraryPath && (
                   <>
                     {" "}
