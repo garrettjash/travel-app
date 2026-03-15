@@ -516,6 +516,7 @@ def main() -> None:
 		# If no distance available, fall back to city-name matching or OpenAI
 		if a_city:
 			# prefer exact match to another place
+			did_reassign = False
 			for pid2, pl2 in places.items():
 				if a_city == clean_text(pl2.get("place_city") or "").lower():
 					if pid2 != int(place_id):
@@ -533,19 +534,21 @@ def main() -> None:
 						})
 						prefix = "[DRY] Reassign" if dry_run else "🔁 Reassigned"
 						print(f"{prefix}: attraction id={attr.get('attraction_id')} -> place_id={pid2} (city match)")
+						did_reassign = True
 						break
-			else:
-				# no exact city match found; use OpenAI if available for ambiguous cases
-				decision = decide_assignment_with_openai(openai_client, attr, args.openai_model)
-				if decision is None:
-					reassignment_actions.append({
-						"attraction_id": attr.get("attraction_id"),
-						"name": clean_text(attr.get("attraction_name")),
-						"current_place": f"{place.get('place_city')}, {place.get('place_countryregion')}",
-						"issue": "no_distance_city_only",
-					})
-					print(f"[REVIEW] Attraction id={attr.get('attraction_id')} needs manual review (no distance, city only)")
-					continue
+			if did_reassign:
+				continue
+			# no exact city match found; use OpenAI if available for ambiguous cases
+			decision = decide_assignment_with_openai(openai_client, attr, args.openai_model)
+			if decision is None:
+				reassignment_actions.append({
+					"attraction_id": attr.get("attraction_id"),
+					"name": clean_text(attr.get("attraction_name")),
+					"current_place": f"{place.get('place_city')}, {place.get('place_countryregion')}",
+					"issue": "no_distance_city_only",
+				})
+				print(f"[REVIEW] Attraction id={attr.get('attraction_id')} needs manual review (no distance, city only)")
+				continue
 		else:
 			# no useful city or distance -> consult OpenAI or flag
 			decision = decide_assignment_with_openai(openai_client, attr, args.openai_model)
