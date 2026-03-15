@@ -458,7 +458,7 @@ export default function CollaborateSessionPage() {
                 Voting link expired
               </p>
               <p style={{ margin: 0, color: "#374151" }}>
-                You can view the results below. The user who created the session can view these results in the 'My Itineraries' section of their profile, and can share the itinerary from there as well.
+                You can view the results below. The user who created the session can view these results in the &apos;My Itineraries&apos; section of their profile, and can share the itinerary from there as well.
                 {itineraryPath && (
                   <>
                     {" "}
