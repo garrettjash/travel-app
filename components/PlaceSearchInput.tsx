@@ -11,6 +11,7 @@ type PlaceSearchInputProps = {
   id: string;
   value: string;
   onChange: (value: string) => void;
+  onSelect?: (place: PlaceOption) => void;
   placeholder?: string;
   className?: string;
   required?: boolean;
@@ -21,6 +22,7 @@ export default function PlaceSearchInput({
   id,
   value,
   onChange,
+  onSelect,
   placeholder = "City or country",
   className = "planning-solo-input",
   required,
@@ -75,6 +77,7 @@ export default function PlaceSearchInput({
 
   function handleSelectPlace(place: PlaceOption) {
     onChange(place.label);
+    if (onSelect) onSelect(place);
     setDropdownOpen(false);
   }
 

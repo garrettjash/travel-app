@@ -1,6 +1,8 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/router";
 import AppShell from "../components/AppShell";
+import PlaceSearchInput from "../components/PlaceSearchInput";
+import { useAuth } from "../lib/auth-context";
 
 type FilterOptionsResponse = {
   options?: Array<{
@@ -11,14 +13,14 @@ type FilterOptionsResponse = {
 };
 
 const LINK_DURATION_OPTIONS = [
-  { label: "5m", minutes: 5 },
-  { label: "10m", minutes: 10 },
-  { label: "15m", minutes: 15 },
-  { label: "30m", minutes: 30 },
-  { label: "1 hr", minutes: 60 },
-  { label: "2 hr", minutes: 120 },
-  { label: "5 hr", minutes: 300 },
-  { label: "12 hr", minutes: 720 },
+  { label: "5 minutes", minutes: 5 },
+  { label: "10 minutes", minutes: 10 },
+  { label: "15 minutes", minutes: 15 },
+  { label: "30 minutes", minutes: 30 },
+  { label: "1 hour", minutes: 60 },
+  { label: "2 hours", minutes: 120 },
+  { label: "5 hours", minutes: 300 },
+  { label: "12 hours", minutes: 720 },
   { label: "1 day", minutes: 1440 }
 ] as const;
 
@@ -57,11 +59,12 @@ function getSafeCollabUrl(inputValue: string) {
 
 export default function CollaboratePage() {
   const router = useRouter();
-  const [places, setPlaces] = useState<Array<{ id: number; label: string }>>([]);
-  const [isLoadingPlaces, setIsLoadingPlaces] = useState(true);
+  const { user } = useAuth();
   const [placeError, setPlaceError] = useState<string | null>(null);
-  const [placeInput, setPlaceInput] = useState("");
-  const [selectedPlaceId, setSelectedPlaceId] = useState<number | null>(null);
+
+  const [placeEntries, setPlaceEntries] = useState<Array<{ value: string; selected?: { id: number; label: string } }>>([
+    { value: "" }
+  ]);
   const [selectedDurationMinutes, setSelectedDurationMinutes] = useState<number>(60);
   const [createSessionLink, setCreateSessionLink] = useState<string | null>(null);
   const [createSessionError, setCreateSessionError] = useState<string | null>(null);
@@ -70,89 +73,52 @@ export default function CollaboratePage() {
   const [joinLinkInput, setJoinLinkInput] = useState("");
   const [joinLinkError, setJoinLinkError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let isActive = true;
+  const filteredPlaces = useMemo(() => [], []);
 
-    async function loadPlaces() {
-      setIsLoadingPlaces(true);
-      setPlaceError(null);
-
-      try {
-        const response = await fetch("/api/collab-places", {
-          method: "GET",
-          headers: {
-            Accept: "application/json"
-          }
-        });
-        const payload = (await response.json()) as FilterOptionsResponse;
-
-        if (!isActive) return;
-
-        if (!response.ok || payload.error) {
-          throw new Error(payload.error || "Unable to load places");
-        }
-
-        const safePlaces = (payload.options ?? [])
-          .map((option) => {
-            const id = Number(option.id);
-            const label = sanitizePlainText(option.label);
-            if (!Number.isFinite(id) || !label) return null;
-            return { id, label };
-          })
-          .filter((option): option is { id: number; label: string } => Boolean(option));
-
-        setPlaces(safePlaces);
-      } catch (error) {
-        if (!isActive) return;
-        setPlaces([]);
-        setPlaceError(error instanceof Error ? error.message : "Unknown error loading places");
-      } finally {
-        if (isActive) {
-          setIsLoadingPlaces(false);
-        }
-      }
-    }
-
-    loadPlaces();
-
-    return () => {
-      isActive = false;
-    };
-  }, []);
-
-  const filteredPlaces = useMemo(() => {
-    const query = sanitizePlainText(placeInput).toLowerCase();
-    if (!query) return places.slice(0, 200);
-    return places.filter((place) => place.label.toLowerCase().includes(query)).slice(0, 200);
-  }, [placeInput, places]);
-
-  const canCreateSession = selectedPlaceId !== null;
+  const canCreateSession = placeEntries.some((e) => e.selected && e.selected.id);
   const canAttemptJoin = sanitizeUrlInput(joinLinkInput).length > 0;
 
-  function handlePlaceInputChange(value: string) {
-    const safeValue = sanitizePlainText(value);
-    setPlaceInput(safeValue);
+  function handlePlaceInputChange(value: string, index = 0) {
+    const safeValue = value; // allow spaces and user text; PlaceSearchInput will handle trimming
+    setPlaceEntries((arr) => arr.map((v, i) => (i === index ? { ...v, value: safeValue } : v)));
     setCreateSessionLink(null);
     setCreateSessionError(null);
     setIsLinkCopied(false);
+    setPlaceError(null);
+  }
 
-    const selectedOption = places.find((place) => place.label === safeValue);
-    if (selectedOption) {
-      setSelectedPlaceId(selectedOption.id);
-      setPlaceError(null);
+  function handlePlaceSelect(place: { id: number; label: string }, index: number) {
+    // Prevent selecting the same place in more than one input
+    const duplicate = placeEntries.some((e, i) => i !== index && e.selected?.id === place.id);
+    if (duplicate) {
+      setPlaceError("This destination is already selected.");
       return;
     }
 
-    setSelectedPlaceId(null);
-    if (safeValue) {
-      setPlaceError("Choose a place from the list.");
-    } else {
-      setPlaceError(null);
-    }
+    setPlaceEntries((arr) => arr.map((v, i) => (i === index ? { value: place.label, selected: { id: place.id, label: place.label } } : v)));
+    setCreateSessionLink(null);
+    setCreateSessionError(null);
+    setIsLinkCopied(false);
+    setPlaceError(null);
+  }
+
+  function removeInput(index: number) {
+    setPlaceEntries((arr) => arr.filter((_, i) => i !== index));
+    setCreateSessionLink(null);
+    setCreateSessionError(null);
+    setIsLinkCopied(false);
   }
 
   async function handleCreateSessionClick() {
-    if (selectedPlaceId === null) return;
+    const placeIds = placeEntries.map((e) => e.selected?.id).filter((id): id is number => Boolean(id));
+    if (placeIds.length === 0) {
+      setPlaceError("Choose at least one destination from the dropdowns.");
+      return;
+    }
+    if (!user) {
+      setCreateSessionError("You must be logged in to create a session.");
+      return;
+    }
 
     setIsCreatingSession(true);
     setCreateSessionError(null);
@@ -167,7 +133,7 @@ export default function CollaboratePage() {
         },
         body: JSON.stringify({
           sessionId: token,
-          placeId: selectedPlaceId,
+          placeIds,
           durationMinutes: selectedDurationMinutes
         })
       });
@@ -229,22 +195,40 @@ export default function CollaboratePage() {
             <div className="saved-trips-builder" style={{ marginTop: 14, gridTemplateColumns: "1fr" }}>
               <div className="saved-trips-field">
                 <label htmlFor="collab-place-search">CREATE A COLLAB SESSION</label>
-                <input
-                  id="collab-place-search"
-                  type="text"
-                  list="collab-place-options"
-                  value={placeInput}
-                  onChange={(event) => handlePlaceInputChange(event.target.value)}
-                  placeholder={isLoadingPlaces ? "Loading places..." : "Search places in database"}
-                  autoComplete="off"
-                  inputMode="search"
-                  disabled={isLoadingPlaces}
-                />
-                <datalist id="collab-place-options">
-                  {filteredPlaces.map((place) => (
-                    <option key={place.id} value={place.label} />
-                  ))}
-                </datalist>
+                <div style={{ display: "flex", gap: 8, flexDirection: "column" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {placeEntries.map((entry, idx) => (
+                        <div key={idx} style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                          <PlaceSearchInput
+                            id={`collab-place-search-${idx}`}
+                            value={entry.value}
+                            onChange={(v) => handlePlaceInputChange(v, idx)}
+                            onSelect={(p) => handlePlaceSelect({ id: p.id, label: p.label }, idx)}
+                            placeholder={"Type to search destinations…"}
+                            className="planning-solo-input"
+                            aria-label={`Add a place (${idx + 1})`}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeInput(idx)}
+                            aria-label={`Remove place ${idx + 1}`}
+                            title={placeEntries.length > 1 ? "Remove this place" : "Remove this place"}
+                            style={{ height: 36, padding: "0 8px" }}
+                          >
+                            −
+                          </button>
+                        </div>
+                      ))}
+
+                      <button
+                        type="button"
+                        className="saved-trips-button"
+                        onClick={() => setPlaceEntries((s) => [...s, { value: "" }])}
+                      >
+                        Add another place
+                      </button>
+                    </div>
+                </div>
               </div>
 
               <div className="saved-trips-field">
@@ -265,15 +249,20 @@ export default function CollaboratePage() {
                 </select>
               </div>
 
-              <div className="saved-trips-actions">
+              <div className="saved-trips-actions" style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <button
                   type="button"
-                  className={`saved-trips-button ${canCreateSession ? "saved-trips-button-primary" : "saved-trips-button-muted"}`}
+                  className={`saved-trips-button ${canCreateSession && user ? "saved-trips-button-primary" : "saved-trips-button-muted"}`}
                   onClick={handleCreateSessionClick}
-                  disabled={!canCreateSession || isCreatingSession}
+                  disabled={!canCreateSession || isCreatingSession || !user}
                 >
-                  {isCreatingSession ? "Creating..." : "Ceate!"}
+                  {isCreatingSession ? "Creating..." : "Create!"}
                 </button>
+                {!user && (
+                  <span style={{ color: "#666", fontSize: 13 }}>
+                    Create sessions requires logging in
+                  </span>
+                )}
               </div>
             </div>
 

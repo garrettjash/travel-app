@@ -58,7 +58,7 @@ export default async function handler(
       const escaped = search.replace(/[%_\\]/g, "\\$&").replace(/"/g, '\\"');
       const pattern = `"%${escaped}%"`;
       query = query.or(
-        `place_city.ilike.${pattern},place_countryregion.ilike.${pattern}`
+        `place_city.ilike.${pattern},place_stateprovince.ilike.${pattern},place_countryregion.ilike.${pattern}`
       );
     }
 

@@ -24,7 +24,6 @@ type SessionAttractionResult = {
 
 type CollabSessionRow = {
   collab_session_id: string;
-  collab_place_id: number | string | null;
   created_at: string | null;
   itinerary_id?: string | null;
 };
@@ -70,6 +69,17 @@ function sanitizePlaceId(rawValue: unknown) {
   if (!Number.isFinite(raw)) return null;
   const value = Math.floor(raw);
   return value > 0 ? value : null;
+}
+
+function sanitizePlaceIds(rawValue: unknown) {
+  if (!Array.isArray(rawValue)) return [] as number[];
+  const ids: number[] = rawValue
+    .map((v) => (typeof v === "string" || typeof v === "number" ? Number(v) : NaN))
+    .filter(Number.isFinite)
+    .map((n) => Math.floor(n))
+    .filter((n) => n > 0);
+  // dedupe
+  return Array.from(new Set(ids));
 }
 
 function sanitizeDurationMinutes(rawValue: unknown) {
@@ -146,11 +156,12 @@ export default async function handler(
     if (req.method === "POST") {
       const baseSessionId = sanitizeSessionId(req.body?.sessionId);
       const placeIdFromBody = sanitizePlaceId(req.body?.placeId);
+      const placeIdsFromBody = sanitizePlaceIds(req.body?.placeIds);
       const placeName = sanitizePlaceName(req.body?.placeName);
       const durationMinutes = sanitizeDurationMinutes(req.body?.durationMinutes);
 
-      if (!baseSessionId || (!placeIdFromBody && !placeName)) {
-        res.status(400).json({ error: "sessionId and either placeId or placeName are required." });
+      if (!baseSessionId || (placeIdsFromBody.length === 0 && !placeIdFromBody && !placeName)) {
+        res.status(400).json({ error: "sessionId and at least one placeId or a placeName are required." });
         return;
       }
 
@@ -159,37 +170,58 @@ export default async function handler(
         return;
       }
 
+
       const sessionId = buildTimedSessionId(baseSessionId, durationMinutes);
 
-      const placeQuery = supabase
-        .from("place")
-        .select("place_id, place_city, place_countryregion")
-        .limit(1);
-
-      const placeResult = placeIdFromBody
-        ? await placeQuery.eq("place_id", placeIdFromBody).maybeSingle()
-        : await placeQuery.or(`place_city.ilike.${placeName},place_countryregion.ilike.${placeName}`).maybeSingle();
-
-      if (placeResult.error) {
-        res.status(500).json({ error: placeResult.error.message });
-        return;
+      // Resolve place records: prefer explicit placeIds array, then single placeId, then name search
+      let resolvedPlaceRows: { place_id: number; place_city: string | null; place_countryregion: string | null }[] = [];
+      if (placeIdsFromBody.length > 0) {
+        const pRes = await supabase
+          .from("place")
+          .select("place_id, place_city, place_countryregion")
+          .in("place_id", placeIdsFromBody)
+          .limit(5000);
+        if (pRes.error) {
+          res.status(500).json({ error: pRes.error.message });
+          return;
+        }
+        resolvedPlaceRows = (pRes.data ?? []) as typeof resolvedPlaceRows;
+      } else if (placeIdFromBody) {
+        const pRes = await supabase
+          .from("place")
+          .select("place_id, place_city, place_countryregion")
+          .eq("place_id", placeIdFromBody)
+          .limit(1)
+          .maybeSingle();
+        if (pRes.error) {
+          res.status(500).json({ error: pRes.error.message });
+          return;
+        }
+        if (pRes.data) resolvedPlaceRows = [pRes.data as any];
+      } else if (placeName) {
+        const pattern = `"%${placeName.replace(/[%_\\]/g, "\\$&" )}%"`;
+        const pRes = await supabase
+          .from("place")
+          .select("place_id, place_city, place_countryregion")
+          .or(`place_city.ilike.${pattern},place_countryregion.ilike.${pattern}`)
+          .limit(50);
+        if (pRes.error) {
+          res.status(500).json({ error: pRes.error.message });
+          return;
+        }
+        // pick the first matching
+        resolvedPlaceRows = (pRes.data ?? []).slice(0, 1) as typeof resolvedPlaceRows;
       }
 
-      const placeId = Number(placeResult.data?.place_id);
-      const place =
-        normalizeText(placeResult.data?.place_city) || normalizeText(placeResult.data?.place_countryregion);
-
-      if (!Number.isFinite(placeId) || !place) {
+      if (resolvedPlaceRows.length === 0) {
         res.status(404).json({ error: "Place not found in database." });
         return;
       }
 
-      const insertSessionResult = await supabase
-        .from("collab_session")
-        .insert({
-          collab_session_id: sessionId,
-          collab_place_id: placeId
-        });
+      const resolvedPlaceIds = resolvedPlaceRows.map((r) => Number(r.place_id)).filter(Number.isFinite);
+
+      // Insert session (no collab_place_id column assumed)
+      const insertSessionResult = await supabase.from("collab_session").insert({ collab_session_id: sessionId });
 
       if (insertSessionResult.error) {
         const isDuplicate = insertSessionResult.error.code === "23505";
@@ -197,10 +229,20 @@ export default async function handler(
         return;
       }
 
+      // Persist join rows to collab_session_places (schema uses `session_id`)
+      const sessionPlaceRows = resolvedPlaceIds.map((pid) => ({ session_id: sessionId, place_id: pid }));
+      const insertSessionPlaces = await supabase.from("collab_session_places").insert(sessionPlaceRows);
+      if (insertSessionPlaces.error) {
+        // rollback session
+        await supabase.from("collab_session").delete().eq("collab_session_id", sessionId);
+        res.status(500).json({ error: insertSessionPlaces.error.message });
+        return;
+      }
+
       const attractionIdsResult = await supabase
         .from("attraction")
-        .select("attraction_id")
-        .eq("place_id", placeId)
+        .select("attraction_id, place_id")
+        .in("place_id", resolvedPlaceIds)
         .limit(5000);
 
       if (attractionIdsResult.error) {
@@ -228,11 +270,15 @@ export default async function handler(
         }
       }
 
+      const placeNames = resolvedPlaceRows
+        .map((r) => normalizeText(r.place_city) || normalizeText(r.place_countryregion))
+        .filter(Boolean);
+
       res.status(201).json({
         sessionId,
-        placeId,
-        place,
-        sessionPath: `/collaborate/session?place=${encodeURIComponent(place)}&session=${encodeURIComponent(sessionId)}`,
+        placeId: resolvedPlaceIds[0] ?? null,
+        place: placeNames[0] ?? "",
+        sessionPath: `/collaborate/session?session=${encodeURIComponent(sessionId)}`,
         attractionsCount: attractionIds.length
       });
       return;
@@ -253,7 +299,7 @@ export default async function handler(
 
       let sessionResult = await supabase
         .from("collab_session")
-        .select("collab_session_id, collab_place_id, created_at, itinerary_id")
+        .select("collab_session_id, created_at, itinerary_id")
         .eq("collab_session_id", sessionId)
         .limit(1)
         .maybeSingle<CollabSessionRow>();
@@ -261,7 +307,7 @@ export default async function handler(
       if (sessionResult.error && isMissingColumnError(sessionResult.error.message)) {
         sessionResult = await supabase
           .from("collab_session")
-          .select("collab_session_id, collab_place_id, created_at")
+          .select("collab_session_id, created_at")
           .eq("collab_session_id", sessionId)
           .limit(1)
           .maybeSingle<CollabSessionRow>();
@@ -287,24 +333,32 @@ export default async function handler(
         isExpired = Date.now() > expiresAt;
       }
 
-      const placeId = Number(sessionResult.data.collab_place_id);
+      // Resolve place ids from join table
+      let resolvedPlaceIds: number[] = [];
+      try {
+        const p = await supabase
+          .from("collab_session_places")
+          .select("place_id")
+          .eq("session_id", sessionId)
+          .limit(1000);
+        if (!p.error && Array.isArray(p.data) && p.data.length > 0) {
+          resolvedPlaceIds = (p.data ?? []).map((r: any) => Number(r.place_id)).filter(Number.isFinite);
+        }
+      } catch {
+        resolvedPlaceIds = [];
+      }
 
-      const [placeResult, itemIdsResult] = await Promise.all([
-        supabase
-          .from("place")
-          .select("place_city")
-          .eq("place_id", placeId)
-          .limit(1)
-          .maybeSingle(),
-        supabase
-          .from("collab_items")
-          .select("attraction_id")
-          .eq("collab_session_id", sessionId)
-          .limit(5000)
-      ]);
+      // No legacy single-place fallback available when column removed; rely on join table only.
 
-      if (placeResult.error) {
-        res.status(500).json({ error: placeResult.error.message });
+      const [placeRowsResult, itemIdsResult] = await Promise.all([
+        resolvedPlaceIds.length > 0
+          ? supabase.from("place").select("place_id, place_city").in("place_id", resolvedPlaceIds).limit(1000)
+          : Promise.resolve({ data: [], error: null }),
+        supabase.from("collab_items").select("attraction_id").eq("collab_session_id", sessionId).limit(5000)
+      ] as any);
+
+      if (placeRowsResult && placeRowsResult.error) {
+        res.status(500).json({ error: placeRowsResult.error.message });
         return;
       }
 
@@ -313,7 +367,12 @@ export default async function handler(
         return;
       }
 
-      const place = normalizeText(placeResult.data?.place_city) || "your destination";
+      const placeNames = Array.isArray(placeRowsResult.data)
+        ? (placeRowsResult.data as any[])
+            .map((r) => normalizeText(r.place_city) || "")
+            .filter(Boolean)
+        : [];
+      const place = placeNames[0] || "your destination";
       const attractionIds = (itemIdsResult.data ?? [])
         .map((row) => Number(row.attraction_id))
         .filter(Number.isFinite);
@@ -353,14 +412,15 @@ export default async function handler(
       const results = Array.from(resultByAttraction.values());
 
       if (attractionIds.length === 0) {
-        res.status(200).json({ sessionId, placeId, place, attractions: [], isExpired, results });
+        res.status(200).json({ sessionId, placeId: resolvedPlaceIds[0] ?? null, place, attractions: [], isExpired, results });
         return;
       }
 
+      // Fetch attractions and ensure they belong to one of the resolved places
       const attractionsResult = await supabase
         .from("attraction")
         .select(
-          "attraction_id, attraction_name, attraction_city, attraction_countryregion, attraction_summary, attraction_vibe, attraction_normalizedrating, attraction_pricelevel"
+          "attraction_id, attraction_name, attraction_city, attraction_countryregion, attraction_summary, attraction_vibe, attraction_normalizedrating, attraction_pricelevel, place_id"
         )
         .in("attraction_id", attractionIds)
         .limit(5000);
@@ -370,16 +430,23 @@ export default async function handler(
         return;
       }
 
+      // Filter out any attractions that do not match the resolvedPlaceIds
+      const filteredAttractionRows = (attractionsResult.data ?? []).filter((row: any) =>
+        resolvedPlaceIds.includes(Number(row.place_id))
+      );
+
+      const filteredAttractionIds = filteredAttractionRows.map((r: any) => Number(r.attraction_id)).filter(Number.isFinite);
+
       const [categoryLinksResult, imagesResult] = await Promise.all([
         supabase
           .from("attraction_categories")
           .select("attraction_id, category_id")
-          .in("attraction_id", attractionIds)
+          .in("attraction_id", filteredAttractionIds)
           .limit(8000),
         supabase
           .from("images")
           .select("attraction_id, image_url")
-          .in("attraction_id", attractionIds)
+          .in("attraction_id", filteredAttractionIds)
           .limit(8000)
       ]);
 
@@ -441,9 +508,14 @@ export default async function handler(
       }
 
       const positionById = new Map<number, number>();
-      attractionIds.forEach((id, index) => positionById.set(id, index));
+      filteredAttractionIds.forEach((id, index) => positionById.set(id, index));
 
-      const attractions = (attractionsResult.data ?? [])
+      if (filteredAttractionIds.length === 0) {
+        res.status(200).json({ sessionId, placeId: resolvedPlaceIds[0] ?? null, place, attractions: [], isExpired, results });
+        return;
+      }
+
+      const attractions = (filteredAttractionRows ?? [])
         .map((row) => {
           const id = Number(row.attraction_id);
           const imageUrls = imageByAttraction.get(id) ?? [];
@@ -552,7 +624,7 @@ export default async function handler(
             const insertRow: Record<string, unknown> = {
               itinerary_id: itineraryId,
               trip_name: `Collab: ${place}`,
-              place: [{ placeId, placeName: place }],
+              place: (placeRowsResult.data ?? []).map((r: any) => ({ placeId: Number(r.place_id), placeName: normalizeText(r.place_city) || "" })),
               start_date: startDate,
               end_date: endDate,
               pace: "balanced",
@@ -591,7 +663,7 @@ export default async function handler(
         }
       }
 
-      res.status(200).json({ sessionId, placeId, place, attractions, isExpired, results, itineraryPath });
+      res.status(200).json({ sessionId, placeId: resolvedPlaceIds[0] ?? null, place, attractions, isExpired, results, itineraryPath });
       return;
     }
 
