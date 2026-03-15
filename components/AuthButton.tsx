@@ -100,6 +100,17 @@ export default function AuthButton({ loginHref = "/login" }: AuthButtonProps) {
             >
               Sign out
             </button>
+            <button
+              type="button"
+              className="auth-button-menu-item"
+              role="menuitem"
+              onClick={() => {
+                router.push("/settings");
+                setMenuOpen(false);
+              }}
+            >
+              Settings
+            </button>
           </div>
         </>
       )}
