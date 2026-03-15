@@ -252,7 +252,7 @@ export default async function handler(
       }
 
       const attractionIds = (attractionIdsResult.data ?? [])
-        .map((row) => Number(row.attraction_id))
+        .map((row: any) => Number(row.attraction_id))
         .filter(Number.isFinite);
 
       if (attractionIds.length > 0) {
@@ -374,7 +374,7 @@ export default async function handler(
         : [];
       const place = placeNames[0] || "your destination";
       const attractionIds = (itemIdsResult.data ?? [])
-        .map((row) => Number(row.attraction_id))
+        .map((row: any) => Number(row.attraction_id))
         .filter(Number.isFinite);
 
       const pollResult = await supabase
@@ -461,7 +461,7 @@ export default async function handler(
       }
 
       const categoryIds = Array.from(
-        new Set((categoryLinksResult.data ?? []).map((row) => Number(row.category_id)).filter(Number.isFinite))
+        new Set((categoryLinksResult.data ?? []).map((row: any) => Number(row.category_id)).filter(Number.isFinite))
       );
 
       const categoryNameById = new Map<number, string>();
@@ -516,7 +516,7 @@ export default async function handler(
       }
 
       const attractions = (filteredAttractionRows ?? [])
-        .map((row) => {
+        .map((row: any) => {
           const id = Number(row.attraction_id);
           const imageUrls = imageByAttraction.get(id) ?? [];
 
