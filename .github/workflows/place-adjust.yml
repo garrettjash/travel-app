@@ -1,9 +1,6 @@
-name: Place adjust (nightly)
+name: Place adjust (manual)
 
 on:
-  schedule:
-    # Runs daily at 02:00 UTC; adjust as desired
-    - cron: '0 2 * * *'
   workflow_dispatch:
     inputs:
       place:
