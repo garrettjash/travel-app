@@ -1,0 +1,74 @@
+name: Place adjust (nightly)
+
+on:
+  schedule:
+    # Runs daily at 02:00 UTC; adjust as desired
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      place:
+        description: 'Place filter (optional)'
+        required: false
+        default: ''
+      country:
+        description: 'Country filter (optional)'
+        required: false
+        default: ''
+      apply:
+        description: 'Set to true to apply changes (dangerous)'
+        required: false
+        default: 'false'
+      skip_openai:
+        description: 'Skip OpenAI calls (default true)'
+        required: false
+        default: 'true'
+      openai_model:
+        description: 'OpenAI model to use (optional)'
+        required: false
+        default: ''
+
+jobs:
+  place_adjust:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt || true; fi
+          pip install python-dotenv openai supabase
+
+      - name: Make report dir
+        run: mkdir -p tmp
+
+      - name: Run place-adjust script
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+        run: |
+          TIMESTAMP=$(date -u +"%Y%m%dT%H%M%SZ")
+          REPORT_FILE=tmp/place_adjust_report_${TIMESTAMP}.json
+          ARGS=(--report-file "$REPORT_FILE")
+          if [ -n "${{ github.event.inputs.place }}" ]; then ARGS+=(--place "${{ github.event.inputs.place }}"); fi
+          if [ -n "${{ github.event.inputs.country }}" ]; then ARGS+=(--country "${{ github.event.inputs.country }}"); fi
+          if [ "${{ github.event.inputs.apply }}" = 'true' ]; then ARGS+=(--apply); fi
+          if [ "${{ github.event.inputs.skip_openai }}" = 'true' ]; then ARGS+=(--skip-openai); fi
+          if [ -n "${{ github.event.inputs.openai_model }}" ]; then ARGS+=(--openai-model "${{ github.event.inputs.openai_model }}"); fi
+          echo "Running: python ai_database/5.\ adjust_data.py ${ARGS[*]}"
+          python "ai_database/5. adjust_data.py" "${ARGS[@]}"
+        shell: bash
+
+      - name: Upload report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: place-adjust-report
+          path: tmp/place_adjust_report_*.json

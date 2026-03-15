@@ -1,0 +1,290 @@
+{
+  "generated_at": "2026-03-15T05:18:05.609537+00:00",
+  "place_merges": [],
+  "reassignments": [
+    {
+      "attraction_id": 3747,
+      "name": "Middle Caicos",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 3753,
+      "name": "Turks & Caicos National Museum",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 3754,
+      "name": "Salt Cay",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 3770,
+      "name": "Fogo de Chão Brazilian Steakhouse",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 3767,
+      "name": "Hawksmoor",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 3771,
+      "name": "Keens Steakhouse",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 3752,
+      "name": "Parrot Cay",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 3775,
+      "name": "COTE Korean Steakhouse",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 3779,
+      "name": "Carne Mare",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 3781,
+      "name": "Boucherie West Village",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 3776,
+      "name": "Don Angie",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 3740,
+      "name": "Royal West Indies",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 3736,
+      "name": "Ocean Club Resorts",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 3738,
+      "name": "Beaches Turkoise Resort",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 3743,
+      "name": "The Palms",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 3744,
+      "name": "Turtle Cove Marina",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 3745,
+      "name": "Coco Bistro",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 3746,
+      "name": "Bugalloos",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 3761,
+      "name": "Fort George Cay",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 3764,
+      "name": "City Creek Center",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 3737,
+      "name": "Ocean Club West",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 5939,
+      "name": "Big Blue Unlimited",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 3756,
+      "name": "City Hall",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 5944,
+      "name": "Ocean Vibes",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 3760,
+      "name": "Church History Museum",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 3757,
+      "name": "Seven Stars Resort",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 5952,
+      "name": "Little Water Cay",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 5949,
+      "name": "Gallivan Plaza",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 3768,
+      "name": "Gyu-Kaku Japanese BBQ",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 3772,
+      "name": "Porter House Bar and Grill",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 5963,
+      "name": "Churrascaria Plataforma",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 5965,
+      "name": "4 Charles Prime Rib",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 3778,
+      "name": "Club A Steakhouse",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 5968,
+      "name": "Delmonico’s",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 3755,
+      "name": "Windmills Plantation",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 3750,
+      "name": "Splashdown Grand Turk",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 3749,
+      "name": "Island House",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 3765,
+      "name": "Rocco Steakhouse",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 3773,
+      "name": "Peter Luger Steak House",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 3742,
+      "name": "Da Conch Shack",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 3758,
+      "name": "Eccles Theater",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 3769,
+      "name": "Quality Meats",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 3759,
+      "name": "Grace Bay Beach",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 3774,
+      "name": "Balvanera",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 3766,
+      "name": "St. Anselm",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 5971,
+      "name": "Dickson’s Farmstand Meats",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    },
+    {
+      "attraction_id": 3762,
+      "name": "Temple Square",
+      "current_place": "Provo, United States",
+      "issue": "heuristic_mismatch"
+    }
+  ],
+  "openai_enabled": false,
+  "mode": "DRY RUN"
+}
