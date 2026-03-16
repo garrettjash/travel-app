@@ -5,11 +5,11 @@ type AgentResponse = {
   session_id: string;
 };
 
-const agentEndpointUrl = "https://t795umrb49.execute-api.us-east-1.amazonaws.com/agent";
+const agentEndpointUrl = "https://2e4vwg7nk5.execute-api.us-east-1.amazonaws.com/prod/agent";
 
 export default async function handler(
   request: NextApiRequest,
-  response: NextApiResponse<AgentResponse | { error: string}>
+  response: NextApiResponse<AgentResponse | { error: string }>
 ) {
   if (request.method !== "POST") {
     return response.status(405).json({ error: "Method Not Allowed" });
@@ -47,7 +47,7 @@ export default async function handler(
         ...(itineraryId && { itinerary_id: itineraryId })
       })
     });
-    
+
     const responseData = await agentResponse.json();
 
     if (!agentResponse.ok) {
