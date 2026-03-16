@@ -72,7 +72,8 @@ type ItineraryRow = {
   share_code_required: boolean | null;
   start_date: string | null;
   end_date: string | null;
-  pace: string | null;
+  // pace column has been removed from DB; keep field optional for backward-compat parsing
+  pace?: string | null;
   notes: string | null;
   days: unknown;
   unscheduled: unknown;
@@ -95,7 +96,8 @@ type SavedItineraryPayload = {
   extraPlaces?: ExtraPlaceItem[];
   startDate: string;
   endDate: string;
-  pace: Pace;
+  // pace is no longer persisted in DB
+  pace?: Pace;
   notes: string;
   days: DayPlan[];
   unscheduled: FavoriteAttraction[];
@@ -517,7 +519,7 @@ export default async function handler(
       const { data, error } = await supabase
         .from("itinerary")
         .select(
-          "itinerary_id, trip_name, place, user_id, share_code, share_code_required, start_date, end_date, pace, notes, days, unscheduled, created_at, updated_at"
+          "itinerary_id, trip_name, place, user_id, share_code, share_code_required, start_date, end_date, notes, days, unscheduled, created_at, updated_at"
         )
         .eq("itinerary_id", itineraryId)
         .limit(1)
@@ -733,6 +735,7 @@ export default async function handler(
         extraPlaces?: ExtraPlaceItem[];
         startDate: string;
         endDate: string;
+        // pace is now purely a derived/client concept
         pace: Pace;
         notes: string;
         days: DayPlan[];
@@ -748,7 +751,7 @@ export default async function handler(
         extraPlaces: extraPlaces.length > 0 ? extraPlaces : undefined,
         startDate: normalizeText(data.start_date) || "",
         endDate: normalizeText(data.end_date) || "",
-        pace: (normalizeText(data.pace) as Pace) || "balanced",
+        pace: "balanced",
         notes: normalizeText(data.notes),
         days: hydratedDays,
         unscheduled: hydratedUnscheduled,
@@ -879,7 +882,6 @@ export default async function handler(
           place: placeEntries,
           start_date: startDate,
           end_date: endDate,
-          pace,
           notes,
           days: dbDays,
           unscheduled: dbUnscheduled,
@@ -912,7 +914,6 @@ export default async function handler(
             place: placeEntries,
             start_date: startDate,
             end_date: endDate,
-            pace,
             notes,
             days: dbDays,
             unscheduled: dbUnscheduled
