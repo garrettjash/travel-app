@@ -111,6 +111,23 @@ export default function SoloPlannerItineraryPage() {
     return null;
   }, [itineraryIdFromRoute, user?.id]);
 
+  // Load existing itinerary for this ID (e.g. from My Itineraries or collab)
+  useEffect(() => {
+    let cancelled = false;
+    if (!itineraryIdFromRoute) return;
+
+    (async () => {
+      const existing = await fetchItinerary();
+      if (!cancelled && existing) {
+        setRefreshedItinerary(existing);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchItinerary, itineraryIdFromRoute]);
+
   const fetchMessages = async (activeSessionId: string) => {
     try {
       const params = new URLSearchParams({
