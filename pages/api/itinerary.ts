@@ -897,7 +897,7 @@ export default async function handler(
 
         response.status(201).json({
           itineraryId,
-          path: `/saved-trips/${encodeURIComponent(itineraryId)}`,
+          path: `/solo-planner/${encodeURIComponent(itineraryId)}`,
           shareCode
         });
         return;
@@ -926,7 +926,7 @@ export default async function handler(
 
         response.status(200).json({
           itineraryId,
-          path: `/saved-trips/${encodeURIComponent(itineraryId)}`
+          path: `/solo-planner/${encodeURIComponent(itineraryId)}`
         });
         return;
       }

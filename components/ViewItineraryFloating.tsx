@@ -33,7 +33,7 @@ export default function ViewItineraryFloating() {
       onClick={() => {
         viewItineraryAndNavigate();
         const id = generateItineraryId();
-        router.push(`/saved-trips/${encodeURIComponent(id)}`);
+        router.push(`/solo-planner/${encodeURIComponent(id)}`);
       }}
       aria-label={`View itinerary with ${cart.length} destination${cart.length === 1 ? "" : "s"}`}
     >

@@ -563,14 +563,14 @@ export default async function handler(
             if (!itineraryResult.error) {
               const ownerId = itineraryResult.data?.user_id ?? null;
               if (ownerId === userId) {
-                itineraryPath = `/saved-trips/${encodeURIComponent(existingItineraryId)}?fromCollab=1`;
+                itineraryPath = `/solo-planner/${encodeURIComponent(existingItineraryId)}?fromCollab=1`;
               } else if (!ownerId) {
                 // Itinerary has no owner (created by guest) - let this user claim it
                 await supabase
                   .from("itinerary")
                   .update({ user_id: userId })
                   .eq("itinerary_id", existingItineraryId);
-                itineraryPath = `/saved-trips/${encodeURIComponent(existingItineraryId)}?fromCollab=1`;
+                itineraryPath = `/solo-planner/${encodeURIComponent(existingItineraryId)}?fromCollab=1`;
               }
             }
           }
@@ -596,13 +596,13 @@ export default async function handler(
               if (!itineraryResult.error) {
                 const ownerId = itineraryResult.data?.user_id ?? null;
                 if (ownerId === userId) {
-                  itineraryPath = `/saved-trips/${encodeURIComponent(alreadyLinked)}?fromCollab=1`;
+                  itineraryPath = `/solo-planner/${encodeURIComponent(alreadyLinked)}?fromCollab=1`;
                 } else if (!ownerId) {
                   await supabase
                     .from("itinerary")
                     .update({ user_id: userId })
                     .eq("itinerary_id", alreadyLinked);
-                  itineraryPath = `/saved-trips/${encodeURIComponent(alreadyLinked)}?fromCollab=1`;
+                  itineraryPath = `/solo-planner/${encodeURIComponent(alreadyLinked)}?fromCollab=1`;
                 }
               }
             }
@@ -657,7 +657,7 @@ export default async function handler(
               if (updateSessionResult.data) {
                 // We won the race - our itinerary is linked
                 if (userId) {
-                  itineraryPath = `/saved-trips/${encodeURIComponent(itineraryId)}?fromCollab=1`;
+                  itineraryPath = `/solo-planner/${encodeURIComponent(itineraryId)}?fromCollab=1`;
                 }
               }
             }

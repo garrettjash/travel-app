@@ -115,13 +115,13 @@ export default function MyItinerariesPage() {
               <>
                 <p>You haven&apos;t saved any itineraries yet. Create one from the Itinerary page or Solo Planner.</p>
                 <button
-                type="button"
-                className="saved-trips-button saved-trips-button-primary"
-                style={{ marginTop: 12 }}
-                onClick={() => router.push("/saved-trips")}
-              >
-                Start planning
-              </button>
+                  type="button"
+                  className="saved-trips-button saved-trips-button-primary"
+                  style={{ marginTop: 12 }}
+                  onClick={() => router.push("/solo-planner")}
+                >
+                  Start planning
+                </button>
               </>
             ) : (
               <ul className="my-itineraries-list">
@@ -130,7 +130,9 @@ export default function MyItinerariesPage() {
                     <button
                       type="button"
                       className="my-itineraries-item"
-                      onClick={() => router.push(`/saved-trips/${encodeURIComponent(item.itineraryId)}`)}
+                      onClick={() =>
+                        router.push(`/solo-planner/${encodeURIComponent(item.itineraryId)}`)
+                      }
                     >
                       <span className="my-itineraries-name">{item.tripName}</span>
                       {item.location && (

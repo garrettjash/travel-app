@@ -509,7 +509,7 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
         ? sanitizeItineraryId(initialItinerary.itineraryId)
         : sanitizeItineraryId(itineraryIdFromRoute ?? "");
     if (!id) return;
-    const url = `${window.location.origin}/saved-trips/${encodeURIComponent(id)}`;
+    const url = `${window.location.origin}/solo-planner/${encodeURIComponent(id)}`;
     setShareLink(url);
     setActiveItineraryId(id);
   }, [initialItinerary?.itineraryId, itineraryIdFromRoute]);
@@ -799,8 +799,10 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
 
       if (!embedded) {
         const currentPath = router.asPath;
-        if (!currentPath.includes(`/saved-trips/${sanitizedId}`)) {
-          router.push(`/saved-trips/${encodeURIComponent(sanitizedId)}`, undefined, { shallow: false });
+        if (!currentPath.includes(`/solo-planner/${sanitizedId}`)) {
+          router.push(`/solo-planner/${encodeURIComponent(sanitizedId)}`, undefined, {
+            shallow: false
+          });
         }
       }
     } catch (error) {
