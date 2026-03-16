@@ -180,7 +180,9 @@ export default function SoloPlannerItineraryPage() {
     setChatError(null);
 
     try {
-      await builderRef.current?.save();
+      if (builderRef.current?.hasBeenSaved) {
+        await builderRef.current.save();
+      }
     } catch {
       /* save errors surfaced in builder */
     }

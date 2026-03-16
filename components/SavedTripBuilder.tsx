@@ -204,6 +204,7 @@ const SUGGESTED_LIMIT = 24;
 export type SavedTripBuilderHandle = {
   save: () => Promise<void>;
   isSaving: boolean;
+  hasBeenSaved: boolean;
 };
 
 const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBuilderProps>(
@@ -818,6 +819,9 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
       save: () => handleSaveRef.current(),
       get isSaving() {
         return isSaving;
+      },
+      get hasBeenSaved() {
+        return hasBeenSavedRef.current;
       }
     }),
     [isSaving]
@@ -839,7 +843,7 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
   ];
   const isFirstMountRef = useRef(true);
   useEffect(() => {
-    if (!embedded || !activeItineraryId) return;
+    if (!embedded || !activeItineraryId || !hasBeenSavedRef.current) return;
     if (isFirstMountRef.current) {
       isFirstMountRef.current = false;
       return;
