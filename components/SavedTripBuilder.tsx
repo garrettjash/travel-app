@@ -312,6 +312,7 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
     };
   }, [placeInputValue]);
 
+
   /** Debounced collab-places search for "Add another location" input */
   useEffect(() => {
     const q = newSuggestionLocation.trim();
@@ -427,12 +428,51 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
     extraSuggestionSections.length
   ]);
 
+  const [suggestSearchQuery, setSuggestSearchQuery] = useState("");
+  const [suggestSearchResults, setSuggestSearchResults] = useState<FavoriteAttraction[]>([]);
+  const [isSearchingSuggestions, setIsSearchingSuggestions] = useState(false);
+
   /** Effective trip location: from dropdown selection, input, or saved/prop value */
   const effectiveLocation = useMemo(
     () =>
       (selectedPlace?.label ?? placeInputValue.trim() ?? tripPlace.trim() ?? initialTripPlace ?? "").trim(),
     [selectedPlace?.label, placeInputValue, tripPlace, initialTripPlace]
   );
+
+  /** Debounced search within primary suggestions (uses /api/attractions similar to Destinations) */
+  useEffect(() => {
+    const q = suggestSearchQuery.trim();
+    if (!q) {
+      setSuggestSearchResults([]);
+      return;
+    }
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      try {
+        setIsSearchingSuggestions(true);
+        const params = new URLSearchParams();
+        params.set("search", q);
+        if (effectiveLocation) params.set("place", effectiveLocation);
+        const res = await fetch(`/api/attractions?${params.toString()}`);
+        const data = await res.json();
+        if (!cancelled && Array.isArray(data.attractions)) {
+          const mapped = (data.attractions as ApiAttraction[]).map(apiAttractionToFavorite);
+          setSuggestSearchResults(mapped);
+        } else if (!cancelled) {
+          setSuggestSearchResults([]);
+        }
+      } catch {
+        if (!cancelled) setSuggestSearchResults([]);
+      } finally {
+        if (!cancelled) setIsSearchingSuggestions(false);
+      }
+    }, 300);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [suggestSearchQuery, effectiveLocation]);
 
   useEffect(() => {
     if (!effectiveLocation) {
@@ -1333,11 +1373,24 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                   {!primarySuggestionsCollapsed && (
                     <>
                       <p className="saved-suggested-intro">Click + to add a place to your itinerary.</p>
-                      {loadingSuggested ? (
+                      <div className="saved-trips-field saved-trips-field-full" style={{ marginTop: 8 }}>
+                        <label htmlFor="saved-suggested-search">Search attractions</label>
+                        <input
+                          id="saved-suggested-search"
+                          type="text"
+                          value={suggestSearchQuery}
+                          onChange={(e) => setSuggestSearchQuery(e.target.value)}
+                          className="planning-solo-input"
+                          placeholder="Search by name or keyword…"
+                        />
+                      </div>
+                      {loadingSuggested && !suggestSearchQuery ? (
                         <p className="saved-suggested-loading">Loading suggestions…</p>
+                      ) : isSearchingSuggestions ? (
+                        <p className="saved-suggested-loading">Searching…</p>
                       ) : (
                         <div className="saved-suggested-grid">
-                          {suggestedAttractions.map((attraction) => {
+                          {(suggestSearchQuery ? suggestSearchResults : suggestedAttractions).map((attraction) => {
                             const added = isInItinerary(attraction.id);
                             return (
                               <article
