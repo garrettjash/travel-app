@@ -1955,6 +1955,13 @@ body {
   gap: 14px;
 }
 
+@media (min-width: 1024px) {
+  /* On desktop, show up to 4 day cards per row, then wrap */
+  .saved-days-drag {
+    grid-template-columns: repeat(4, minmax(260px, 1fr));
+  }
+}
+
 .saved-days-drag > * {
   min-width: 0;
 }
