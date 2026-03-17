@@ -760,7 +760,7 @@ body {
   font-size: 1.2rem;
   cursor: pointer;
   box-shadow: 0 18px 28px rgba(15, 23, 42, 0.16);
-  position: fixed;
+  position: absolute;
   right: 16px;
   bottom: 16px;
   z-index: 30;
