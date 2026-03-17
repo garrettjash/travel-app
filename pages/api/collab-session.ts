@@ -276,6 +276,7 @@ export default async function handler(
         .filter(Boolean);
 
       // Create a placeholder itinerary now so the logged-in creator owns it
+      let createdItineraryId: string | null = null;
       try {
         const rawCreatorUserId = asString(req.body?.userId);
         const creatorUserId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawCreatorUserId)
@@ -307,6 +308,7 @@ export default async function handler(
 
         const { error: insertErr } = await supabase.from("itinerary").insert(insertRow);
         if (!insertErr) {
+          createdItineraryId = itineraryId;
           // Link session -> itinerary if none set (avoid overwriting existing linkage)
           await supabase
             .from("collab_session")
@@ -323,7 +325,8 @@ export default async function handler(
         placeId: resolvedPlaceIds[0] ?? null,
         place: placeNames[0] ?? "",
         sessionPath: `/collaborate/session?session=${encodeURIComponent(sessionId)}`,
-        attractionsCount: attractionIds.length
+        attractionsCount: attractionIds.length,
+        createdItineraryId
       });
       return;
     }
