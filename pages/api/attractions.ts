@@ -16,7 +16,7 @@ type AttractionRow = {
   attraction_rawdata: string | null;
   attraction_lastrefreshed: string | null;
   attraction_summary: string | null;
-  attraction_vibe: string | null;
+  attraction_vibe: string[] | string | null;
   attraction_normalizedrating: number | null;
   attraction_pricelevel: string | null;
   attraction_popularityscore: number | null;
@@ -111,6 +111,12 @@ function asNumber(value: string | string[] | undefined) {
 }
 
 function normalizeText(value: unknown) {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => normalizeText(item))
+      .filter(Boolean)
+      .join(", ");
+  }
   if (typeof value === "string") return value.trim();
   if (value === null || value === undefined) return "";
   return String(value).trim();
@@ -119,6 +125,21 @@ function normalizeText(value: unknown) {
 function uniqueSorted(values: Array<string | null | undefined>) {
   return Array.from(
     new Set(values.map((value) => normalizeText(value)).filter(Boolean))
+  ).sort((a, b) => a.localeCompare(b));
+}
+
+function splitMultiValueText(value: string | null | undefined) {
+  return normalizeText(value)
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+function uniqueSortedSplitValues(values: Array<string | null | undefined>) {
+  return Array.from(
+    new Set(
+      values.flatMap((value) => splitMultiValueText(value).map((part) => part.toLowerCase()))
+    )
   ).sort((a, b) => a.localeCompare(b));
 }
 
@@ -173,7 +194,7 @@ export default async function handler(
         attraction_city: string | null;
         attraction_stateprovince: string | null;
         attraction_countryregion: string | null;
-        attraction_vibe: string | null;
+        attraction_vibe: string[] | string | null;
         attraction_pricelevel: string | null;
       }> = [];
 
@@ -213,7 +234,7 @@ export default async function handler(
         attractionFilterRows.map((row) => row.attraction_countryregion)
       );
 
-      const vibes = uniqueSorted(
+      const vibes = uniqueSortedSplitValues(
         attractionFilterRows.map((row) => row.attraction_vibe)
       );
 
@@ -329,7 +350,7 @@ export default async function handler(
     }
 
     if (vibe) {
-      query = query.ilike("attraction_vibe", vibe);
+      query = query.overlaps("attraction_vibe", [vibe]);
     }
 
     if (countryRegion) {

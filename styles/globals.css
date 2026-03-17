@@ -3008,6 +3008,26 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
   color: #d22d4b;
 }
 
+.attraction-card-itinerary-button {
+  border: 1px solid #cddced;
+  border-radius: 999px;
+  background: #f7fbff;
+  color: #2a547d;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 9px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.attraction-card-itinerary-button-active {
+  border-color: #9bc6a8;
+  background: #eefaf1;
+  color: #25613a;
+}
+
 .attraction-modal-overlay {
   position: fixed;
   inset: 0;
@@ -3077,10 +3097,28 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
   color: #d22d4b;
 }
 
-.attraction-modal-favorite-row {
+.attraction-modal-action-row {
   margin-top: 10px;
   display: flex;
   justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.attraction-modal-itinerary-button {
+  border: 1px solid #cddced;
+  border-radius: 999px;
+  background: #f7fbff;
+  color: #2a547d;
+  font-weight: 700;
+  padding: 9px 14px;
+  cursor: pointer;
+}
+
+.attraction-modal-itinerary-button-active {
+  border-color: #9bc6a8;
+  background: #eefaf1;
+  color: #25613a;
 }
 
 .login-notice-overlay {

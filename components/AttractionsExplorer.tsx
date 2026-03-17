@@ -680,8 +680,8 @@ export default function AttractionsExplorer({ title, subtitle, initialPlace }: A
                         </button>
                         <button
                           type="button"
-                          className={`attractions-view-more ${
-                            isInCart(attraction.id) ? "attractions-view-more-disabled" : ""
+                          className={`attraction-card-itinerary-button ${
+                            isInCart(attraction.id) ? "attraction-card-itinerary-button-active" : ""
                           }`}
                           onClick={(event) => {
                             event.stopPropagation();
@@ -691,8 +691,13 @@ export default function AttractionsExplorer({ title, subtitle, initialPlace }: A
                               addToCart(toFavoriteAttraction(attraction));
                             }
                           }}
+                          title={
+                            isInCart(attraction.id)
+                              ? `Remove ${attraction.name} from itinerary`
+                              : `Add ${attraction.name} to itinerary`
+                          }
                         >
-                          {isInCart(attraction.id) ? "In itinerary (click to remove)" : "Add to itinerary"}
+                          {isInCart(attraction.id) ? "In itinerary" : "Add to itinerary"}
                         </button>
                       </div>
                     </div>
@@ -743,7 +748,15 @@ export default function AttractionsExplorer({ title, subtitle, initialPlace }: A
       <AttractionDetailsModal
         attraction={selectedAttraction}
         isFavorited={selectedAttraction ? isFavorite(selectedAttraction.id) : false}
+        isInItinerary={selectedAttraction ? isInCart(selectedAttraction.id) : false}
         onToggleFavorite={(attraction) => toggleFavorite(toFavoriteAttraction(attraction))}
+        onToggleItinerary={(attraction) => {
+          if (isInCart(attraction.id)) {
+            removeFromCart(attraction.id);
+            return;
+          }
+          addToCart(toFavoriteAttraction(attraction));
+        }}
         onClose={() => setSelectedAttraction(null)}
       />
     </>

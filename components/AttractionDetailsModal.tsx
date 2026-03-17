@@ -25,7 +25,9 @@ type AttractionDetails = {
 type AttractionDetailsModalProps = {
   attraction: AttractionDetails | null;
   isFavorited: boolean;
+  isInItinerary: boolean;
   onToggleFavorite: (attraction: AttractionDetails) => void;
+  onToggleItinerary: (attraction: AttractionDetails) => void;
   onClose: () => void;
 };
 
@@ -83,7 +85,9 @@ function buildOpenStreetMapLink(latitude: number, longitude: number) {
 export default function AttractionDetailsModal({
   attraction,
   isFavorited,
+  isInItinerary,
   onToggleFavorite,
+  onToggleItinerary,
   onClose
 }: AttractionDetailsModalProps) {
   if (!attraction) return null;
@@ -108,7 +112,7 @@ export default function AttractionDetailsModal({
           <div className="attraction-modal-image-fallback" aria-hidden="true">No image</div>
         )}
 
-        <div className="attraction-modal-favorite-row">
+        <div className="attraction-modal-action-row">
           <button
             type="button"
             className={`attraction-modal-favorite ${
@@ -118,6 +122,15 @@ export default function AttractionDetailsModal({
             aria-label={isFavorited ? "Unfavorite attraction" : "Favorite attraction"}
           >
             {isFavorited ? "♥" : "♡"}
+          </button>
+          <button
+            type="button"
+            className={`attraction-modal-itinerary-button ${
+              isInItinerary ? "attraction-modal-itinerary-button-active" : ""
+            }`}
+            onClick={() => onToggleItinerary(attraction)}
+          >
+            {isInItinerary ? "Remove from itinerary" : "Add to itinerary"}
           </button>
         </div>
 
