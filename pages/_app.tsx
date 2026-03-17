@@ -1,4 +1,5 @@
 import type { AppProps } from "next/app";
+import Head from "next/head";
 import ViewItineraryFloating from "../components/ViewItineraryFloating";
 import { AuthProvider } from "../lib/auth-context";
 import { CartProvider } from "../lib/cart-context";
@@ -8,15 +9,20 @@ import "../styles/globals.css";
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
-    <AuthProvider>
-      <FavoritesProvider>
-        <CartProvider>
-          <ItineraryProvider>
-            <Component {...pageProps} />
-            <ViewItineraryFloating />
-          </ItineraryProvider>
-        </CartProvider>
-      </FavoritesProvider>
-    </AuthProvider>
+    <>
+      <Head>
+        <link rel="icon" href="/favicon.png" />
+      </Head>
+      <AuthProvider>
+        <FavoritesProvider>
+          <CartProvider>
+            <ItineraryProvider>
+              <Component {...pageProps} />
+              <ViewItineraryFloating />
+            </ItineraryProvider>
+          </CartProvider>
+        </FavoritesProvider>
+      </AuthProvider>
+    </>
   );
 }

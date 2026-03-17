@@ -412,7 +412,7 @@ export default function SoloPlannerItineraryPage() {
         aria-label="Open AI chat"
         title="Open AI chat"
       >
-        <span aria-hidden="true">💬</span>
+        <img src="/chat-icon.svg" alt="" width={24} height={24} aria-hidden="true" />
       </button>
     </main>
   );
