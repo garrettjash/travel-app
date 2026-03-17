@@ -271,7 +271,7 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
   const placeDropdownRef = useRef<HTMLDivElement>(null);
   const [suggestedAttractions, setSuggestedAttractions] = useState<FavoriteAttraction[]>([]);
   const [loadingSuggested, setLoadingSuggested] = useState(false);
-  const [tripName, setTripName] = useState(initialItinerary?.tripName ?? "My Weekend Escape");
+  const [tripName, setTripName] = useState(initialItinerary?.tripName ?? "");
   const [tripPlace, setTripPlace] = useState(initialItinerary?.tripPlace ?? initialTripPlace ?? "");
   const [startDate, setStartDate] = useState(initialItinerary?.startDate ?? defaultStart);
   const [endDate, setEndDate] = useState(initialItinerary?.endDate ?? defaultEnd);
@@ -371,7 +371,6 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
     });
   }, [tripDays]);
 
-  const totalStops = dayPlans.reduce((sum, day) => sum + day.stops.length, 0);
   const activeTripName = tripName.trim() || "Untitled Trip";
 
   useEffect(() => {
@@ -1276,6 +1275,7 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
     ]);
     setNewSuggestionLocation("");
     setExtraPlaceDropdownOpen(false);
+    setAddLocationExpanded(false);
 
     const sectionId = id;
     let cancelled = false;
@@ -1411,17 +1411,17 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
           </section>
 
           <form className="saved-trips-builder" onSubmit={handleSave}>
-            <div className="saved-trips-field saved-trips-field-full">
+            <div className="saved-trips-field saved-trips-field-compact">
               <label htmlFor="trip-name">Trip Name</label>
               <input
                 id="trip-name"
                 type="text"
                 value={tripName}
                 onChange={(event) => setTripName(event.target.value)}
-                placeholder="Name your trip"
+                placeholder="Give your trip a name"
               />
             </div>
-            <div className="saved-trips-field saved-trips-field-full saved-trips-field-stack">
+            <div className="saved-trips-field saved-trips-field-compact saved-trips-field-stack saved-trips-field-location">
               <label htmlFor="trip-place">Trip location</label>
               <div ref={placeDropdownRef} className="saved-trips-field-place">
                 <input
@@ -1608,25 +1608,6 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
               </button>
             </div>
           </form>
-
-          <section className="saved-trips-stats">
-            <article>
-              <h3>Trip</h3>
-              <p>{activeTripName}</p>
-            </article>
-            <article>
-              <h3>Days</h3>
-              <p>{tripDays}</p>
-            </article>
-            <article>
-              <h3>Ideas Selected</h3>
-              <p>{attractions.length}</p>
-            </article>
-            <article>
-              <h3>Stops Scheduled</h3>
-              <p>{totalStops}</p>
-            </article>
-          </section>
 
           <section className="saved-trips-notes">
             <label htmlFor="trip-notes">Trip Notes</label>
