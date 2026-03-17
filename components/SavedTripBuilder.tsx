@@ -123,6 +123,7 @@ type ExtraSuggestionSection = {
   attractions: FavoriteAttraction[];
   loading: boolean;
   collapsed: boolean;
+  searchQuery?: string;
 };
 
 function formatLocation(city: string, stateProvince: string, country: string) {
@@ -431,6 +432,13 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
   const [suggestSearchQuery, setSuggestSearchQuery] = useState("");
   const [suggestSearchResults, setSuggestSearchResults] = useState<FavoriteAttraction[]>([]);
   const [isSearchingSuggestions, setIsSearchingSuggestions] = useState(false);
+  const [shareMenuOpen, setShareMenuOpen] = useState(false);
+
+  function updateSectionSearch(sectionId: string, query: string) {
+    setExtraSuggestionSections((sections) =>
+      sections.map((s) => (s.id === sectionId ? { ...s, searchQuery: query } : s))
+    );
+  }
 
   /** Effective trip location: from dropdown selection, input, or saved/prop value */
   const effectiveLocation = useMemo(
@@ -1497,11 +1505,33 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                       <p className="saved-suggested-intro">
                         Click + to add a place from {section.label} to your itinerary.
                       </p>
+                      <div className="saved-trips-field saved-trips-field-full" style={{ marginTop: 8 }}>
+                        <label htmlFor={`extra-suggested-search-${section.id}`}>
+                          Search attractions in {section.label}
+                        </label>
+                        <input
+                          id={`extra-suggested-search-${section.id}`}
+                          type="text"
+                          className="planning-solo-input"
+                          placeholder="Search by name or keyword…"
+                          value={section.searchQuery ?? ""}
+                          onChange={(e) => updateSectionSearch(section.id, e.target.value)}
+                        />
+                      </div>
                       {section.loading ? (
                         <p className="saved-suggested-loading">Loading suggestions…</p>
                       ) : (
                         <div className="saved-suggested-grid">
-                          {section.attractions.map((attraction) => {
+                          {section.attractions
+                            .filter((attraction) => {
+                              const q = (section.searchQuery ?? "").trim().toLowerCase();
+                              if (!q) return true;
+                              const haystack = `${attraction.name} ${attraction.city ?? ""} ${
+                                attraction.stateProvince ?? ""
+                              } ${attraction.country ?? ""} ${attraction.summary ?? ""}`.toLowerCase();
+                              return haystack.includes(q);
+                            })
+                            .map((attraction) => {
                             const added = isInItinerary(attraction.id);
                             return (
                               <article
