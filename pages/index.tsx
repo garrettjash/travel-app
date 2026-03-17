@@ -36,7 +36,7 @@ export default function MarketingHomePage() {
         <div className="marketing-home-overlay" />
         <div className="marketing-home-content">
           <p className="marketing-home-eyebrow">Trip planning in one workspace</p>
-          <h1 className="marketing-home-title">Plan trips without the clutter.</h1>
+          <h1 className="marketing-home-title">Build trip itineraries and collaborate with friends.</h1>
           <p className="marketing-home-copy">
             Explore destinations, build solo plans, spin up group sessions, and keep everything organized in one place.
           </p>
