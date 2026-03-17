@@ -123,6 +123,7 @@ type ExtraSuggestionSection = {
   attractions: FavoriteAttraction[];
   loading: boolean;
   collapsed: boolean;
+  searchQuery?: string;
 };
 
 function formatLocation(city: string, stateProvince: string, country: string) {
@@ -431,6 +432,13 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
   const [suggestSearchQuery, setSuggestSearchQuery] = useState("");
   const [suggestSearchResults, setSuggestSearchResults] = useState<FavoriteAttraction[]>([]);
   const [isSearchingSuggestions, setIsSearchingSuggestions] = useState(false);
+  const [shareMenuOpen, setShareMenuOpen] = useState(false);
+
+  function updateSectionSearch(sectionId: string, query: string) {
+    setExtraSuggestionSections((sections) =>
+      sections.map((s) => (s.id === sectionId ? { ...s, searchQuery: query } : s))
+    );
+  }
 
   /** Effective trip location: from dropdown selection, input, or saved/prop value */
   const effectiveLocation = useMemo(
@@ -1107,19 +1115,63 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
               <h1>Itinerary</h1>
               <p>Turn your favorites into a ready-to-go itinerary in one click and save it with a shareable link.</p>
             </div>
-            <button
-              type="button"
-              className="saved-trips-button saved-trips-header-action"
-              onClick={handleExport}
-            >
-              <img
-                src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJQAAACUCAMAAABC4vDmAAAAXVBMVEX///8AAACbm5tQUFDv7+94eHi1tbV9fX1ERETQ0NCpqank5OQzMzMqKirJycnExMQXFxcICAj4+PglJSUeHh5hYWE5OTnb29u7u7sRERGRkZFKSkpVVVVsbGyKioovde/pAAACaElEQVR4nO3ca5OCIBQG4INprZey0i7W7v7/n7maylHCQkehmX3fLzXVwDNABF4imifxLct+45kKmyn+WZQ5+64d3YRb8UhycS3hxIloknxMD7btVGUbutbUuXRMpeojejDMRS/ZB7RVuBVK3Pfgbq+ahNjvHJuyZ1PZg05VqY5UJXVoyodQuTMVt9O+mT0THmGOVNdCCsJN/bgJ5UvF1YmJ608pqJ8FlLLUgWotKz+U85JEUXiQb6xtmzrtVH3/GUU7Z20V8Rh/zN8dFIU82iObpn7fKShHPejJSvNmTdBD0YXnL8+WiftOtL+9fRTxzGCrrW6ywq1cZyooinntcLNh4nY68HpORdGFx5WF0c5jvLsef0J11u0WZoZTW1XR3SM8oyiW89VpcVRbVX+Pp0E1e8GKvziqaamsv+/UocjPbLVU/W2/K3thLYr8e2/eWFJVduBJ3Z/rUeSf7JjKHJ9fGkDpP2wrwyiHAco0QJkGKNMAZRqgTAOUaSygYm/zJoFy+EmPSoN35XjGJwOugwfoOMq+SY+KXpdRJTfc6vjvi5oPJYTZSSajouZDme1VvfcFzYkyOwQC1EhU8fUiiXKER49aJ6/KKCagvsdsjiZMnsfvCajVmBPCE1D+CiiggAIKKKCAAgoooIACCiiggAIKKKCAAgoooOZHtZd+fxSqub55zHWKy6Pq/ht1ttYCiq5BMO56Thuo0QEKKKCAAgoooIACCiiggAIKKKCAAgoooIACCiiggHKEGnWLyoRMukXlvF445wkoWwHqH6AG/2dumRj+I9uPTdOPmYmOkcHttfMkj3Sz4R8cySgb1UR8OgAAAABJRU5ErkJggg=="
-                alt=""
-                width={18}
-                height={18}
-              />
-              <span>Export</span>
-            </button>
+            <div className="saved-trips-header-actions">
+              <button
+                type="button"
+                className="saved-trips-button saved-trips-header-action"
+                onClick={handleExport}
+              >
+                <img
+                  src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJQAAACUCAMAAABC4vDmAAAAXVBMVEX///8AAACbm5tQUFDv7+94eHi1tbV9fX1ERETQ0NCpqank5OQzMzMqKirJycnExMQXFxcICAj4+PglJSUeHh5hYWE5OTnb29u7u7sRERGRkZFKSkpVVVVsbGyKioovde/pAAACaElEQVR4nO3ca5OCIBQG4INprZey0i7W7v7/n7maylHCQkehmX3fLzXVwDNABF4imifxLct+45kKmyn+WZQ5+64d3YRb8UhycS3hxIloknxMD7btVGUbutbUuXRMpeojejDMRS/ZB7RVuBVK3Pfgbq+ahNjvHJuyZ1PZg05VqY5UJXVoyodQuTMVt9O+mT0THmGOVNdCCsJN/bgJ5UvF1YmJ608pqJ8FlLLUgWotKz+U85JEUXiQb6xtmzrtVH3/GUU7Z20V8Rh/zN8dFIU82iObpn7fKShHPejJSvNmTdBD0YXnL8+WiftOtL+9fRTxzGCrrW6ywq1cZyooinntcLNh4nY68HpORdGFx5WF0c5jvLsef0J11u0WZoZTW1XR3SM8oyiW89VpcVRbVX+Pp0E1e8GKvziqaamsv+/UocjPbLVU/W2/K3thLYr8e2/eWFJVduBJ3Z/rUeSf7JjKHJ9fGkDpP2wrwyiHAco0QJkGKNMAZRqgTAOUaSygYm/zJoFy+EmPSoN35XjGJwOugwfoOMq+SY+KXpdRJTfc6vjvi5oPJYTZSSajouZDme1VvfcFzYkyOwQC1EhU8fUiiXKER49aJ6/KKCagvsdsjiZMnsfvCajVmBPCE1D+CiiggAIKKKCAAgoooIACCiiggAIKKKCAAgoooOZHtZd+fxSqub55zHWKy6Pq/ht1ttYCiq5BMO56Thuo0QEKKKCAAgoooIACCiiggAIKKKCAAgoooIACCiiggHKEGnWLyoRMukXlvF445wkoWwHqH6AG/2dumRj+I9uPTdOPmYmOkcHttfMkj3Sz4R8cySgb1UR8OgAAAABJRU5ErkJggg=="
+                  alt=""
+                  width={18}
+                  height={18}
+                />
+                <span>Export</span>
+              </button>
+              {(shareLink || (user?.id && shareCode)) && (
+                <div className="saved-trips-share-dropdown">
+                  <button
+                    type="button"
+                    className="saved-trips-button saved-trips-header-action"
+                    onClick={() => setShareMenuOpen((open) => !open)}
+                  >
+                    <span>Share</span>
+                    <span className="saved-trips-share-caret" aria-hidden="true">
+                      ▾
+                    </span>
+                  </button>
+                  {shareMenuOpen && (
+                    <div className="saved-trips-share-menu">
+                      {shareLink && (
+                        <button
+                          type="button"
+                          className="saved-trips-share-menu-item"
+                          onClick={() => {
+                            void handleCopyShareLink();
+                            setShareMenuOpen(false);
+                          }}
+                        >
+                          {isShareCopied ? "Link Copied!" : "Copy share link"}
+                        </button>
+                      )}
+                      {user?.id && shareCode && (
+                        <button
+                          type="button"
+                          className="saved-trips-share-menu-item"
+                          onClick={() => {
+                            void handleCopyShareCode();
+                            setShareMenuOpen(false);
+                          }}
+                        >
+                          {isShareCodeCopied ? "Code Copied!" : "Copy share code"}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </section>
 
           <form className="saved-trips-builder" onSubmit={handleSave}>
@@ -1497,11 +1549,33 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                       <p className="saved-suggested-intro">
                         Click + to add a place from {section.label} to your itinerary.
                       </p>
+                      <div className="saved-trips-field saved-trips-field-full" style={{ marginTop: 8 }}>
+                        <label htmlFor={`extra-suggested-search-${section.id}`}>
+                          Search attractions in {section.label}
+                        </label>
+                        <input
+                          id={`extra-suggested-search-${section.id}`}
+                          type="text"
+                          className="planning-solo-input"
+                          placeholder="Search by name or keyword…"
+                          value={section.searchQuery ?? ""}
+                          onChange={(e) => updateSectionSearch(section.id, e.target.value)}
+                        />
+                      </div>
                       {section.loading ? (
                         <p className="saved-suggested-loading">Loading suggestions…</p>
                       ) : (
                         <div className="saved-suggested-grid">
-                          {section.attractions.map((attraction) => {
+                          {section.attractions
+                            .filter((attraction) => {
+                              const q = (section.searchQuery ?? "").trim().toLowerCase();
+                              if (!q) return true;
+                              const haystack = `${attraction.name} ${attraction.city ?? ""} ${
+                                attraction.stateProvince ?? ""
+                              } ${attraction.country ?? ""} ${attraction.summary ?? ""}`.toLowerCase();
+                              return haystack.includes(q);
+                            })
+                            .map((attraction) => {
                             const added = isInItinerary(attraction.id);
                             return (
                               <article
@@ -1825,29 +1899,6 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
               >
                 {isSaving ? "Saving..." : activeItineraryId ? "Save Changes" : "Save & Get Shareable Link"}
               </button>
-              {shareLink && (
-                <button
-                  type="button"
-                  className="saved-trips-button"
-                  onClick={handleCopyShareLink}
-                >
-                  {isShareCopied ? "Link Copied!" : "Copy Share Link"}
-                </button>
-              )}
-              {user?.id && shareCode && (
-                <>
-                  <span>
-                    Share Code: <strong>{shareCode}</strong>
-                  </span>
-                  <button
-                    type="button"
-                    className="saved-trips-button"
-                    onClick={handleCopyShareCode}
-                  >
-                    {isShareCodeCopied ? "Code Copied!" : "Copy Code"}
-                  </button>
-                </>
-              )}
             </div>
             {saveError && (
               <p className="attractions-state attractions-state-error" style={{ marginTop: 8 }}>
