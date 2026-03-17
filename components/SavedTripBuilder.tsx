@@ -185,6 +185,12 @@ function formatTimeLabel(startTime: string, durationMinutes: number): string {
   return `${safeTime} • ${remainingMinutes}m`;
 }
 
+function formatCalendarTimeRange(startTime: string, durationMinutes: number): string {
+  const startMinutes = timeToMinutes(startTime || "09:00");
+  const endMinutes = Math.min(24 * 60 - 1, startMinutes + Math.max(0, durationMinutes || 0));
+  return `${formatMinuteLabel(startMinutes)} to ${formatMinuteLabel(endMinutes)}`;
+}
+
 function formatMinuteLabel(totalMinutes: number) {
   const clamped = Math.max(0, Math.min(24 * 60 - 1, Math.floor(totalMinutes)));
   const hours24 = Math.floor(clamped / 60);
@@ -233,7 +239,7 @@ const SAMPLE_TRIAL_START_MINUTE = 8 * 60;
 const SAMPLE_TRIAL_END_MINUTE = 20 * 60;
 const SAMPLE_TRIAL_STEP_MINUTES = 60;
 const SAMPLE_TRIAL_DEFAULT_DURATION = 90;
-const SAMPLE_TRIAL_PX_PER_STEP = 28;
+const SAMPLE_TRIAL_PX_PER_STEP = 44;
 
 export type SavedTripBuilderHandle = {
   save: () => Promise<void>;
@@ -299,7 +305,9 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
     dayIndex: number;
     slotIndex: number;
     startY: number;
+    initialStartMinute: number;
     initialDuration: number;
+    edge: "top" | "bottom";
   } | null>(null);
   const seededExtraFromItineraryRef = useRef(false);
   const calendarTimeSlots = useMemo(() => {
@@ -751,10 +759,6 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
     function handleMouseMove(event: MouseEvent) {
       const deltaY = event.clientY - resizeState.startY;
       const stepDelta = Math.round(deltaY / SAMPLE_TRIAL_PX_PER_STEP);
-      const nextDuration = Math.max(
-        SAMPLE_TRIAL_STEP_MINUTES,
-        resizeState.initialDuration + stepDelta * SAMPLE_TRIAL_STEP_MINUTES
-      );
 
       setDayPlans((current) =>
         current.map((day, dayIndex) => {
@@ -763,7 +767,29 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
             ...day,
             stops: day.stops.map((stop, slotIndex) => {
               if (slotIndex !== resizeState.slotIndex) return stop;
-              const maxDuration = SAMPLE_TRIAL_END_MINUTE - timeToMinutes(stop.startTime || "09:00");
+              const currentStartMinute = resizeState.initialStartMinute;
+              const requestedDeltaMinutes = stepDelta * SAMPLE_TRIAL_STEP_MINUTES;
+
+              if (resizeState.edge === "top") {
+                const nextStartMinute = Math.max(
+                  SAMPLE_TRIAL_START_MINUTE,
+                  Math.min(
+                    currentStartMinute + requestedDeltaMinutes,
+                    currentStartMinute + resizeState.initialDuration - SAMPLE_TRIAL_STEP_MINUTES
+                  )
+                );
+                return {
+                  ...stop,
+                  startTime: minutesToTime(nextStartMinute),
+                  durationMinutes: resizeState.initialDuration - (nextStartMinute - currentStartMinute)
+                };
+              }
+
+              const maxDuration = SAMPLE_TRIAL_END_MINUTE - currentStartMinute;
+              const nextDuration = Math.max(
+                SAMPLE_TRIAL_STEP_MINUTES,
+                resizeState.initialDuration + requestedDeltaMinutes
+              );
               return {
                 ...stop,
                 durationMinutes: Math.min(maxDuration, nextDuration)
@@ -2053,13 +2079,36 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                                     }`}
                                     draggable
                                     style={{ top, height }}
-                                    onClick={() => setSelectedAttraction(stop.attraction)}
                                     onDragStart={() => setDragSource({ type: "day", dayIndex, slotIndex })}
                                     onDragEnd={() => setDragSource(null)}
                                   >
+                                    <button
+                                      type="button"
+                                      className="sample-trial-event-edge sample-trial-event-edge-top"
+                                      aria-label={`Resize ${stop.attraction.name} earlier`}
+                                      onMouseDown={(event) => {
+                                        event.preventDefault();
+                                        event.stopPropagation();
+                                        setCalendarResizeState({
+                                          dayIndex,
+                                          slotIndex,
+                                          startY: event.clientY,
+                                          initialStartMinute: timeToMinutes(stop.startTime || "09:00"),
+                                          initialDuration: stop.durationMinutes || SAMPLE_TRIAL_DEFAULT_DURATION,
+                                          edge: "top"
+                                        });
+                                      }}
+                                    />
                                     <div className="sample-trial-event-copy">
-                                      <strong>{stop.attraction.name}</strong>
-                                      <span>{formatTimeLabel(stop.startTime, stop.durationMinutes)}</span>
+                                      <strong>
+                                        {stop.attraction.name} •{" "}
+                                        <span>
+                                          {formatCalendarTimeRange(
+                                            stop.startTime,
+                                            stop.durationMinutes
+                                          )}
+                                        </span>
+                                      </strong>
                                     </div>
                                     <button
                                       type="button"
@@ -2075,8 +2124,8 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                                     </button>
                                     <button
                                       type="button"
-                                      className="sample-trial-event-resize"
-                                      aria-label={`Extend time for ${stop.attraction.name}`}
+                                      className="sample-trial-event-edge sample-trial-event-edge-bottom"
+                                      aria-label={`Resize ${stop.attraction.name} later`}
                                       onMouseDown={(event) => {
                                         event.preventDefault();
                                         event.stopPropagation();
@@ -2084,12 +2133,12 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                                           dayIndex,
                                           slotIndex,
                                           startY: event.clientY,
-                                          initialDuration: stop.durationMinutes || SAMPLE_TRIAL_DEFAULT_DURATION
+                                          initialStartMinute: timeToMinutes(stop.startTime || "09:00"),
+                                          initialDuration: stop.durationMinutes || SAMPLE_TRIAL_DEFAULT_DURATION,
+                                          edge: "bottom"
                                         });
                                       }}
-                                    >
-                                      Drag to make longer
-                                    </button>
+                                    />
                                   </article>
                                 );
                               })}
