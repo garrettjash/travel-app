@@ -1331,7 +1331,7 @@ body {
   font-size: 0.9rem;
   font-weight: 600;
   color: #214262;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
 .planning-solo-input-row {
@@ -1348,6 +1348,11 @@ body {
 .planning-place-search-wrapper .planning-solo-input {
   width: 100%;
   box-sizing: border-box;
+}
+
+/* Slightly shorten planning inputs so they don't span full width */
+.planning-place-search-wrapper .planning-solo-input {
+  max-width: 520px;
 }
 
 .planning-place-listbox {
