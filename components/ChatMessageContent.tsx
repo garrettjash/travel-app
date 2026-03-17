@@ -45,6 +45,11 @@ function parseBlocks(content: string): Block[] {
   const blocks: Block[] = [];
   let paragraphLines: string[] = [];
   let activeList: { kind: ListKind; items: string[] } | null = null;
+  const appendToActiveListItem = (line: string) => {
+    if (!activeList || activeList.items.length === 0) return false;
+    activeList.items[activeList.items.length - 1] += `\n${line.trim()}`;
+    return true;
+  };
 
   const flushParagraph = () => {
     if (paragraphLines.length === 0) return;
@@ -60,6 +65,7 @@ function parseBlocks(content: string): Block[] {
 
   for (const rawLine of lines) {
     const line = rawLine.trimEnd();
+    const trimmedStart = line.trimStart();
 
     if (!line.trim()) {
       flushParagraph();
@@ -67,7 +73,11 @@ function parseBlocks(content: string): Block[] {
       continue;
     }
 
-    const headingMatch = line.match(/^(#{1,6})\s+(.*)$/);
+    if (/^\s+/.test(rawLine) && appendToActiveListItem(trimmedStart)) {
+      continue;
+    }
+
+    const headingMatch = trimmedStart.match(/^(#{1,6})\s+(.*)$/);
     if (headingMatch) {
       flushParagraph();
       flushList();
@@ -79,7 +89,7 @@ function parseBlocks(content: string): Block[] {
       continue;
     }
 
-    const orderedItemMatch = line.match(/^\d+\.\s+(.*)$/);
+    const orderedItemMatch = trimmedStart.match(/^\d+\.\s+(.*)$/);
     if (orderedItemMatch) {
       flushParagraph();
       if (!activeList || activeList.kind !== "ol") {
@@ -90,7 +100,7 @@ function parseBlocks(content: string): Block[] {
       continue;
     }
 
-    const unorderedItemMatch = line.match(/^[-*]\s+(.*)$/);
+    const unorderedItemMatch = trimmedStart.match(/^[-*]\s+(.*)$/);
     if (unorderedItemMatch) {
       flushParagraph();
       if (!activeList || activeList.kind !== "ul") {
@@ -135,7 +145,7 @@ export default function ChatMessageContent({ content }: { content: string }) {
           return (
             <ListTag key={blockIndex}>
               {block.items.map((item, itemIndex) => (
-                <li key={itemIndex}>{renderInline(item)}</li>
+                <li key={itemIndex}>{renderLines(item.split("\n"))}</li>
               ))}
             </ListTag>
           );
