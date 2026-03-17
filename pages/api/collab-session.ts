@@ -605,17 +605,20 @@ export default async function handler(
       if (isExpired && results.length > 0) {
         const existingItineraryId = sessionResult.data.itinerary_id;
 
-        const votedIds = results
-          .filter((r) => r.yesVotes >= r.noVotes)
-          .sort((a, b) => b.yesVotes - b.noVotes - (a.yesVotes - a.noVotes))
-          .map((r) => r.attractionId);
-
-        const nameById = new Map(attractions.map((a) => [a.id, normalizeText(a.name) || "Unnamed attraction"]));
-        const unscheduled = votedIds.map((id) => ({
-          attractionId: id,
-          attractionName: nameById.get(id) ?? "Unnamed attraction"
-        }));
         if (existingItineraryId) {
+          const votedIds = results
+            .filter((r) => r.yesVotes >= r.noVotes)
+            .sort((a, b) => b.yesVotes - b.noVotes - (a.yesVotes - a.noVotes))
+            .map((r) => r.attractionId);
+
+          const nameById = new Map(
+            attractions.map((a) => [a.id, normalizeText(a.name) || "Unnamed attraction"])
+          );
+          const unscheduled = votedIds.map((id) => ({
+            attractionId: id,
+            attractionName: nameById.get(id) ?? "Unnamed attraction"
+          }));
+
           // Return itineraryPath to owner; if itinerary has no user_id, let logged-in user claim it
           if (userId) {
             const itineraryResult = await supabase
@@ -627,18 +630,19 @@ export default async function handler(
 
             if (!itineraryResult.error) {
               const ownerId = itineraryResult.data?.user_id ?? null;
-                if (ownerId === userId) {
-                  itineraryPath = `/solo-planner/${encodeURIComponent(existingItineraryId)}?fromCollab=1`;
-                } else if (!ownerId) {
+              if (ownerId === userId) {
+                itineraryPath = `/solo-planner/${encodeURIComponent(existingItineraryId)}?fromCollab=1`;
+              } else if (!ownerId) {
                 // Itinerary has no owner (created by guest) - let this user claim it
                 await supabase
                   .from("itinerary")
                   .update({ user_id: userId })
                   .eq("itinerary_id", existingItineraryId);
-                  itineraryPath = `/solo-planner/${encodeURIComponent(existingItineraryId)}?fromCollab=1`;
+                itineraryPath = `/solo-planner/${encodeURIComponent(existingItineraryId)}?fromCollab=1`;
               }
             }
           }
+
           // Update the existing itinerary with collab results (unscheduled/top-voted)
           try {
             if (unscheduled.length > 0) {
@@ -647,101 +651,15 @@ export default async function handler(
                 .update({ days: [], unscheduled })
                 .eq("itinerary_id", existingItineraryId);
               if (updateErr) {
-                // Non-fatal for viewers; abort only if owner action is required
+                // Non-fatal; owner can still open itinerary
               }
             }
           } catch {
             // ignore
           }
-        } else {
-          // Re-check itinerary_id in case a concurrent request already created one
-          const { data: freshSession } = await supabase
-            .from("collab_session")
-            .select("itinerary_id")
-            .eq("collab_session_id", sessionId)
-            .limit(1)
-            .maybeSingle<{ itinerary_id: string | null }>();
-
-          const alreadyLinked = freshSession?.itinerary_id;
-          if (alreadyLinked) {
-            if (userId) {
-              const itineraryResult = await supabase
-                .from("itinerary")
-                .select("user_id")
-                .eq("itinerary_id", alreadyLinked)
-                .limit(1)
-                .maybeSingle<{ user_id: string | null }>();
-
-              if (!itineraryResult.error) {
-                const ownerId = itineraryResult.data?.user_id ?? null;
-                if (ownerId === userId) {
-                  itineraryPath = `/solo-planner/${encodeURIComponent(alreadyLinked)}?fromCollab=1`;
-                } else if (!ownerId) {
-                  await supabase
-                    .from("itinerary")
-                    .update({ user_id: userId })
-                    .eq("itinerary_id", alreadyLinked);
-                  itineraryPath = `/solo-planner/${encodeURIComponent(alreadyLinked)}?fromCollab=1`;
-                }
-              }
-            }
-          } else {
-          const votedIds = results
-            .filter((r) => r.yesVotes >= r.noVotes)
-            .sort((a, b) => b.yesVotes - b.noVotes - (a.yesVotes - a.noVotes))
-            .map((r) => r.attractionId);
-
-          if (votedIds.length > 0) {
-            const itineraryId = crypto.randomUUID();
-            const today = new Date();
-            const startDate = today.toISOString().slice(0, 10);
-            const endDate = new Date(today.getTime() + 1000 * 60 * 60 * 24).toISOString().slice(0, 10);
-
-            const nameById = new Map(attractions.map((a) => [a.id, normalizeText(a.name) || "Unnamed attraction"]));
-            const unscheduled = votedIds.map((id) => ({
-              attractionId: id,
-              attractionName: nameById.get(id) ?? "Unnamed attraction"
-            }));
-
-            const insertRow: Record<string, unknown> = {
-              itinerary_id: itineraryId,
-              trip_name: `Collab: ${collabName}`,
-              place: (placeRowsResult.data ?? []).map((r: any) => ({ placeId: Number(r.place_id), placeName: normalizeText(r.place_city) || "" })),
-              start_date: startDate,
-              end_date: endDate,
-              notes: "",
-              days: [],
-              unscheduled
-            };
-            if (userId) insertRow.user_id = userId;
-
-            const { error: insertErr } = await supabase.from("itinerary").insert(insertRow);
-
-            if (!insertErr) {
-              const updateSessionResult = await supabase
-                .from("collab_session")
-                .update({ itinerary_id: itineraryId })
-                .eq("collab_session_id", sessionId)
-                .is("itinerary_id", null)
-                .select("itinerary_id")
-                .maybeSingle();
-
-              const updateErr = updateSessionResult.error;
-              if (updateErr && !isMissingColumnError(updateErr.message)) {
-                res.status(500).json({ error: updateErr.message });
-                return;
-              }
-
-              if (updateSessionResult.data) {
-                // We won the race - our itinerary is linked
-                if (userId) {
-                  itineraryPath = `/solo-planner/${encodeURIComponent(itineraryId)}?fromCollab=1`;
-                }
-              }
-            }
-          }
-          }
         }
+        // If there is no existingItineraryId, we no longer create a new itinerary here.
+        // The only itinerary for this collab is the one created at session POST time.
       }
 
       res.status(200).json({ sessionId, placeId: resolvedPlaceIds[0] ?? null, place, attractions, isExpired, results, itineraryPath, expiresAt: expiresAtIso });
