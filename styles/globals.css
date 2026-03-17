@@ -2872,46 +2872,13 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
   color: #0f3f67;
 }
 
-/* Compact itinerary layout when chat panel is open */
-.solo-planner-page-chat-open .saved-day-card {
-  padding: 8px;
-}
-
-.solo-planner-page-chat-open .saved-day-stops {
-  gap: 6px;
-}
-
-.solo-planner-page-chat-open .saved-schedule-card {
-  padding: 6px 8px;
-  gap: 6px;
-}
-
-.solo-planner-page-chat-open .saved-schedule-card-img {
-  width: 44px;
-  height: 34px;
-}
-
-.solo-planner-page-chat-open .saved-schedule-card-placeholder {
-  min-width: 44px;
-  min-height: 34px;
-}
-
-.solo-planner-page-chat-open .saved-schedule-card-body h3 {
-  font-size: 0.88rem;
-}
-
-.solo-planner-page-chat-open .saved-schedule-card-meta {
-  font-size: 0.72rem;
-}
-
+/* When chat panel is open, hide explicit time/duration/order controls to reduce clutter */
 .solo-planner-page-chat-open .saved-schedule-card-in-day .saved-stop-slot {
-  padding: 4px 6px;
-  gap: 4px;
+  display: none;
 }
 
-.solo-planner-page-chat-open .saved-stop-time-display {
-  font-size: 0.7rem;
-  padding: 2px 6px;
+.solo-planner-page-chat-open .saved-schedule-card-handle {
+  display: none;
 }
 
 /* While chatbot is working, visually and interactively "lock" itinerary editor */
