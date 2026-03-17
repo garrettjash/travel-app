@@ -210,74 +210,86 @@ export default function CollaborateSessionPage() {
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [voteSavedMessage, setVoteSavedMessage] = useState<string | null>(null);
 
+  async function refreshSession() {
+    if (!sessionId) return;
+    setIsLoading(true);
+    setError(null);
+    setVoteSavedMessage(null);
+
+    try {
+      const params = new URLSearchParams();
+      params.set("sessionId", sessionId);
+      if (user?.id) params.set("userId", user.id);
+      const response = await fetch(`/api/collab-session?${params.toString()}`);
+      const payload = (await response.json()) as SessionPayload;
+
+      const legacyExpired =
+        !response.ok &&
+        typeof payload.error === "string" &&
+        payload.error.toLowerCase().includes("expired");
+
+      if (legacyExpired) {
+        setDestination(destinationFromUrl);
+        setAttractions([]);
+        setIsSessionExpired(true);
+        setResultsByAttraction({});
+        setItineraryPath(null);
+        setCurrentIndex(0);
+        return;
+      }
+
+      if (!response.ok || payload.error) {
+        throw new Error(payload.error || "Failed to load collab session.");
+      }
+
+      setDestination(payload.place || destinationFromUrl);
+      setAttractions(payload.attractions ?? []);
+      setExpiresAtIso(payload.expiresAt ?? null);
+      setIsSessionExpired(Boolean(payload.isExpired));
+      setItineraryPath(payload.itineraryPath ?? null);
+      setResultsByAttraction(
+        Object.fromEntries((payload.results ?? []).map((item) => [item.attractionId, item]))
+      );
+      setCurrentIndex(0);
+    } catch (loadError) {
+      setAttractions([]);
+      setIsSessionExpired(false);
+      setResultsByAttraction({});
+      setError(loadError instanceof Error ? loadError.message : "Unknown error loading session");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   useEffect(() => {
     setGuestId(getOrCreateGuestId());
   }, []);
 
   useEffect(() => {
     if (!router.isReady || !sessionId) return;
-
-    let isActive = true;
-
-    async function loadSession() {
-      setIsLoading(true);
-      setError(null);
-      setVoteSavedMessage(null);
-
-      try {
-        const params = new URLSearchParams();
-        params.set("sessionId", sessionId);
-        if (user?.id) params.set("userId", user.id);
-        const response = await fetch(`/api/collab-session?${params.toString()}`);
-        const payload = (await response.json()) as SessionPayload;
-
-        if (!isActive) return;
-
-        const legacyExpired =
-          !response.ok &&
-          typeof payload.error === "string" &&
-          payload.error.toLowerCase().includes("expired");
-
-        if (legacyExpired) {
-          setDestination(destinationFromUrl);
-          setAttractions([]);
-          setIsSessionExpired(true);
-          setResultsByAttraction({});
-          setItineraryPath(null);
-          setCurrentIndex(0);
-          return;
-        }
-
-        if (!response.ok || payload.error) {
-          throw new Error(payload.error || "Failed to load collab session.");
-        }
-
-        setDestination(payload.place || destinationFromUrl);
-        setAttractions(payload.attractions ?? []);
-        setExpiresAtIso(payload.expiresAt ?? null);
-        setIsSessionExpired(Boolean(payload.isExpired));
-        setItineraryPath(payload.itineraryPath ?? null);
-        setResultsByAttraction(
-          Object.fromEntries((payload.results ?? []).map((item) => [item.attractionId, item]))
-        );
-        setCurrentIndex(0);
-      } catch (loadError) {
-        if (!isActive) return;
-        setAttractions([]);
-        setIsSessionExpired(false);
-        setResultsByAttraction({});
-        setError(loadError instanceof Error ? loadError.message : "Unknown error loading session");
-      } finally {
-        if (isActive) setIsLoading(false);
-      }
-    }
-
-    loadSession();
-
+    let cancelled = false;
+    (async () => {
+      await refreshSession();
+      if (cancelled) return;
+    })();
     return () => {
-      isActive = false;
+      cancelled = true;
     };
   }, [destinationFromUrl, router.isReady, sessionId, user?.id]);
+
+  // When we have an expiry time, refetch right after it flips to expired.
+  // This makes sure the server applies poll results into the linked itinerary
+  // without requiring the user to click through.
+  useEffect(() => {
+    if (!expiresAtIso || isSessionExpired) return;
+    const expiryMs = Date.parse(expiresAtIso);
+    if (!Number.isFinite(expiryMs)) return;
+    const delay = Math.max(250, expiryMs - Date.now() + 250);
+    const t = window.setTimeout(() => {
+      void refreshSession();
+    }, delay);
+    return () => window.clearTimeout(t);
+  }, [expiresAtIso, isSessionExpired, sessionId, user?.id]);
 
   useEffect(() => {
     if (!sessionId) return;

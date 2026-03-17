@@ -643,16 +643,15 @@ export default async function handler(
             }
           }
 
-          // Update the existing itinerary with collab results (unscheduled/top-voted)
+          // Update the existing itinerary with collab results (unscheduled/top-voted).
+          // Always apply (even if empty) so the itinerary isn't left stale/blank.
           try {
-            if (unscheduled.length > 0) {
-              const { error: updateErr } = await supabase
-                .from("itinerary")
-                .update({ days: [], unscheduled })
-                .eq("itinerary_id", existingItineraryId);
-              if (updateErr) {
-                // Non-fatal; owner can still open itinerary
-              }
+            const { error: updateErr } = await supabase
+              .from("itinerary")
+              .update({ days: [], unscheduled })
+              .eq("itinerary_id", existingItineraryId);
+            if (updateErr) {
+              // Non-fatal; owner can still open itinerary
             }
           } catch {
             // ignore
