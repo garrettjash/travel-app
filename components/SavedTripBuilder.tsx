@@ -150,6 +150,24 @@ function minutesToTime(minutes: number): string {
   return `${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`;
 }
 
+function formatLocalDateIso(date: Date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function parseLocalDateIso(value: string) {
+  const m = (value ?? "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return null;
+  const y = Number(m[1]);
+  const mo = Number(m[2]);
+  const d = Number(m[3]);
+  if (!Number.isFinite(y) || !Number.isFinite(mo) || !Number.isFinite(d)) return null;
+  // Construct a local-time Date at midnight to avoid UTC day-shift bugs.
+  return new Date(y, mo - 1, d);
+}
+
 function formatTimeLabel(startTime: string, durationMinutes: number): string {
   const safeTime = startTime && /^\d{2}:\d{2}$/.test(startTime) ? startTime : "09:00";
   const total = Math.max(0, Math.floor(durationMinutes || 0));
@@ -170,8 +188,8 @@ function formatTimeLabel(startTime: string, durationMinutes: number): string {
 function daysBetween(startDate: string, endDate: string) {
   if (!startDate || !endDate) return 3;
 
-  const start = new Date(startDate);
-  const end = new Date(endDate);
+  const start = parseLocalDateIso(startDate) ?? new Date(startDate);
+  const end = parseLocalDateIso(endDate) ?? new Date(endDate);
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 3;
 
   const msDiff = end.getTime() - start.getTime();
@@ -222,8 +240,8 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
   const [selectedAttraction, setSelectedAttraction] = useState<FavoriteAttraction | null>(null);
 
   const today = new Date();
-  const defaultStart = today.toISOString().slice(0, 10);
-  const defaultEnd = new Date(today.getTime() + 1000 * 60 * 60 * 24 * 2).toISOString().slice(0, 10);
+  const defaultStart = formatLocalDateIso(today);
+  const defaultEnd = formatLocalDateIso(new Date(today.getTime() + 1000 * 60 * 60 * 24 * 2));
 
   const [placesOptions, setPlacesOptions] = useState<PlaceOption[]>([]);
   const [selectedPlace, setSelectedPlace] = useState<PlaceOption | null>(null);
@@ -958,7 +976,7 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
     for (const day of dayPlans) {
       if (!day.stops.length) continue;
       const dayIndex = day.dayNumber - 1;
-      const baseDate = new Date(startDate);
+      const baseDate = parseLocalDateIso(startDate) ?? new Date(startDate);
       if (Number.isNaN(baseDate.getTime())) continue;
       const eventDate = new Date(baseDate.getTime() + dayIndex * 24 * 60 * 60 * 1000);
       const datePart = formatDateForIcs(eventDate);
