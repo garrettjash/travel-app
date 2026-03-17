@@ -270,16 +270,6 @@ export default function SoloPlannerItineraryPage() {
       <section className="solo-planner-main">
         <aside className="solo-itinerary-panel solo-itinerary-panel-open">
           <div className="solo-itinerary-panel-inner planner-pane-surface">
-            <div className="solo-itinerary-panel-header planner-pane-header">
-              <div>
-                <h2>Itinerary Builder</h2>
-                <p>
-                  {initialPlace
-                    ? `Organize stops for ${initialPlace}.`
-                    : "Build and save your trip plan."}
-                </p>
-              </div>
-            </div>
             {initialPlace && (
               <section className="solo-itinerary-suggested">
                 <h3>Suggested for {initialPlace}</h3>

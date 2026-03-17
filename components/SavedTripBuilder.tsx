@@ -1348,7 +1348,7 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
     <div className={`saved-trips-content${embedded ? " saved-trips-content-embedded" : ""}`}>
           <section className="saved-trips-header">
             <div>
-              <h1>Itinerary</h1>
+              <h1>Itinerary Builder</h1>
               <p>Turn your favorites into a ready-to-go itinerary in one click and save it with a shareable link.</p>
             </div>
             <div className="saved-trips-header-actions">
@@ -1410,170 +1410,87 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
             </div>
           </section>
 
-          <form className="saved-trips-builder" onSubmit={handleSave}>
-            <div className="saved-trips-field saved-trips-field-compact">
-              <label htmlFor="trip-name">Trip Name</label>
-              <input
-                id="trip-name"
-                type="text"
-                value={tripName}
-                onChange={(event) => setTripName(event.target.value)}
-                placeholder="Give your trip a name"
-              />
-            </div>
-            <div className="saved-trips-field saved-trips-field-compact saved-trips-field-stack saved-trips-field-location">
-              <label htmlFor="trip-place">Trip location</label>
-              <div ref={placeDropdownRef} className="saved-trips-field-place">
-                <input
-                  id="trip-place"
-                  type="text"
-                  value={placeInputValue}
-                  onChange={(e) => {
-                    setPlaceInputValue(e.target.value);
-                    setPlaceDropdownOpen(true);
-                    if (!e.target.value.trim()) {
-                      setSelectedPlace(null);
-                      setTripPlace("");
-                    }
-                  }}
-                  onFocus={() => setPlaceDropdownOpen(true)}
-                  onBlur={() => {
-                    setTimeout(() => setPlaceDropdownOpen(false), 180);
-                  }}
-                  placeholder="Type to search destinations…"
-                  autoComplete="off"
-                  aria-label="Trip location — type to search and pick a destination"
-                  aria-expanded={placeDropdownOpen}
-                  aria-haspopup="listbox"
-                  aria-controls="trip-place-listbox"
-                  role="combobox"
-                />
-                {placeDropdownOpen && (
-                  <ul
-                    id="trip-place-listbox"
-                    className="saved-trips-place-listbox"
-                    role="listbox"
-                    aria-label="Available destinations"
-                  >
-                    {filteredPlaces.length === 0 ? (
-                      <li className="saved-trips-place-option saved-trips-place-option-empty" role="option">
-                        No matching places
-                      </li>
-                    ) : (
-                      filteredPlaces.map((p) => (
-                        <li
-                          key={p.id}
-                          role="option"
-                          className="saved-trips-place-option"
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            handleSelectPlace(p);
-                          }}
-                          aria-selected={selectedPlace?.id === p.id}
-                        >
-                          {p.label}
-                        </li>
-                      ))
-                    )}
-                  </ul>
-                )}
-              </div>
-              {extraSuggestionSections.map((section) => (
-                <div key={section.id} className="saved-trips-extra-location-row">
+          <section className="saved-trips-top-layout">
+            <form className="saved-trips-builder" onSubmit={handleSave}>
+              <div className="saved-trips-builder-top-row">
+                <div className="saved-trips-field saved-trips-field-compact saved-trips-field-trip-name">
+                  <label htmlFor="trip-name">Trip Name</label>
                   <input
+                    id="trip-name"
                     type="text"
-                    readOnly
-                    value={section.label}
-                    className="planning-solo-input"
-                    aria-label={`Additional location: ${section.label}`}
+                    value={tripName}
+                    onChange={(event) => setTripName(event.target.value)}
+                    placeholder="Give your trip a name"
                   />
-                  <button
-                    type="button"
-                    className="saved-schedule-card-remove"
-                    aria-label={`Remove ${section.label}`}
-                    onClick={() =>
-                      setExtraSuggestionSections((current) =>
-                        current.filter((s) => s.id !== section.id)
-                      )
-                    }
-                  >
-                    <img
-                      src="https://img.icons8.com/fluent-systems-regular/24/FA5252/trash.png"
-                      alt=""
-                      width={18}
-                      height={18}
-                      className="saved-schedule-card-remove-icon"
-                    />
-                  </button>
                 </div>
-              ))}
-              <button
-                type="button"
-                className="saved-trips-add-location-trigger"
-                onClick={() => setAddLocationExpanded((e) => !e)}
-              >
-                <span aria-hidden style={{ fontSize: "1.2em" }}>{addLocationExpanded ? "−" : "+"}</span>
-                <span>Add another Location</span>
-              </button>
-              {addLocationExpanded && (
-                <div className="saved-trips-field-place saved-trips-extra-location-editor" ref={extraPlaceDropdownRef}>
-                  <div className="planning-solo-input-row saved-trips-extra-location-controls">
-                    <input
-                      id="extra-location-input"
-                      className="planning-solo-input"
-                      type="text"
-                      value={newSuggestionLocation}
-                      onChange={(e) => {
-                        setNewSuggestionLocation(e.target.value);
-                        setExtraPlaceDropdownOpen(true);
-                      }}
-                      onFocus={() => setExtraPlaceDropdownOpen(true)}
-                      onBlur={() => setTimeout(() => setExtraPlaceDropdownOpen(false), 180)}
-                      placeholder="Type to search destinations…"
-                      autoComplete="off"
-                    />
-                    <div className="saved-trips-inline-actions">
-                      <button
-                        type="button"
-                        className="planning-solo-next"
-                        onClick={() => handleAddExtraLocation()}
-                      >
-                        Add Location
-                      </button>
-                      <button
-                        type="button"
-                        className="saved-trips-button saved-trips-button-muted"
-                        onClick={() => {
-                          setAddLocationExpanded(false);
-                          setNewSuggestionLocation("");
-                          setExtraPlaceDropdownOpen(false);
-                        }}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                  {extraPlaceDropdownOpen && (
+                <div className="saved-trips-field saved-trips-field-date">
+                  <label htmlFor="trip-start">Start</label>
+                  <input
+                    id="trip-start"
+                    type="date"
+                    value={startDate}
+                    onChange={(event) => setStartDate(event.target.value)}
+                  />
+                </div>
+                <div className="saved-trips-field saved-trips-field-date">
+                  <label htmlFor="trip-end">End</label>
+                  <input
+                    id="trip-end"
+                    type="date"
+                    value={endDate}
+                    onChange={(event) => setEndDate(event.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="saved-trips-field saved-trips-field-full saved-trips-field-stack saved-trips-field-location">
+                <label htmlFor="trip-place">Trip location</label>
+                <div ref={placeDropdownRef} className="saved-trips-field-place">
+                  <input
+                    id="trip-place"
+                    type="text"
+                    value={placeInputValue}
+                    onChange={(e) => {
+                      setPlaceInputValue(e.target.value);
+                      setPlaceDropdownOpen(true);
+                      if (!e.target.value.trim()) {
+                        setSelectedPlace(null);
+                        setTripPlace("");
+                      }
+                    }}
+                    onFocus={() => setPlaceDropdownOpen(true)}
+                    onBlur={() => {
+                      setTimeout(() => setPlaceDropdownOpen(false), 180);
+                    }}
+                    placeholder="Type to search destinations…"
+                    autoComplete="off"
+                    aria-label="Trip location — type to search and pick a destination"
+                    aria-expanded={placeDropdownOpen}
+                    aria-haspopup="listbox"
+                    aria-controls="trip-place-listbox"
+                    role="combobox"
+                  />
+                  {placeDropdownOpen && (
                     <ul
+                      id="trip-place-listbox"
                       className="saved-trips-place-listbox"
                       role="listbox"
-                      aria-label="Available destinations for suggestions"
-                      style={{ maxHeight: 200, overflowY: "auto" }}
+                      aria-label="Available destinations"
                     >
-                      {filteredExtraPlaces.length === 0 ? (
+                      {filteredPlaces.length === 0 ? (
                         <li className="saved-trips-place-option saved-trips-place-option-empty" role="option">
                           No matching places
                         </li>
                       ) : (
-                        filteredExtraPlaces.map((p) => (
+                        filteredPlaces.map((p) => (
                           <li
                             key={p.id}
                             role="option"
                             className="saved-trips-place-option"
                             onMouseDown={(e) => {
                               e.preventDefault();
-                              handleAddExtraLocation(p);
+                              handleSelectPlace(p);
                             }}
+                            aria-selected={selectedPlace?.id === p.id}
                           >
                             {p.label}
                           </li>
@@ -1582,42 +1499,129 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                     </ul>
                   )}
                 </div>
-              )}
-            </div>
-            <div className="saved-trips-field">
-              <label htmlFor="trip-start">Start</label>
-              <input
-                id="trip-start"
-                type="date"
-                value={startDate}
-                onChange={(event) => setStartDate(event.target.value)}
-              />
-            </div>
-            <div className="saved-trips-field">
-              <label htmlFor="trip-end">End</label>
-              <input
-                id="trip-end"
-                type="date"
-                value={endDate}
-                onChange={(event) => setEndDate(event.target.value)}
-              />
-            </div>
-            <div className="saved-trips-actions">
-              <button type="button" className="saved-trips-button saved-trips-button-muted" onClick={clearPlan}>
-                Clear schedule
-              </button>
-            </div>
-          </form>
+                {extraSuggestionSections.map((section) => (
+                  <div key={section.id} className="saved-trips-extra-location-row">
+                    <input
+                      type="text"
+                      readOnly
+                      value={section.label}
+                      className="planning-solo-input"
+                      aria-label={`Additional location: ${section.label}`}
+                    />
+                    <button
+                      type="button"
+                      className="saved-schedule-card-remove"
+                      aria-label={`Remove ${section.label}`}
+                      onClick={() =>
+                        setExtraSuggestionSections((current) =>
+                          current.filter((s) => s.id !== section.id)
+                        )
+                      }
+                    >
+                      <img
+                        src="https://img.icons8.com/fluent-systems-regular/24/FA5252/trash.png"
+                        alt=""
+                        width={18}
+                        height={18}
+                        className="saved-schedule-card-remove-icon"
+                      />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className="saved-trips-add-location-trigger"
+                  onClick={() => setAddLocationExpanded((e) => !e)}
+                >
+                  <span aria-hidden style={{ fontSize: "1.2em" }}>{addLocationExpanded ? "−" : "+"}</span>
+                  <span>Add another Location</span>
+                </button>
+                {addLocationExpanded && (
+                  <div className="saved-trips-field-place saved-trips-extra-location-editor" ref={extraPlaceDropdownRef}>
+                    <div className="planning-solo-input-row saved-trips-extra-location-controls">
+                      <input
+                        id="extra-location-input"
+                        className="planning-solo-input"
+                        type="text"
+                        value={newSuggestionLocation}
+                        onChange={(e) => {
+                          setNewSuggestionLocation(e.target.value);
+                          setExtraPlaceDropdownOpen(true);
+                        }}
+                        onFocus={() => setExtraPlaceDropdownOpen(true)}
+                        onBlur={() => setTimeout(() => setExtraPlaceDropdownOpen(false), 180)}
+                        placeholder="Type to search destinations…"
+                        autoComplete="off"
+                      />
+                      <div className="saved-trips-inline-actions">
+                        <button
+                          type="button"
+                          className="planning-solo-next"
+                          onClick={() => handleAddExtraLocation()}
+                        >
+                          Add Location
+                        </button>
+                        <button
+                          type="button"
+                          className="saved-trips-button saved-trips-button-muted"
+                          onClick={() => {
+                            setAddLocationExpanded(false);
+                            setNewSuggestionLocation("");
+                            setExtraPlaceDropdownOpen(false);
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                    {extraPlaceDropdownOpen && (
+                      <ul
+                        className="saved-trips-place-listbox"
+                        role="listbox"
+                        aria-label="Available destinations for suggestions"
+                        style={{ maxHeight: 200, overflowY: "auto" }}
+                      >
+                        {filteredExtraPlaces.length === 0 ? (
+                          <li className="saved-trips-place-option saved-trips-place-option-empty" role="option">
+                            No matching places
+                          </li>
+                        ) : (
+                          filteredExtraPlaces.map((p) => (
+                            <li
+                              key={p.id}
+                              role="option"
+                              className="saved-trips-place-option"
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                handleAddExtraLocation(p);
+                              }}
+                            >
+                              {p.label}
+                            </li>
+                          ))
+                        )}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </div>
+              <div className="saved-trips-actions">
+                <button type="button" className="saved-trips-button saved-trips-button-muted" onClick={clearPlan}>
+                  Clear schedule
+                </button>
+              </div>
+            </form>
 
-          <section className="saved-trips-notes">
-            <label htmlFor="trip-notes">Trip Notes</label>
-            <textarea
-              id="trip-notes"
-              value={notes}
-              onChange={(event) => setNotes(event.target.value)}
-              placeholder="Add reminders: reservations, neighborhood plans, must-eat spots..."
-              rows={3}
-            />
+            <section className="saved-trips-notes saved-trips-notes-panel">
+              <label htmlFor="trip-notes">Trip Notes</label>
+              <textarea
+                id="trip-notes"
+                value={notes}
+                onChange={(event) => setNotes(event.target.value)}
+                placeholder="Add reminders: reservations, neighborhood plans, must-eat spots..."
+                rows={3}
+              />
+            </section>
           </section>
 
           {effectiveLocation && (

@@ -1782,20 +1782,34 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
 }
 
 .saved-trips-builder {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: 1fr;
+  align-items: start;
+}
+
+.saved-trips-builder-top-row {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(0, 1.15fr) minmax(130px, 0.7fr) minmax(130px, 0.7fr);
+  align-items: start;
+}
+
+.saved-trips-top-layout {
   margin-top: 16px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(280px, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.saved-trips-builder,
+.saved-trips-notes-panel {
   border: 1px solid #d5e3f1;
   background: rgba(255, 255, 255, 0.9);
   border-radius: 16px;
   padding: 16px;
   box-shadow: 0 10px 24px rgba(17, 61, 104, 0.08);
-  display: grid;
-  gap: 14px;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.45fr) minmax(130px, 0.75fr) minmax(130px, 0.75fr);
-  align-items: start;
-}
-
-.solo-itinerary-panel .saved-trips-stats {
-  grid-template-columns: repeat(2, minmax(140px, 1fr));
 }
 
 .saved-trips-field {
@@ -2067,12 +2081,18 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
 }
 
 .saved-trips-notes {
-  margin-top: 14px;
   display: grid;
-  gap: 6px;
+  gap: 0;
+  align-content: start;
+}
+
+.saved-trips-notes-panel {
+  min-height: 100%;
+  align-content: start;
 }
 
 .saved-trips-notes label {
+  margin: 0;
   font-size: 0.82rem;
   font-weight: 700;
   color: #395977;
@@ -2081,6 +2101,7 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
 }
 
 .saved-trips-notes textarea {
+  margin: 0;
   min-height: 96px;
   resize: vertical;
 }
@@ -3119,7 +3140,15 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
   }
 
   .saved-trips-builder {
+    grid-template-columns: 1fr;
+  }
+
+  .saved-trips-builder-top-row {
     grid-template-columns: repeat(2, minmax(120px, 1fr));
+  }
+
+  .saved-trips-top-layout {
+    grid-template-columns: 1fr;
   }
 
   .saved-trips-stats {
@@ -3143,6 +3172,10 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
   }
 
   .saved-trips-builder {
+    grid-template-columns: 1fr;
+  }
+
+  .saved-trips-builder-top-row {
     grid-template-columns: 1fr;
   }
 
