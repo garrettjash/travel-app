@@ -35,6 +35,7 @@ type CollabSessionResponse =
       place: string;
       sessionPath: string;
       attractionsCount: number;
+      createdItineraryId?: string | null;
     }
   | {
       sessionId: string;
