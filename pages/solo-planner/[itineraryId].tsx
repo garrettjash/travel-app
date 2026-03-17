@@ -1,7 +1,8 @@
-import { FormEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import AuthButton from "../../components/AuthButton";
 import AppTopNav from "../../components/AppTopNav";
+import ChatMessageContent from "../../components/ChatMessageContent";
 import SavedTripBuilder, {
   SavedItinerary,
   type SavedTripBuilderHandle
@@ -41,27 +42,6 @@ function formatTimestamp(value: string) {
   });
 
   return `${dayLabel}, ${timeLabel}`;
-}
-
-function renderFormattedMessage(content: string): ReactNode {
-  const boldPattern = /\*\*(.+?)\*\*/g;
-  const parts: ReactNode[] = [];
-  let cursor = 0;
-  let match: RegExpExecArray | null;
-
-  while ((match = boldPattern.exec(content)) !== null) {
-    if (match.index > cursor) {
-      parts.push(content.slice(cursor, match.index));
-    }
-    parts.push(<strong key={`bold-${match.index}`}>{match[1]}</strong>);
-    cursor = match.index + match[0].length;
-  }
-
-  if (cursor < content.length) {
-    parts.push(content.slice(cursor));
-  }
-
-  return parts.length > 0 ? parts : content;
 }
 
 function formatLocation(city: string, stateProvince: string, country: string) {
@@ -373,7 +353,7 @@ export default function SoloPlannerItineraryPage() {
                   <strong>{msg.role === "user" ? "Me" : "Assistant"}</strong>
                   <span>{formatTimestamp(msg.createdAt)}</span>
                 </div>
-                <p>{renderFormattedMessage(msg.content)}</p>
+                <ChatMessageContent content={msg.content} />
               </article>
             ))}
 
