@@ -21,6 +21,7 @@ type ChatMessage = {
 };
 
 const LINK_DURATION_OPTIONS = [
+  { label: "1 Minute", minutes: 1 },
   { label: "5 Minutes", minutes: 5 },
   { label: "10 Minutes", minutes: 10 },
   { label: "15 Minutes", minutes: 15 },
@@ -397,9 +398,8 @@ export default function CollabPlannerPage() {
 
   return (
     <main
-      className={`collab-planner-page ${isChatOpen ? "collab-planner-page-chat-open" : ""} ${
-        isCollaborateCollapsed ? "collab-planner-page-main-collapsed" : ""
-      }`}
+      className={`collab-planner-page ${isChatOpen ? "collab-planner-page-chat-open" : ""} ${isCollaborateCollapsed ? "collab-planner-page-main-collapsed" : ""
+        }`}
     >
       <header className="destinations-topbar">
         <button
