@@ -87,31 +87,14 @@ function formatExpiryIsoToLocal(iso: string | null) {
   if (!iso) return null;
   const d = new Date(iso);
   if (!Number.isFinite(d.getTime())) return null;
-
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const day = pad(d.getDate());
-  const monthNames = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December"
-  ];
-  const month = monthNames[d.getMonth()];
-  const year = d.getFullYear();
-  const hours = d.getHours();
-  const minutes = pad(d.getMinutes());
-  const ampm = hours >= 12 ? "PM" : "AM";
-  const hour12 = hours % 12 === 0 ? 12 : hours % 12;
-
-  return `${day}-${month}-${year}, ${hour12}:${minutes} ${ampm}`;
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  }).format(d);
 }
 
 function formatCommaList(value: string) {
@@ -447,7 +430,7 @@ export default function CollaborateSessionPage() {
         }}
       >
         <div style={{ flex: 1, minWidth: 0 }}>
-        <section className="about-card">
+        <section className="about-card" style={{ marginLeft: "auto", marginRight: "auto", textAlign: "center" }}>
           <h1>
             Welcome to your collab session for <span className="destinations-brand">{destination}</span>
           </h1>
@@ -515,7 +498,7 @@ export default function CollaborateSessionPage() {
         )}
 
         {!isLoading && !error && currentAttraction && (
-          <section className="about-card" style={{ maxWidth: 980 }}>
+          <section className="about-card" style={{ maxWidth: 980, marginLeft: "auto", marginRight: "auto" }}>
             {isSessionExpired && (
               <p style={{ margin: "0 0 10px", color: "#1f8f4a", fontWeight: 600 }}>
                 Polling is no longer live, but these are the results.
@@ -532,7 +515,7 @@ export default function CollaborateSessionPage() {
               </p>
             )}
 
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
               {!allAttractionsVoted && !isSessionExpired && (
                 <button
                   type="button"
