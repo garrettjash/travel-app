@@ -13,6 +13,7 @@ type FilterOptionsResponse = {
 };
 
 const LINK_DURATION_OPTIONS = [
+  { label: "1 Minute", minutes: 1 },
   { label: "5 minutes", minutes: 5 },
   { label: "10 minutes", minutes: 10 },
   { label: "15 minutes", minutes: 15 },
@@ -134,8 +135,8 @@ export default function CollaboratePage() {
         body: JSON.stringify({
           sessionId: token,
           placeIds,
-            durationMinutes: selectedDurationMinutes,
-            userId: user.id
+          durationMinutes: selectedDurationMinutes,
+          userId: user.id
         })
       });
 
@@ -186,134 +187,134 @@ export default function CollaboratePage() {
 
   return (
     <AppShell activeTab="collaborate">
-          <div className="collaborate-page-content">
-          <section className="about-card">
-            <h1>Collaborate</h1>
-            <p>Create or join a collaborate session.</p>
-          </section>
+      <div className="collaborate-page-content">
+        <section className="about-card">
+          <h1>Collaborate</h1>
+          <p>Create or join a collaborate session.</p>
+        </section>
 
-          <section className="about-card">
-            <div className="saved-trips-builder" style={{ marginTop: 14, gridTemplateColumns: "1fr" }}>
-              <div className="saved-trips-field">
-                <label htmlFor="collab-place-search">CREATE A COLLAB SESSION</label>
-                <div style={{ display: "flex", gap: 8, flexDirection: "column" }}>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                      {placeEntries.map((entry, idx) => (
-                        <div key={idx} style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                          <PlaceSearchInput
-                            id={`collab-place-search-${idx}`}
-                            value={entry.value}
-                            onChange={(v) => handlePlaceInputChange(v, idx)}
-                            onSelect={(p) => handlePlaceSelect({ id: p.id, label: p.label }, idx)}
-                            placeholder={"Type to search destinations…"}
-                            className="planning-solo-input"
-                            aria-label={`Add a place (${idx + 1})`}
-                          />
-                          <button
-                            type="button"
-                            className="remove-input-button"
-                            onClick={() => removeInput(idx)}
-                            aria-label={`Remove place ${idx + 1}`}
-                            title={placeEntries.length > 1 ? "Remove this place" : "Remove this place"}
-                          >
-                            −
-                          </button>
-                        </div>
-                      ))}
-
+        <section className="about-card">
+          <div className="saved-trips-builder" style={{ marginTop: 14, gridTemplateColumns: "1fr" }}>
+            <div className="saved-trips-field">
+              <label htmlFor="collab-place-search">CREATE A COLLAB SESSION</label>
+              <div style={{ display: "flex", gap: 8, flexDirection: "column" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {placeEntries.map((entry, idx) => (
+                    <div key={idx} style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                      <PlaceSearchInput
+                        id={`collab-place-search-${idx}`}
+                        value={entry.value}
+                        onChange={(v) => handlePlaceInputChange(v, idx)}
+                        onSelect={(p) => handlePlaceSelect({ id: p.id, label: p.label }, idx)}
+                        placeholder={"Type to search destinations…"}
+                        className="planning-solo-input"
+                        aria-label={`Add a place (${idx + 1})`}
+                      />
                       <button
                         type="button"
-                        className="saved-trips-button"
-                        onClick={() => setPlaceEntries((s) => [...s, { value: "" }])}
+                        className="remove-input-button"
+                        onClick={() => removeInput(idx)}
+                        aria-label={`Remove place ${idx + 1}`}
+                        title={placeEntries.length > 1 ? "Remove this place" : "Remove this place"}
                       >
-                        Add another place
+                        −
                       </button>
                     </div>
-                </div>
-              </div>
-
-              <div className="saved-trips-field">
-                <label htmlFor="collab-link-duration">Select how long the link should be live</label>
-                <select
-                  id="collab-link-duration"
-                  value={selectedDurationMinutes}
-                  onChange={(event) => {
-                    const value = Number(event.target.value);
-                    setSelectedDurationMinutes(Number.isFinite(value) ? value : 60);
-                  }}
-                >
-                  {LINK_DURATION_OPTIONS.map((option) => (
-                    <option key={option.minutes} value={option.minutes}>
-                      {option.label}
-                    </option>
                   ))}
-                </select>
-              </div>
 
-              <div className="saved-trips-actions" style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <button
-                  type="button"
-                  className={`saved-trips-button ${canCreateSession && user ? "saved-trips-button-primary" : "saved-trips-button-muted"}`}
-                  onClick={handleCreateSessionClick}
-                  disabled={!canCreateSession || isCreatingSession || !user}
-                >
-                  {isCreatingSession ? "Creating..." : "Create!"}
-                </button>
-                {!user && (
-                  <span style={{ color: "#666", fontSize: 13 }}>
-                    Create sessions requires logging in
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {placeError && <p className="attractions-state">{placeError}</p>}
-            {createSessionError && <p className="attractions-state attractions-state-error">{createSessionError}</p>}
-            {createSessionLink && (
-              <div className="saved-trips-actions" style={{ marginTop: 8 }}>
-                <p className="attractions-state" style={{ margin: 0, flex: 1 }}>
-                  Session link created: {createSessionLink}
-                </p>
-                <button
-                  type="button"
-                  className="saved-trips-button"
-                  onClick={handleCopySessionLink}
-                >
-                  Copy
-                </button>
-              </div>
-            )}
-            {isLinkCopied && <p className="attractions-state">Link Copied!</p>}
-          </section>
-
-          <section className="about-card">
-            <div className="saved-trips-field">
-              <label htmlFor="collab-join-link">JOIN A COLLAB SESSION</label>
-              <form onSubmit={handleJoinSubmit}>
-                <div className="saved-trips-actions" style={{ marginTop: 0 }}>
-                  <input
-                    id="collab-join-link"
-                    type="url"
-                    value={joinLinkInput}
-                    onChange={(event) => setJoinLinkInput(sanitizeUrlInput(event.target.value))}
-                    placeholder="Paste a collaborate session link"
-                    autoComplete="off"
-                    spellCheck={false}
-                  />
                   <button
-                    type="submit"
-                    className={`saved-trips-button ${canAttemptJoin ? "saved-trips-button-primary" : "saved-trips-button-muted"}`}
-                    disabled={!canAttemptJoin}
+                    type="button"
+                    className="saved-trips-button"
+                    onClick={() => setPlaceEntries((s) => [...s, { value: "" }])}
                   >
-                    Go!
+                    Add another place
                   </button>
                 </div>
-              </form>
+              </div>
             </div>
 
-            {joinLinkError && <p className="attractions-state">{joinLinkError}</p>}
-          </section>
+            <div className="saved-trips-field">
+              <label htmlFor="collab-link-duration">Select how long the link should be live</label>
+              <select
+                id="collab-link-duration"
+                value={selectedDurationMinutes}
+                onChange={(event) => {
+                  const value = Number(event.target.value);
+                  setSelectedDurationMinutes(Number.isFinite(value) ? value : 60);
+                }}
+              >
+                {LINK_DURATION_OPTIONS.map((option) => (
+                  <option key={option.minutes} value={option.minutes}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="saved-trips-actions" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <button
+                type="button"
+                className={`saved-trips-button ${canCreateSession && user ? "saved-trips-button-primary" : "saved-trips-button-muted"}`}
+                onClick={handleCreateSessionClick}
+                disabled={!canCreateSession || isCreatingSession || !user}
+              >
+                {isCreatingSession ? "Creating..." : "Create!"}
+              </button>
+              {!user && (
+                <span style={{ color: "#666", fontSize: 13 }}>
+                  Create sessions requires logging in
+                </span>
+              )}
+            </div>
           </div>
+
+          {placeError && <p className="attractions-state">{placeError}</p>}
+          {createSessionError && <p className="attractions-state attractions-state-error">{createSessionError}</p>}
+          {createSessionLink && (
+            <div className="saved-trips-actions" style={{ marginTop: 8 }}>
+              <p className="attractions-state" style={{ margin: 0, flex: 1 }}>
+                Session link created: {createSessionLink}
+              </p>
+              <button
+                type="button"
+                className="saved-trips-button"
+                onClick={handleCopySessionLink}
+              >
+                Copy
+              </button>
+            </div>
+          )}
+          {isLinkCopied && <p className="attractions-state">Link Copied!</p>}
+        </section>
+
+        <section className="about-card">
+          <div className="saved-trips-field">
+            <label htmlFor="collab-join-link">JOIN A COLLAB SESSION</label>
+            <form onSubmit={handleJoinSubmit}>
+              <div className="saved-trips-actions" style={{ marginTop: 0 }}>
+                <input
+                  id="collab-join-link"
+                  type="url"
+                  value={joinLinkInput}
+                  onChange={(event) => setJoinLinkInput(sanitizeUrlInput(event.target.value))}
+                  placeholder="Paste a collaborate session link"
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+                <button
+                  type="submit"
+                  className={`saved-trips-button ${canAttemptJoin ? "saved-trips-button-primary" : "saved-trips-button-muted"}`}
+                  disabled={!canAttemptJoin}
+                >
+                  Go!
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {joinLinkError && <p className="attractions-state">{joinLinkError}</p>}
+        </section>
+      </div>
     </AppShell>
   );
 }
