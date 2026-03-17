@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import AppShell from "../components/AppShell";
 import ChatMessageContent from "../components/ChatMessageContent";
 import { useAuth } from "../lib/auth-context";
@@ -47,6 +47,7 @@ export default function AiChatbotPage() {
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const previousMessageCountRef = useRef(0);
+  const draftInputRef = useRef<HTMLTextAreaElement | null>(null);
 
   const canSend = useMemo(
     () => draft.trim().length > 0 && !isSending,
@@ -105,6 +106,20 @@ export default function AiChatbotPage() {
 
     previousMessageCountRef.current = messages.length;
   }, [messages]);
+
+  useEffect(() => {
+    const element = draftInputRef.current;
+    if (!element) return;
+    element.style.height = "0px";
+    element.style.height = `${Math.min(element.scrollHeight, 180)}px`;
+  }, [draft]);
+
+  const handleDraftKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      event.currentTarget.form?.requestSubmit();
+    }
+  };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -198,14 +213,16 @@ export default function AiChatbotPage() {
                 Message
               </label>
               <div className="chat-form-row">
-                <input
+                <textarea
+                  ref={draftInputRef}
                   id="chat-input"
                   className="chat-input"
-                  type="text"
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={handleDraftKeyDown}
                   placeholder="Type your message..."
                   maxLength={2000}
+                  rows={1}
                 />
                 <button type="submit" disabled={!canSend} className="chat-send-button">
                   {isSending ? <span className="chat-send-spinner" aria-label="Sending message" /> : "Send"}

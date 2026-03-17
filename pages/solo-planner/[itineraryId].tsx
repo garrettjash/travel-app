@@ -1,4 +1,4 @@
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import AuthButton from "../../components/AuthButton";
 import AppTopNav from "../../components/AppTopNav";
@@ -69,6 +69,7 @@ export default function SoloPlannerItineraryPage() {
   const [chatError, setChatError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const previousMessageCountRef = useRef(0);
+  const draftInputRef = useRef<HTMLTextAreaElement | null>(null);
   const builderRef = useRef<SavedTripBuilderHandle | null>(null);
 
   const [refreshedItinerary, setRefreshedItinerary] = useState<SavedItinerary | null>(null);
@@ -162,6 +163,20 @@ export default function SoloPlannerItineraryPage() {
 
     previousMessageCountRef.current = messages.length;
   }, [messages]);
+
+  useEffect(() => {
+    const element = draftInputRef.current;
+    if (!element) return;
+    element.style.height = "0px";
+    element.style.height = `${Math.min(element.scrollHeight, 180)}px`;
+  }, [draft]);
+
+  const handleDraftKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      event.currentTarget.form?.requestSubmit();
+    }
+  };
 
   useEffect(() => {
     if (!initialPlace || !sessionId) return;
@@ -377,14 +392,16 @@ export default function SoloPlannerItineraryPage() {
               Message
             </label>
             <div className="chat-form-row">
-              <input
+              <textarea
+                ref={draftInputRef}
                 id="solo-chat-input"
                 className="chat-input"
-                type="text"
                 value={draft}
                 onChange={(event) => setDraft(event.target.value)}
+                onKeyDown={handleDraftKeyDown}
                 placeholder="Type your message..."
                 maxLength={2000}
+                rows={1}
               />
               <button type="submit" disabled={!canSend} className="chat-send-button">
                 {isSending ? (
@@ -402,9 +419,9 @@ export default function SoloPlannerItineraryPage() {
       <button
         type="button"
         className="solo-chat-fab"
-        onClick={() => setIsChatOpen(true)}
-        aria-label="Open AI chat"
-        title="Open AI chat"
+        onClick={() => setIsChatOpen((previous) => !previous)}
+        aria-label={isChatOpen ? "Close AI chat" : "Open AI chat"}
+        title={isChatOpen ? "Close AI chat" : "Open AI chat"}
       >
         <img src="/chat-icon.svg" alt="" width={24} height={24} aria-hidden="true" />
       </button>
