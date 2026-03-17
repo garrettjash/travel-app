@@ -45,9 +45,11 @@ function parseBlocks(content: string): Block[] {
   const blocks: Block[] = [];
   let paragraphLines: string[] = [];
   let activeList: { kind: ListKind; items: string[] } | null = null;
+  let pendingListBreak = false;
   const appendToActiveListItem = (line: string) => {
     if (!activeList || activeList.items.length === 0) return false;
     activeList.items[activeList.items.length - 1] += `\n${line.trim()}`;
+    pendingListBreak = false;
     return true;
   };
 
@@ -69,12 +71,24 @@ function parseBlocks(content: string): Block[] {
 
     if (!line.trim()) {
       flushParagraph();
-      flushList();
+      if (activeList) {
+        pendingListBreak = true;
+        continue;
+      }
       continue;
     }
 
     if (/^\s+/.test(rawLine) && appendToActiveListItem(trimmedStart)) {
       continue;
+    }
+
+    if (pendingListBreak && activeList) {
+      const continuingOrderedItem = activeList.kind === "ol" && /^\d+\.\s+/.test(trimmedStart);
+      const continuingUnorderedItem = activeList.kind === "ul" && /^[-*]\s+/.test(trimmedStart);
+      if (!continuingOrderedItem && !continuingUnorderedItem) {
+        flushList();
+      }
+      pendingListBreak = false;
     }
 
     const headingMatch = trimmedStart.match(/^(#{1,6})\s+(.*)$/);
