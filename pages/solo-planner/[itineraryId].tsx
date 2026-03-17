@@ -274,15 +274,6 @@ export default function SoloPlannerItineraryPage() {
                     : "Build and save your trip plan."}
                 </p>
               </div>
-              <button
-                type="button"
-                className="solo-chat-launch-button"
-                onClick={() => setIsChatOpen(true)}
-                aria-label="Open AI chat"
-                title="Open AI chat"
-              >
-                <span aria-hidden="true">💬</span>
-              </button>
             </div>
             {initialPlace && (
               <section className="solo-itinerary-suggested">
@@ -413,6 +404,16 @@ export default function SoloPlannerItineraryPage() {
           </form>
         </section>
       </aside>
+
+      <button
+        type="button"
+        className="solo-chat-fab"
+        onClick={() => setIsChatOpen(true)}
+        aria-label="Open AI chat"
+        title="Open AI chat"
+      >
+        <span aria-hidden="true">💬</span>
+      </button>
     </main>
   );
 }
