@@ -65,7 +65,7 @@ export default function SettingsPage() {
         </section>
 
         <section className="about-card" style={{ marginTop: 12 }}>
-          <form onSubmit={handleSave}>
+          <form onSubmit={handleSave} className="settings-form">
             <div style={{ display: "grid", gap: 12 }}>
               <div>
                 <label>First name</label>

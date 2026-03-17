@@ -760,7 +760,7 @@ body {
   font-size: 1.2rem;
   cursor: pointer;
   box-shadow: 0 18px 28px rgba(15, 23, 42, 0.16);
-  position: absolute;
+  position: fixed;
   right: 16px;
   bottom: 16px;
   z-index: 30;
@@ -1331,7 +1331,7 @@ body {
   font-size: 0.9rem;
   font-weight: 600;
   color: #214262;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .planning-solo-input-row {
@@ -1348,11 +1348,6 @@ body {
 .planning-place-search-wrapper .planning-solo-input {
   width: 100%;
   box-sizing: border-box;
-}
-
-/* Slightly shorten planning inputs so they don't span full width */
-.planning-place-search-wrapper .planning-solo-input {
-  max-width: 520px;
 }
 
 .planning-place-listbox {
@@ -1402,6 +1397,31 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
   outline: none;
   border-color: #89b3d8;
   box-shadow: 0 8px 20px rgba(13, 68, 115, 0.06);
+}
+
+/* Settings page specific adjustments */
+.settings-form label {
+  display: block;
+  margin-bottom: 10px; /* more padding between label (text) and input */
+  font-weight: 600;
+  color: #214262;
+}
+.settings-form input[type="text"],
+.settings-form input[type="email"],
+.settings-form textarea,
+.settings-form select {
+  width: 60%; /* shorten inputs a bit */
+  max-width: 420px;
+  min-width: 220px;
+}
+@media (max-width: 700px) {
+  .settings-form input[type="text"],
+  .settings-form input[type="email"],
+  .settings-form textarea,
+  .settings-form select {
+    width: 100%;
+    min-width: 0;
+  }
 }
 
 .planning-solo-next {
