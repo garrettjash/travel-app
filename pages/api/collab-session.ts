@@ -56,7 +56,7 @@ const supabaseKey =
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY ||
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-const ALLOWED_DURATIONS_MINUTES = [5, 10, 15, 30, 60, 120, 300, 720, 1440] as const;
+const ALLOWED_DURATIONS_MINUTES = [1, 5, 10, 15, 30, 60, 120, 300, 720, 1440] as const;
 const DEFAULT_DURATION_MINUTES = 1440;
 
 function sanitizeSessionId(rawValue: unknown) {
