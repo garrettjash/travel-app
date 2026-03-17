@@ -235,7 +235,9 @@ export default function SoloPlannerItineraryPage() {
       };
       setMessages((prev) => [...prev, agentMessage]);
 
-      if (agentData.itinerary_modified && itineraryIdFromRoute) {
+      const shouldRefresh =
+        Boolean(agentData.itinerary_modified) || Boolean(agentData.refresh_data);
+      if (shouldRefresh && itineraryIdFromRoute) {
         const fresh = await fetchItinerary();
         if (fresh) setRefreshedItinerary(fresh);
       }
