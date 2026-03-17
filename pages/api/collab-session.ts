@@ -276,6 +276,7 @@ export default async function handler(
       const placeNames = resolvedPlaceRows
         .map((r) => normalizeText(r.place_city) || normalizeText(r.place_countryregion))
         .filter(Boolean);
+      const collabTitle = placeNames.length > 0 ? placeNames.join(", ") : "your destination";
 
       // Create a placeholder itinerary now so the logged-in creator owns it
       let createdItineraryId: string | null = null;
@@ -298,7 +299,7 @@ export default async function handler(
 
         const insertRow: Record<string, unknown> = {
           itinerary_id: itineraryId,
-          trip_name: `Collab: ${placeNames[0] ?? "your destination"}`,
+          trip_name: `Collab: ${collabTitle}`,
           place: placeEntries,
           start_date: startDate,
           end_date: endDate,
@@ -428,6 +429,7 @@ export default async function handler(
             .filter(Boolean)
         : [];
       const place = placeNames[0] || "your destination";
+      const collabName = placeNames.length > 0 ? placeNames.join(", ") : "your destination";
       const attractionIds = (itemIdsResult.data ?? [])
         .map((row: any) => Number(row.attraction_id))
         .filter(Number.isFinite);
@@ -703,7 +705,7 @@ export default async function handler(
 
             const insertRow: Record<string, unknown> = {
               itinerary_id: itineraryId,
-              trip_name: `Collab: ${place}`,
+              trip_name: `Collab: ${collabName}`,
               place: (placeRowsResult.data ?? []).map((r: any) => ({ placeId: Number(r.place_id), placeName: normalizeText(r.place_city) || "" })),
               start_date: startDate,
               end_date: endDate,
