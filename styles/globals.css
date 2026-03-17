@@ -1607,6 +1607,51 @@ body {
   gap: 16px;
 }
 
+.saved-trips-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+
+.saved-trips-share-dropdown {
+  position: relative;
+}
+
+.saved-trips-share-caret {
+  margin-left: 4px;
+  font-size: 0.75rem;
+}
+
+.saved-trips-share-menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 4px;
+  min-width: 180px;
+  padding: 6px 0;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 8px 18px rgba(17, 61, 104, 0.18);
+  z-index: 20;
+}
+
+.saved-trips-share-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 6px 12px;
+  background: none;
+  border: none;
+  font-size: 0.9rem;
+  color: #113d68;
+  cursor: pointer;
+}
+
+.saved-trips-share-menu-item:hover {
+  background: #f0f5fb;
+}
+
 .saved-trips-header p {
   margin: 8px 0 0;
   color: #49627e;
