@@ -263,6 +263,7 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
   const [extraPlaceDropdownOpen, setExtraPlaceDropdownOpen] = useState(false);
   const extraPlaceDropdownRef = useRef<HTMLDivElement>(null);
   const [editingStopKey, setEditingStopKey] = useState<string | null>(null);
+  const seededExtraFromItineraryRef = useRef(false);
 
   const tripDays = useMemo(() => daysBetween(startDate, endDate), [startDate, endDate]);
 
@@ -274,6 +275,43 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
     }
     return next.slice(0, tripDays);
   }, [dayPlans, tripDays]);
+
+  /**
+   * When the trip date range shrinks (fewer tripDays), move any stops on
+   * days that are no longer visible into Unassigned instead of keeping them
+   * hidden on trimmed days.
+   */
+  useEffect(() => {
+    setDayPlans((current) => {
+      if (!current.length) return current;
+
+      const kept: DayPlan[] = [];
+      const removedAttractions: FavoriteAttraction[] = [];
+
+      for (const day of current) {
+        if (day.dayNumber <= tripDays) {
+          kept.push(day);
+        } else if (day.stops?.length) {
+          for (const stop of day.stops) {
+            if (stop?.attraction) removedAttractions.push(stop.attraction);
+          }
+        }
+      }
+
+      if (!removedAttractions.length) return current;
+
+      setUnscheduled((prev) => {
+        const existingIds = new Set(prev.map((a) => a.id));
+        const additions = removedAttractions.filter(
+          (a) => a && typeof a.id === "number" && !existingIds.has(a.id)
+        );
+        if (!additions.length) return prev;
+        return [...prev, ...additions];
+      });
+
+      return kept;
+    });
+  }, [tripDays]);
 
   const totalStops = dayPlans.reduce((sum, day) => sum + day.stops.length, 0);
   const activeTripName = tripName.trim() || "Untitled Trip";
@@ -349,9 +387,13 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
   /**
    * When viewing an existing itinerary, seed extra suggestion sections from
    * saved extraPlaces (if any), or infer from attraction cities.
+   *
+   * Important: we only do this **once per itinerary**, so if the user later
+   * deletes all extra locations, they stay deleted and don't get re-created.
    */
   useEffect(() => {
     if (!initialItinerary) return;
+    if (seededExtraFromItineraryRef.current) return;
     if (extraSuggestionSections.length > 0) return;
 
     const savedExtra = initialItinerary.extraPlaces ?? [];
@@ -366,6 +408,7 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
           collapsed: false
         }));
       setExtraSuggestionSections(sections);
+      seededExtraFromItineraryRef.current = true;
       sections.forEach((section, idx) => {
         const ep = savedExtra[idx]!;
         const place: PlaceOption = {
@@ -420,6 +463,7 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
       // for the inferred location without blocking initial render.
       void handleAddExtraLocation(place);
     }
+    seededExtraFromItineraryRef.current = true;
   }, [
     initialItinerary?.itineraryId,
     initialItinerary?.tripPlace,
