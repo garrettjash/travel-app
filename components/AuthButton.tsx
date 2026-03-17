@@ -96,20 +96,20 @@ export default function AuthButton({ loginHref = "/login" }: AuthButtonProps) {
               type="button"
               className="auth-button-menu-item"
               role="menuitem"
-              onClick={handleLogout}
-            >
-              Sign out
-            </button>
-            <button
-              type="button"
-              className="auth-button-menu-item"
-              role="menuitem"
               onClick={() => {
                 router.push("/settings");
                 setMenuOpen(false);
               }}
             >
               Settings
+            </button>
+            <button
+              type="button"
+              className="auth-button-menu-item"
+              role="menuitem"
+              onClick={handleLogout}
+            >
+              Sign out
             </button>
           </div>
         </>

@@ -1360,6 +1360,41 @@ body {
   color: #1f2933;
 }
 
+/* Remove / compact action button for inputs */
+.remove-input-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid #e6edf6;
+  background: #ffffff;
+  color: #bf1e2e;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+.remove-input-button:hover {
+  background: #fff5f6;
+  border-color: #ffd6d9;
+}
+
+/* Improve global inputs to match planning UI */
+input[type="text"], input[type="email"], textarea, select {
+  border: 1px solid #c6d8ec;
+  border-radius: 10px;
+  background: #fff;
+  padding: 10px 12px;
+  font: inherit;
+  color: #1a2a3b;
+  transition: box-shadow 0.12s ease, border-color 0.12s ease;
+}
+input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: #89b3d8;
+  box-shadow: 0 8px 20px rgba(13, 68, 115, 0.06);
+}
+
 .planning-solo-next {
   border: 1px solid #89b3d8;
   border-radius: 10px;

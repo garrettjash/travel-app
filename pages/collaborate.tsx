@@ -211,10 +211,10 @@ export default function CollaboratePage() {
                           />
                           <button
                             type="button"
+                            className="remove-input-button"
                             onClick={() => removeInput(idx)}
                             aria-label={`Remove place ${idx + 1}`}
                             title={placeEntries.length > 1 ? "Remove this place" : "Remove this place"}
-                            style={{ height: 36, padding: "0 8px" }}
                           >
                             −
                           </button>
