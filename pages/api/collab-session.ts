@@ -36,6 +36,7 @@ type CollabSessionResponse =
       sessionPath: string;
       attractionsCount: number;
       createdItineraryId?: string | null;
+      createdItineraryError?: string | null;
     }
   | {
       sessionId: string;
@@ -278,6 +279,7 @@ export default async function handler(
 
       // Create a placeholder itinerary now so the logged-in creator owns it
       let createdItineraryId: string | null = null;
+      let createdItineraryError: string | null = null;
       try {
         const rawCreatorUserId = asString(req.body?.userId);
         const creatorUserId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawCreatorUserId)
@@ -316,9 +318,12 @@ export default async function handler(
             .update({ itinerary_id: itineraryId })
             .eq("collab_session_id", sessionId)
             .is("itinerary_id", null);
+        } else {
+          createdItineraryError = insertErr.message;
         }
       } catch {
         // non-fatal; continue creating session even if itinerary insert fails
+        createdItineraryError = "exception during itinerary insert";
       }
 
       res.status(201).json({
@@ -327,7 +332,8 @@ export default async function handler(
         place: placeNames[0] ?? "",
         sessionPath: `/collaborate/session?session=${encodeURIComponent(sessionId)}`,
         attractionsCount: attractionIds.length,
-        createdItineraryId
+        createdItineraryId,
+        createdItineraryError
       });
       return;
     }
