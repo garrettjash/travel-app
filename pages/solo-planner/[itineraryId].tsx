@@ -92,6 +92,7 @@ export default function SoloPlannerItineraryPage() {
   const builderRef = useRef<SavedTripBuilderHandle | null>(null);
 
   const [refreshedItinerary, setRefreshedItinerary] = useState<SavedItinerary | null>(null);
+  const [itineraryRefreshVersion, setItineraryRefreshVersion] = useState(0);
 
   const canSend = useMemo(() => draft.trim().length > 0 && !isSending, [draft, isSending]);
 
@@ -239,7 +240,10 @@ export default function SoloPlannerItineraryPage() {
         Boolean(agentData.itinerary_modified) || Boolean(agentData.refresh_data);
       if (shouldRefresh && itineraryIdFromRoute) {
         const fresh = await fetchItinerary();
-        if (fresh) setRefreshedItinerary(fresh);
+        if (fresh) {
+          setRefreshedItinerary(fresh);
+          setItineraryRefreshVersion((v) => v + 1);
+        }
       }
     } catch (err) {
       setChatError(err instanceof Error ? err.message : "Failed to send message");
@@ -325,7 +329,11 @@ export default function SoloPlannerItineraryPage() {
               initialItinerary={refreshedItinerary ?? undefined}
               initialTripPlace={typeof initialPlace === "string" ? initialPlace : undefined}
               itineraryIdFromRoute={String(itineraryIdFromRoute ?? "")}
-              key={refreshedItinerary ? `refresh-${refreshedItinerary.updatedAt ?? refreshedItinerary.itineraryId}` : "new"}
+              key={
+                refreshedItinerary
+                  ? `refresh-${itineraryRefreshVersion}-${refreshedItinerary.itineraryId}`
+                  : "new"
+              }
             />
           </div>
         </aside>
