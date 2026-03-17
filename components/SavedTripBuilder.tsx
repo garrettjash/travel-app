@@ -1993,7 +1993,15 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
       <AttractionDetailsModal
         attraction={selectedAttraction}
         isFavorited={selectedAttraction ? isFavorite(selectedAttraction.id) : false}
+        isInItinerary={selectedAttraction ? isInItinerary(selectedAttraction.id) : false}
         onToggleFavorite={toggleFavorite}
+        onToggleItinerary={(attraction) => {
+          if (isInItinerary(attraction.id)) {
+            removeFromItinerary(attraction.id);
+            return;
+          }
+          addAttraction(attraction);
+        }}
         onClose={() => setSelectedAttraction(null)}
       />
     </div>

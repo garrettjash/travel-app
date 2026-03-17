@@ -2,6 +2,7 @@ import { useState } from "react";
 import AttractionDetailsModal from "../components/AttractionDetailsModal";
 import AppShell from "../components/AppShell";
 import { useFavorites } from "../lib/favorites-context";
+import { useItinerary } from "../lib/itinerary-context";
 
 function formatLocation(city: string, stateProvince: string, country: string) {
   return [city, stateProvince, country].filter(Boolean).join(", ") || "Location unavailable";
@@ -17,6 +18,7 @@ function formatCommaList(value: string) {
 
 export default function FavoritesPage() {
   const { favorites, toggleFavorite, isFavorite } = useFavorites();
+  const { addAttraction, removeAttraction, isInItinerary } = useItinerary();
   const [imageIndexByAttraction, setImageIndexByAttraction] = useState<Record<number, number>>({});
   const [selectedAttraction, setSelectedAttraction] = useState<(typeof favorites)[number] | null>(null);
 
@@ -125,7 +127,15 @@ export default function FavoritesPage() {
       <AttractionDetailsModal
         attraction={selectedAttraction}
         isFavorited={selectedAttraction ? isFavorite(selectedAttraction.id) : false}
+        isInItinerary={selectedAttraction ? isInItinerary(selectedAttraction.id) : false}
         onToggleFavorite={toggleFavorite}
+        onToggleItinerary={(attraction) => {
+          if (isInItinerary(attraction.id)) {
+            removeAttraction(attraction.id);
+            return;
+          }
+          addAttraction(attraction);
+        }}
         onClose={() => setSelectedAttraction(null)}
       />
     </AppShell>

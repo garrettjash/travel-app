@@ -110,7 +110,7 @@ function asNumber(value: string | string[] | undefined) {
   return raw;
 }
 
-function normalizeText(value: unknown) {
+function normalizeText(value: unknown): string {
   if (Array.isArray(value)) {
     return value
       .map((item) => normalizeText(item))
@@ -128,14 +128,14 @@ function uniqueSorted(values: Array<string | null | undefined>) {
   ).sort((a, b) => a.localeCompare(b));
 }
 
-function splitMultiValueText(value: string | null | undefined) {
+function splitMultiValueText(value: string | string[] | null | undefined) {
   return normalizeText(value)
     .split(",")
     .map((part) => part.trim())
     .filter(Boolean);
 }
 
-function uniqueSortedSplitValues(values: Array<string | null | undefined>) {
+function uniqueSortedSplitValues(values: Array<string | string[] | null | undefined>) {
   return Array.from(
     new Set(
       values.flatMap((value) => splitMultiValueText(value).map((part) => part.toLowerCase()))
