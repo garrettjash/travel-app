@@ -185,6 +185,16 @@ function formatTimeLabel(startTime: string, durationMinutes: number): string {
   return `${safeTime} • ${remainingMinutes}m`;
 }
 
+function formatMinuteLabel(totalMinutes: number) {
+  const clamped = Math.max(0, Math.min(24 * 60 - 1, Math.floor(totalMinutes)));
+  const hours24 = Math.floor(clamped / 60);
+  const minutes = clamped % 60;
+  const suffix = hours24 >= 12 ? "PM" : "AM";
+  const hours12 = hours24 % 12 || 12;
+  if (minutes === 0) return `${hours12} ${suffix}`;
+  return `${hours12}:${String(minutes).padStart(2, "0")} ${suffix}`;
+}
+
 function daysBetween(startDate: string, endDate: string) {
   if (!startDate || !endDate) return 3;
 
@@ -219,6 +229,11 @@ function sanitizeItineraryId(raw: string | null | undefined) {
 }
 
 const SUGGESTED_LIMIT = 24;
+const SAMPLE_TRIAL_START_MINUTE = 8 * 60;
+const SAMPLE_TRIAL_END_MINUTE = 20 * 60;
+const SAMPLE_TRIAL_STEP_MINUTES = 60;
+const SAMPLE_TRIAL_DEFAULT_DURATION = 90;
+const SAMPLE_TRIAL_PX_PER_STEP = 28;
 
 export type SavedTripBuilderHandle = {
   save: () => Promise<void>;
@@ -280,8 +295,25 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
   const [extraPlacesOptions, setExtraPlacesOptions] = useState<PlaceOption[]>([]);
   const [extraPlaceDropdownOpen, setExtraPlaceDropdownOpen] = useState(false);
   const extraPlaceDropdownRef = useRef<HTMLDivElement>(null);
-  const [editingStopKey, setEditingStopKey] = useState<string | null>(null);
+  const [calendarResizeState, setCalendarResizeState] = useState<{
+    dayIndex: number;
+    slotIndex: number;
+    startY: number;
+    initialDuration: number;
+  } | null>(null);
   const seededExtraFromItineraryRef = useRef(false);
+  const calendarTimeSlots = useMemo(() => {
+    const slots: number[] = [];
+    for (
+      let minute = SAMPLE_TRIAL_START_MINUTE;
+      minute <= SAMPLE_TRIAL_END_MINUTE;
+      minute += SAMPLE_TRIAL_STEP_MINUTES
+    ) {
+      slots.push(minute);
+    }
+    return slots;
+  }, []);
+  const calendarGridHeight = (calendarTimeSlots.length - 1) * SAMPLE_TRIAL_PX_PER_STEP;
 
   const tripDays = useMemo(() => daysBetween(startDate, endDate), [startDate, endDate]);
 
@@ -712,6 +744,48 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
     return () => document.removeEventListener("dragend", clearDrag);
   }, []);
 
+  useEffect(() => {
+    if (!calendarResizeState) return;
+    const resizeState = calendarResizeState;
+
+    function handleMouseMove(event: MouseEvent) {
+      const deltaY = event.clientY - resizeState.startY;
+      const stepDelta = Math.round(deltaY / SAMPLE_TRIAL_PX_PER_STEP);
+      const nextDuration = Math.max(
+        SAMPLE_TRIAL_STEP_MINUTES,
+        resizeState.initialDuration + stepDelta * SAMPLE_TRIAL_STEP_MINUTES
+      );
+
+      setDayPlans((current) =>
+        current.map((day, dayIndex) => {
+          if (dayIndex !== resizeState.dayIndex) return day;
+          return {
+            ...day,
+            stops: day.stops.map((stop, slotIndex) => {
+              if (slotIndex !== resizeState.slotIndex) return stop;
+              const maxDuration = SAMPLE_TRIAL_END_MINUTE - timeToMinutes(stop.startTime || "09:00");
+              return {
+                ...stop,
+                durationMinutes: Math.min(maxDuration, nextDuration)
+              };
+            })
+          };
+        })
+      );
+    }
+
+    function handleMouseUp() {
+      setCalendarResizeState(null);
+    }
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [calendarResizeState]);
+
   type DropTarget =
     | { type: "day"; dayIndex: number; insertIndex: number }
     | { type: "unscheduled"; insertIndex: number };
@@ -829,6 +903,80 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
     setUnscheduled((c) => c.filter((x) => x.id !== attractionId));
     setDayPlans((c) => c.map((d) => ({ ...d, stops: d.stops.filter((s) => s.attraction.id !== attractionId) })));
   }, [removeAttraction]);
+
+  const moveStopToCalendar = useCallback(
+    (from: DragSource, dayIndex: number, requestedMinute: number) => {
+      let attraction: FavoriteAttraction;
+      let durationMinutes = SAMPLE_TRIAL_DEFAULT_DURATION;
+
+      if (from.type === "day") {
+        const stop = dayPlans[from.dayIndex]?.stops[from.slotIndex];
+        if (!stop) return;
+        attraction = stop.attraction;
+        durationMinutes = stop.durationMinutes || SAMPLE_TRIAL_DEFAULT_DURATION;
+      } else {
+        const item = unscheduled[from.index];
+        if (!item) return;
+        attraction = item;
+      }
+
+      const roundedMinute =
+        Math.round((requestedMinute - SAMPLE_TRIAL_START_MINUTE) / SAMPLE_TRIAL_STEP_MINUTES) *
+          SAMPLE_TRIAL_STEP_MINUTES +
+        SAMPLE_TRIAL_START_MINUTE;
+      const safeStartMinute = Math.max(
+        SAMPLE_TRIAL_START_MINUTE,
+        Math.min(SAMPLE_TRIAL_END_MINUTE - SAMPLE_TRIAL_STEP_MINUTES, roundedMinute)
+      );
+
+      setDayPlans((current) => {
+        const next = current.map((day) => ({ ...day, stops: [...day.stops] }));
+        while (next.length < tripDays) next.push({ dayNumber: next.length + 1, stops: [] });
+
+        if (from.type === "day") {
+          const sourceDay = next[from.dayIndex];
+          if (!sourceDay) return current;
+          sourceDay.stops.splice(from.slotIndex, 1);
+        }
+
+        const targetDay = next[dayIndex];
+        if (!targetDay) return next.slice(0, tripDays);
+
+        const nextStartMinute = Math.min(safeStartMinute, SAMPLE_TRIAL_END_MINUTE - durationMinutes);
+        const newStop: PlannedStop = {
+          attraction,
+          startTime: minutesToTime(nextStartMinute),
+          durationMinutes
+        };
+
+        const insertIndex = targetDay.stops.findIndex(
+          (stop) => timeToMinutes(stop.startTime || "09:00") > nextStartMinute
+        );
+
+        if (insertIndex === -1) {
+          targetDay.stops.push(newStop);
+        } else {
+          targetDay.stops.splice(insertIndex, 0, newStop);
+        }
+
+        return next.slice(0, tripDays);
+      });
+      setUnscheduled((current) =>
+        from.type === "unscheduled" ? current.filter((_, index) => index !== from.index) : current
+      );
+      setDragSource(null);
+    },
+    [dayPlans, tripDays, unscheduled]
+  );
+
+  const getCalendarDateLabel = useCallback(
+    (dayIndex: number) => {
+      const baseDate = parseLocalDateIso(startDate) ?? new Date();
+      const date = new Date(baseDate.getTime() + dayIndex * 24 * 60 * 60 * 1000);
+      return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    },
+    [startDate]
+  );
 
   async function handleSave(event?: FormEvent) {
     if (event) event.preventDefault();
@@ -1818,154 +1966,139 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                   </div>
                 </div>
 
-                <div className="saved-days-drag">
-                  {paddedDayPlans.map((day, dayIndex) => (
-                    <article className="saved-day-card saved-day-droppable" key={day.dayNumber}>
-                      <header>
-                        <h2>Day {day.dayNumber}</h2>
-                      </header>
-                      <div
-                        className="saved-day-stops"
-                        onDragOver={(e) => {
-                          e.preventDefault();
-                          e.dataTransfer.dropEffect = "move";
-                        }}
-                        onDrop={(e) => {
-                          e.preventDefault();
-                          if (dragSource) moveStop(dragSource, { type: "day", dayIndex, insertIndex: day.stops.length });
-                        }}
-                      >
-                        {day.stops.map((stop, slotIndex) => (
-                          <div
-                            key={`${day.dayNumber}-${stop.attraction.id}-${stop.startTime}-${slotIndex}`}
-                            className={`saved-schedule-card saved-schedule-card-in-day saved-schedule-card-clickable ${dragSource?.type === "day" && dragSource.dayIndex === dayIndex && dragSource.slotIndex === slotIndex ? "saved-schedule-card-dragging" : ""}`}
-                            draggable
-                            onClick={() => setSelectedAttraction(stop.attraction)}
-                            onDragStart={() => setDragSource({ type: "day", dayIndex, slotIndex })}
-                            onDragEnd={() => setDragSource(null)}
-                            onDragOver={(e) => {
-                              e.preventDefault();
-                              e.dataTransfer.dropEffect = "move";
-                            }}
-                            onDrop={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              // Dropping on last card = append after (gives "previous end" time); else insert before
-                              const insertIndex =
-                                slotIndex === day.stops.length - 1 ? day.stops.length : slotIndex;
-                              if (dragSource) moveStop(dragSource, { type: "day", dayIndex, insertIndex });
-                            }}
-                          >
+                <div className="saved-calendar-shell">
+                  <div className="sample-trial-panel-head">
+                    <h3>Trip Calendar</h3>
+                    <span>Drag places onto the time you want</span>
+                  </div>
+                  <p className="sample-trial-panel-copy">
+                    Drop a place onto a day and time. Pull the bottom tab to make the stop longer.
+                  </p>
+                  <div className="sample-trial-calendar">
+                    <div className="sample-trial-time-rail" aria-hidden="true">
+                      <div className="sample-trial-time-rail-spacer" />
+                      {calendarTimeSlots.slice(0, -1).map((minute) => (
+                        <div
+                          key={minute}
+                          className="sample-trial-time-slot"
+                          style={{ height: SAMPLE_TRIAL_PX_PER_STEP }}
+                        >
+                          <span>{formatMinuteLabel(minute)}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="sample-trial-day-columns">
+                      {paddedDayPlans.map((day, dayIndex) => {
+                        const sortedStops = day.stops
+                          .map((stop, slotIndex) => ({ stop, slotIndex }))
+                          .sort(
+                            (left, right) =>
+                              timeToMinutes(left.stop.startTime || "09:00") -
+                              timeToMinutes(right.stop.startTime || "09:00")
+                          );
+
+                        return (
+                          <section className="sample-trial-day-column" key={day.dayNumber}>
+                            <header className="sample-trial-day-header">
+                              <strong>Day {day.dayNumber}</strong>
+                              <span>{getCalendarDateLabel(dayIndex)}</span>
+                            </header>
                             <div
-                              className="saved-stop-slot"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              {editingStopKey === `${dayIndex}-${slotIndex}` ? (
-                                <div className="saved-stop-time-inputs">
-                                  <input
-                                    type="time"
-                                    className="saved-stop-time-input"
-                                    value={stop.startTime || "09:00"}
-                                    onChange={(e) => {
-                                      const value = e.target.value;
-                                      setDayPlans((current) =>
-                                        current.map((d, di) =>
-                                          di !== dayIndex
-                                            ? d
-                                            : {
-                                                ...d,
-                                                stops: d.stops.map((s, si) =>
-                                                  si !== slotIndex ? s : { ...s, startTime: value || "09:00" }
-                                                )
-                                              }
-                                        )
-                                      );
-                                    }}
-                                  />
-                                  <select
-                                    className="saved-stop-duration-select"
-                                    value={stop.durationMinutes || 60}
-                                    onChange={(e) => {
-                                      const value = Number(e.target.value) || 60;
-                                      setDayPlans((current) =>
-                                        current.map((d, di) =>
-                                          di !== dayIndex
-                                            ? d
-                                            : {
-                                                ...d,
-                                                stops: d.stops.map((s, si) =>
-                                                  si !== slotIndex ? s : { ...s, durationMinutes: value }
-                                                )
-                                              }
-                                        )
-                                      );
-                                    }}
-                                  >
-                                    {[15, 30, 45, 60, 90, 120, 180].map((mins) => (
-                                      <option key={mins} value={mins}>
-                                        {mins < 60 ? `${mins}m` : mins === 60 ? "1h" : `${mins / 60}h`}
-                                      </option>
-                                    ))}
-                                  </select>
-                                  <button
-                                    type="button"
-                                    className="saved-stop-time-done"
-                                    onClick={() => setEditingStopKey(null)}
-                                  >
-                                    Done
-                                  </button>
-                                </div>
-                              ) : (
-                                <button
-                                  type="button"
-                                  className="saved-stop-time-display"
-                                  onClick={() => setEditingStopKey(`${dayIndex}-${slotIndex}`)}
-                                  title="Click to edit time and duration"
-                                >
-                                  {formatTimeLabel(stop.startTime, stop.durationMinutes)}
-                                </button>
-                              )}
-                            </div>
-                            {stop.attraction.imageUrl ? (
-                              <img src={stop.attraction.imageUrl} alt="" className="saved-schedule-card-img" />
-                            ) : (
-                              <div className="saved-schedule-card-img saved-schedule-card-placeholder" aria-hidden />
-                            )}
-                            <div className="saved-schedule-card-body">
-                              <h3>{stop.attraction.name}</h3>
-                              <p className="saved-schedule-card-meta">
-                                {formatLocation(stop.attraction.city, stop.attraction.stateProvince, stop.attraction.country)}
-                                {formatCategoryLabel(stop.attraction.categories) && (
-                                  <span className="saved-schedule-card-type"> · {formatCategoryLabel(stop.attraction.categories)}</span>
-                                )}
-                              </p>
-                            </div>
-                            <button
-                              type="button"
-                              className="saved-schedule-card-remove"
-                              aria-label={`Remove ${stop.attraction.name}`}
-                              onMouseDown={(e) => e.stopPropagation()}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                removeFromItinerary(stop.attraction.id);
+                              className="sample-trial-day-grid"
+                              style={{ height: calendarGridHeight }}
+                              onDragOver={(event) => {
+                                event.preventDefault();
+                                event.dataTransfer.dropEffect = "move";
+                              }}
+                              onDrop={(event) => {
+                                event.preventDefault();
+                                if (!dragSource) return;
+                                const rect = event.currentTarget.getBoundingClientRect();
+                                const offsetY = event.clientY - rect.top;
+                                const requestedMinute =
+                                  SAMPLE_TRIAL_START_MINUTE +
+                                  (offsetY / SAMPLE_TRIAL_PX_PER_STEP) * SAMPLE_TRIAL_STEP_MINUTES;
+                                moveStopToCalendar(dragSource, dayIndex, requestedMinute);
                               }}
                             >
-                              <img
-                                src="https://img.icons8.com/fluent-systems-regular/24/FA5252/trash.png"
-                                alt=""
-                                width={18}
-                                height={18}
-                                className="saved-schedule-card-remove-icon"
-                              />
-                            </button>
-                          </div>
-                        ))}
-                        {day.stops.length === 0 && (
-                          <p className="saved-day-empty">Drop places here</p>
-                        )}
-                      </div>
-                    </article>
-                  ))}
+                              {calendarTimeSlots.slice(0, -1).map((minute) => (
+                                <div
+                                  key={minute}
+                                  className="sample-trial-grid-line"
+                                  style={{ height: SAMPLE_TRIAL_PX_PER_STEP }}
+                                />
+                              ))}
+                              {sortedStops.length === 0 && (
+                                <p className="saved-day-empty saved-day-empty-calendar">Drop places here</p>
+                              )}
+                              {sortedStops.map(({ stop, slotIndex }) => {
+                                const top =
+                                  ((timeToMinutes(stop.startTime || "09:00") - SAMPLE_TRIAL_START_MINUTE) /
+                                    SAMPLE_TRIAL_STEP_MINUTES) *
+                                  SAMPLE_TRIAL_PX_PER_STEP;
+                                const height =
+                                  ((stop.durationMinutes || SAMPLE_TRIAL_DEFAULT_DURATION) /
+                                    SAMPLE_TRIAL_STEP_MINUTES) *
+                                  SAMPLE_TRIAL_PX_PER_STEP;
+
+                                return (
+                                  <article
+                                    key={`${day.dayNumber}-${stop.attraction.id}-${stop.startTime}-${slotIndex}`}
+                                    className={`sample-trial-event saved-schedule-card-clickable ${
+                                      dragSource?.type === "day" &&
+                                      dragSource.dayIndex === dayIndex &&
+                                      dragSource.slotIndex === slotIndex
+                                        ? "sample-trial-event-dragging"
+                                        : ""
+                                    }`}
+                                    draggable
+                                    style={{ top, height }}
+                                    onClick={() => setSelectedAttraction(stop.attraction)}
+                                    onDragStart={() => setDragSource({ type: "day", dayIndex, slotIndex })}
+                                    onDragEnd={() => setDragSource(null)}
+                                  >
+                                    <div className="sample-trial-event-copy">
+                                      <strong>{stop.attraction.name}</strong>
+                                      <span>{formatTimeLabel(stop.startTime, stop.durationMinutes)}</span>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      className="sample-trial-event-remove"
+                                      aria-label={`Remove ${stop.attraction.name}`}
+                                      onMouseDown={(e) => e.stopPropagation()}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        removeFromItinerary(stop.attraction.id);
+                                      }}
+                                    >
+                                      ×
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="sample-trial-event-resize"
+                                      aria-label={`Extend time for ${stop.attraction.name}`}
+                                      onMouseDown={(event) => {
+                                        event.preventDefault();
+                                        event.stopPropagation();
+                                        setCalendarResizeState({
+                                          dayIndex,
+                                          slotIndex,
+                                          startY: event.clientY,
+                                          initialDuration: stop.durationMinutes || SAMPLE_TRIAL_DEFAULT_DURATION
+                                        });
+                                      }}
+                                    >
+                                      Drag to make longer
+                                    </button>
+                                  </article>
+                                );
+                              })}
+                            </div>
+                          </section>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
               </section>
           )}

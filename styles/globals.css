@@ -2123,6 +2123,13 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
   gap: 14px;
 }
 
+.saved-calendar-shell {
+  border: 1px solid #d5e3f1;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.94);
+  padding: 14px;
+}
+
 @media (min-width: 1024px) {
   /* On desktop, show up to 4 day cards per row, then wrap */
   .saved-days-drag {
@@ -2157,6 +2164,19 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
   margin: 10px 0 0;
   color: #49627e;
   font-size: 0.9rem;
+}
+
+.saved-day-empty-calendar {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  top: 10px;
+  margin: 0;
+  border: 1px dashed #c2d9ee;
+  border-radius: 12px;
+  background: rgba(248, 252, 255, 0.92);
+  padding: 12px;
+  text-align: center;
 }
 
 .saved-day-stops {
@@ -2710,6 +2730,299 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.sample-trial-section {
+  margin-top: 22px;
+  border: 1px solid #d5e3f1;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+  padding: 18px;
+  box-shadow: 0 12px 30px rgba(17, 61, 104, 0.08);
+}
+
+.sample-trial-header h2 {
+  margin: 0;
+  color: #113d68;
+  font-size: 1.35rem;
+}
+
+.sample-trial-header p {
+  margin: 8px 0 0;
+  max-width: 68ch;
+  color: #4b627a;
+  line-height: 1.5;
+}
+
+.sample-trial-place-picker {
+  margin-top: 16px;
+}
+
+.sample-trial-empty-state {
+  margin-top: 16px;
+  border: 1px dashed #c2d9ee;
+  border-radius: 16px;
+  background: #f8fbfe;
+  padding: 22px;
+  display: grid;
+  gap: 6px;
+  color: #48607a;
+}
+
+.sample-trial-empty-state strong {
+  color: #153b61;
+  font-size: 1rem;
+}
+
+.sample-trial-layout {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.sample-trial-attractions,
+.sample-trial-calendar-shell {
+  border: 1px solid #d8e5f2;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 16px;
+}
+
+.sample-trial-panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sample-trial-panel-head h3 {
+  margin: 0;
+  color: #17395d;
+  font-size: 1.05rem;
+}
+
+.sample-trial-panel-head span {
+  color: #5b7490;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.sample-trial-panel-copy {
+  margin: 8px 0 0;
+  color: #556d86;
+  line-height: 1.45;
+}
+
+.sample-trial-attraction-list {
+  margin-top: 14px;
+  display: grid;
+  gap: 10px;
+  max-height: 760px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.sample-trial-attraction-card {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  border: 1px solid #d7e4f2;
+  border-radius: 14px;
+  background: #fbfdff;
+  padding: 10px;
+  cursor: grab;
+  text-align: left;
+}
+
+.sample-trial-attraction-card:active {
+  cursor: grabbing;
+}
+
+.sample-trial-attraction-thumb {
+  width: 72px;
+  height: 72px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: #ddebf7;
+}
+
+.sample-trial-attraction-thumb-placeholder {
+  background: linear-gradient(135deg, #dbe8f4 0%, #c9ddf0 100%);
+}
+
+.sample-trial-attraction-copy h4 {
+  margin: 0;
+  color: #17395d;
+  font-size: 0.98rem;
+  line-height: 1.35;
+}
+
+.sample-trial-attraction-copy p {
+  margin: 6px 0 0;
+  color: #607892;
+  font-size: 0.88rem;
+}
+
+.sample-trial-calendar {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.sample-trial-time-rail {
+  position: sticky;
+  top: 12px;
+}
+
+.sample-trial-time-rail-spacer {
+  height: 48px;
+}
+
+.sample-trial-time-slot {
+  position: relative;
+}
+
+.sample-trial-time-slot span {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translateY(-50%);
+  font-size: 0.76rem;
+  color: #6a839d;
+  font-weight: 700;
+}
+
+.sample-trial-day-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+}
+
+.sample-trial-day-column {
+  min-width: 0;
+}
+
+.sample-trial-day-header {
+  display: grid;
+  gap: 2px;
+  margin-bottom: 8px;
+  padding: 0 2px;
+}
+
+.sample-trial-day-header strong {
+  color: #17395d;
+  font-size: 0.98rem;
+}
+
+.sample-trial-day-header span {
+  color: #67809a;
+  font-size: 0.83rem;
+}
+
+.sample-trial-day-grid {
+  position: relative;
+  border: 1px solid #d5e3f1;
+  border-radius: 16px;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(130, 182, 232, 0.08) 0%, rgba(130, 182, 232, 0) 100%),
+    #ffffff;
+}
+
+.sample-trial-grid-line {
+  border-top: 1px solid #edf3f8;
+}
+
+.sample-trial-grid-line:first-child {
+  border-top: none;
+}
+
+.sample-trial-event {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  border: 1px solid #82b6e8;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #e8f4ff 0%, #d8ebfc 100%);
+  box-shadow: 0 10px 20px rgba(61, 116, 169, 0.16);
+  padding: 10px 10px 34px;
+  display: grid;
+  gap: 8px;
+}
+
+.sample-trial-event-dragging {
+  opacity: 0.75;
+}
+
+.sample-trial-event-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.sample-trial-event-copy strong {
+  color: #123a61;
+  font-size: 0.92rem;
+  line-height: 1.3;
+}
+
+.sample-trial-event-copy span {
+  color: #365d84;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.sample-trial-event-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #a23e3e;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.sample-trial-event-resize {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 8px;
+  border: none;
+  border-radius: 999px;
+  background: #123d68;
+  color: #fff;
+  min-height: 22px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: ns-resize;
+}
+
+@media (max-width: 980px) {
+  .sample-trial-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sample-trial-attraction-list {
+    max-height: none;
+  }
+}
+
+@media (max-width: 620px) {
+  .sample-trial-calendar {
+    grid-template-columns: 58px minmax(0, 1fr);
+  }
+
+  .sample-trial-day-columns {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 980px) {
