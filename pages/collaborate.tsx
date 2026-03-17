@@ -134,7 +134,8 @@ export default function CollaboratePage() {
         body: JSON.stringify({
           sessionId: token,
           placeIds,
-          durationMinutes: selectedDurationMinutes
+            durationMinutes: selectedDurationMinutes,
+            userId: user.id
         })
       });
 

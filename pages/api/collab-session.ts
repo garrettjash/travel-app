@@ -275,6 +275,49 @@ export default async function handler(
         .map((r) => normalizeText(r.place_city) || normalizeText(r.place_countryregion))
         .filter(Boolean);
 
+      // Create a placeholder itinerary now so the logged-in creator owns it
+      try {
+        const rawCreatorUserId = asString(req.body?.userId);
+        const creatorUserId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawCreatorUserId)
+          ? rawCreatorUserId
+          : null;
+
+        const placeEntries = resolvedPlaceRows.map((r) => ({
+          placeId: Number(r.place_id),
+          placeName: normalizeText(r.place_city) || normalizeText(r.place_countryregion) || ""
+        }));
+
+        const itineraryId = typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2,10)}`;
+        const today = new Date();
+        const startDate = today.toISOString().slice(0, 10);
+        const endDate = new Date(today.getTime() + 1000 * 60 * 60 * 24).toISOString().slice(0, 10);
+
+        const insertRow: Record<string, unknown> = {
+          itinerary_id: itineraryId,
+          trip_name: `Collab: ${placeNames[0] ?? "your destination"}`,
+          place: placeEntries,
+          start_date: startDate,
+          end_date: endDate,
+          pace: "balanced",
+          notes: "",
+          days: [],
+          unscheduled: []
+        };
+        if (creatorUserId) insertRow.user_id = creatorUserId;
+
+        const { error: insertErr } = await supabase.from("itinerary").insert(insertRow);
+        if (!insertErr) {
+          // Link session -> itinerary if none set (avoid overwriting existing linkage)
+          await supabase
+            .from("collab_session")
+            .update({ itinerary_id: itineraryId })
+            .eq("collab_session_id", sessionId)
+            .is("itinerary_id", null);
+        }
+      } catch {
+        // non-fatal; continue creating session even if itinerary insert fails
+      }
+
       res.status(201).json({
         sessionId,
         placeId: resolvedPlaceIds[0] ?? null,
@@ -550,6 +593,17 @@ export default async function handler(
 
       if (isExpired && results.length > 0) {
         const existingItineraryId = sessionResult.data.itinerary_id;
+
+        const votedIds = results
+          .filter((r) => r.yesVotes >= r.noVotes)
+          .sort((a, b) => b.yesVotes - b.noVotes - (a.yesVotes - a.noVotes))
+          .map((r) => r.attractionId);
+
+        const nameById = new Map(attractions.map((a) => [a.id, normalizeText(a.name) || "Unnamed attraction"]));
+        const unscheduled = votedIds.map((id) => ({
+          attractionId: id,
+          attractionName: nameById.get(id) ?? "Unnamed attraction"
+        }));
         if (existingItineraryId) {
           // Return itineraryPath to owner; if itinerary has no user_id, let logged-in user claim it
           if (userId) {
@@ -562,17 +616,31 @@ export default async function handler(
 
             if (!itineraryResult.error) {
               const ownerId = itineraryResult.data?.user_id ?? null;
-              if (ownerId === userId) {
-                itineraryPath = `/solo-planner/${encodeURIComponent(existingItineraryId)}?fromCollab=1`;
-              } else if (!ownerId) {
+                if (ownerId === userId) {
+                  itineraryPath = `/solo-planner/${encodeURIComponent(existingItineraryId)}?fromCollab=1`;
+                } else if (!ownerId) {
                 // Itinerary has no owner (created by guest) - let this user claim it
                 await supabase
                   .from("itinerary")
                   .update({ user_id: userId })
                   .eq("itinerary_id", existingItineraryId);
-                itineraryPath = `/solo-planner/${encodeURIComponent(existingItineraryId)}?fromCollab=1`;
+                  itineraryPath = `/solo-planner/${encodeURIComponent(existingItineraryId)}?fromCollab=1`;
               }
             }
+          }
+          // Update the existing itinerary with collab results (unscheduled/top-voted)
+          try {
+            if (unscheduled.length > 0) {
+              const { error: updateErr } = await supabase
+                .from("itinerary")
+                .update({ days: [], unscheduled })
+                .eq("itinerary_id", existingItineraryId);
+              if (updateErr) {
+                // Non-fatal for viewers; abort only if owner action is required
+              }
+            }
+          } catch {
+            // ignore
           }
         } else {
           // Re-check itinerary_id in case a concurrent request already created one
@@ -608,7 +676,7 @@ export default async function handler(
             }
           } else {
           const votedIds = results
-            .filter((r) => r.yesVotes > r.noVotes)
+            .filter((r) => r.yesVotes >= r.noVotes)
             .sort((a, b) => b.yesVotes - b.noVotes - (a.yesVotes - a.noVotes))
             .map((r) => r.attractionId);
 
