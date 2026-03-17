@@ -302,7 +302,6 @@ export default async function handler(
           place: placeEntries,
           start_date: startDate,
           end_date: endDate,
-          pace: "balanced",
           notes: "",
           days: [],
           unscheduled: []
@@ -708,7 +707,6 @@ export default async function handler(
               place: (placeRowsResult.data ?? []).map((r: any) => ({ placeId: Number(r.place_id), placeName: normalizeText(r.place_city) || "" })),
               start_date: startDate,
               end_date: endDate,
-              pace: "balanced",
               notes: "",
               days: [],
               unscheduled
