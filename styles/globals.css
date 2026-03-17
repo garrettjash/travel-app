@@ -2540,10 +2540,45 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
   border-color: #6aa3dc;
 }
 
-.saved-suggested-added {
+.saved-suggested-action-row {
+  align-self: flex-start;
+  margin-top: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.saved-suggested-added-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid #2d7a4f;
+  border-radius: 8px;
   background: #2d7a4f;
-  border-color: #2d7a4f;
-  cursor: default;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.saved-suggested-remove {
+  width: 30px;
+  height: 30px;
+  border: 1px solid #d7a8a8;
+  border-radius: 999px;
+  background: #fff5f5;
+  color: #a83232;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.saved-suggested-remove:hover {
+  background: #ffe7e7;
+  border-color: #cb8d8d;
 }
 
 /* Your itinerary – draggable cards */

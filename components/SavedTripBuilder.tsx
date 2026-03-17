@@ -1546,26 +1546,37 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                                       {attraction.summary.length > 120 ? "…" : ""}
                                     </p>
                                   )}
-                                  <button
-                                    type="button"
-                                    className={`saved-suggested-add ${added ? "saved-suggested-added" : ""}`}
-                                    aria-label={
-                                      added
-                                        ? `Remove ${attraction.name} from itinerary`
-                                        : `Add ${attraction.name} to itinerary`
-                                    }
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      if (added) {
-                                        removeFromItinerary(attraction.id);
-                                      } else {
+                                  {added ? (
+                                    <div className="saved-suggested-action-row">
+                                      <span className="saved-suggested-added-badge" aria-label={`${attraction.name} added to itinerary`}>
+                                        ✓ Added
+                                      </span>
+                                      <button
+                                        type="button"
+                                        className="saved-suggested-remove"
+                                        aria-label={`Remove ${attraction.name} from itinerary`}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          removeFromItinerary(attraction.id);
+                                        }}
+                                      >
+                                        ×
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      className="saved-suggested-add"
+                                      aria-label={`Add ${attraction.name} to itinerary`}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
                                         addAttraction(attraction);
                                         setUnscheduled((u) => [...u, attraction]);
-                                      }
-                                    }}
-                                  >
-                                    {added ? "✓ Added (click to remove)" : "+ Add"}
-                                  </button>
+                                      }}
+                                    >
+                                      + Add
+                                    </button>
+                                  )}
                                 </div>
                               </article>
                             );
@@ -1679,26 +1690,37 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                                       {attraction.summary.length > 120 ? "…" : ""}
                                     </p>
                                   )}
-                                  <button
-                                    type="button"
-                                    className={`saved-suggested-add ${added ? "saved-suggested-added" : ""}`}
-                                    aria-label={
-                                      added
-                                        ? `Remove ${attraction.name} from itinerary`
-                                        : `Add ${attraction.name} to itinerary`
-                                    }
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      if (added) {
-                                        removeFromItinerary(attraction.id);
-                                      } else {
+                                  {added ? (
+                                    <div className="saved-suggested-action-row">
+                                      <span className="saved-suggested-added-badge" aria-label={`${attraction.name} added to itinerary`}>
+                                        ✓ Added
+                                      </span>
+                                      <button
+                                        type="button"
+                                        className="saved-suggested-remove"
+                                        aria-label={`Remove ${attraction.name} from itinerary`}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          removeFromItinerary(attraction.id);
+                                        }}
+                                      >
+                                        ×
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      className="saved-suggested-add"
+                                      aria-label={`Add ${attraction.name} to itinerary`}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
                                         addAttraction(attraction);
                                         setUnscheduled((u) => [...u, attraction]);
-                                      }
-                                    }}
-                                  >
-                                    {added ? "✓ Added (click to remove)" : "+ Add"}
-                                  </button>
+                                      }}
+                                    >
+                                      + Add
+                                    </button>
+                                  )}
                                 </div>
                               </article>
                             );
