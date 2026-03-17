@@ -249,7 +249,11 @@ export default function SoloPlannerItineraryPage() {
   };
 
   return (
-    <main className={`solo-planner-page ${isChatOpen ? "solo-planner-page-chat-open" : ""}`}>
+    <main
+      className={`solo-planner-page ${isChatOpen ? "solo-planner-page-chat-open" : ""} ${
+        isSending ? "solo-planner-page-chat-busy" : ""
+      }`}
+    >
       <header className="destinations-topbar">
         <button
           type="button"
