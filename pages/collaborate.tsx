@@ -77,6 +77,7 @@ export default function CollaboratePage() {
   const [isDownloadingQr, setIsDownloadingQr] = useState(false);
   const [createSessionId, setCreateSessionId] = useState<string | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'create' | 'join'>('create');
 
   const filteredPlaces = useMemo(() => [], []);
 
@@ -234,21 +235,54 @@ export default function CollaboratePage() {
     }
   }
 
+  async function handleShare() {
+    if (!createSessionLink) return;
+    // Try Web Share API first
+    if ((navigator as any).share) {
+      try {
+        await (navigator as any).share({
+          title: 'Join my Travel app session',
+          text: 'Join my travel planning session',
+          url: createSessionLink
+        });
+        return;
+      } catch {
+        // fallthrough to copy
+      }
+    }
+
+    // Fallback: copy to clipboard
+    try {
+      await navigator.clipboard.writeText(createSessionLink);
+      setIsLinkCopied(true);
+    } catch {
+      setIsLinkCopied(false);
+    }
+  }
+
   function handleJoinSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const sanitized = sanitizeUrlInput(joinLinkInput);
-    const safePath = getSafeCollabUrl(sanitized);
+    const raw = sanitizeUrlInput(joinLinkInput).trim();
+    if (!raw) return;
 
-    if (!safePath) {
-      setJoinLinkError(
-        "Enter a valid collaborate link on this site (http/https only)."
-      );
+    // If it's a full URL, validate and push the safe path.
+    if (/^https?:\/\//i.test(raw)) {
+      const safePath = getSafeCollabUrl(raw);
+      if (!safePath) {
+        setJoinLinkError("Enter a valid collaborate link on this site (http/https only).");
+        return;
+      }
+
+      setJoinLinkError(null);
+      router.push(safePath);
       return;
     }
 
+    // Otherwise treat it as a session id/code and navigate to /collaborate/[id]
+    const code = raw;
     setJoinLinkError(null);
-    router.push(safePath);
+    router.push(`/collaborate/${encodeURIComponent(code)}`);
   }
 
   return (
@@ -260,148 +294,160 @@ export default function CollaboratePage() {
         </section>
 
         <section className="about-card">
-          <div className="saved-trips-builder" style={{ marginTop: 14, gridTemplateColumns: "1fr" }}>
-            <div className="saved-trips-field">
-              <label htmlFor="collab-place-search">CREATE A COLLAB SESSION</label>
-              <div style={{ display: "flex", gap: 8, flexDirection: "column" }}>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {placeEntries.map((entry, idx) => (
-                    <div key={idx} style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                      <PlaceSearchInput
-                        id={`collab-place-search-${idx}`}
-                        value={entry.value}
-                        onChange={(v) => handlePlaceInputChange(v, idx)}
-                        onSelect={(p) => handlePlaceSelect({ id: p.id, label: p.label }, idx)}
-                        placeholder={"Type to search destinations…"}
-                        className="planning-solo-input"
-                        aria-label={`Add a place (${idx + 1})`}
-                      />
+          <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
+            <button
+              type="button"
+              className={`saved-trips-button ${activeTab === 'create' ? 'saved-trips-button-primary' : 'saved-trips-button-muted'}`}
+              onClick={() => setActiveTab('create')}
+            >
+              Create
+            </button>
+            <button
+              type="button"
+              className={`saved-trips-button ${activeTab === 'join' ? 'saved-trips-button-primary' : 'saved-trips-button-muted'}`}
+              onClick={() => setActiveTab('join')}
+            >
+              Join
+            </button>
+          </div>
+
+          {activeTab === 'create' && (
+            <div>
+              <p style={{ marginTop: 0, marginBottom: 12 }}><strong>Step 1:</strong> Add one or more destinations. <strong>Step 2:</strong> Choose how long the link should be live. <strong>Step 3:</strong> Click <em>Create session</em> and share the link or QR code.</p>
+
+              <div className="saved-trips-builder" style={{ marginTop: 8, gridTemplateColumns: '1fr' }}>
+                <div className="saved-trips-field">
+                  <label htmlFor="collab-place-search">Add destinations</label>
+                  <div style={{ display: 'flex', gap: 8, flexDirection: 'column' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {placeEntries.map((entry, idx) => (
+                        <div key={idx} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <PlaceSearchInput
+                            id={`collab-place-search-${idx}`}
+                            value={entry.value}
+                            onChange={(v) => handlePlaceInputChange(v, idx)}
+                            onSelect={(p) => handlePlaceSelect({ id: p.id, label: p.label }, idx)}
+                            placeholder={'Type to search destinations…'}
+                            className="planning-solo-input"
+                            aria-label={`Add a place (${idx + 1})`}
+                          />
+                          <button
+                            type="button"
+                            className="remove-input-button"
+                            onClick={() => removeInput(idx)}
+                          >
+                            −
+                          </button>
+                        </div>
+                      ))}
+
                       <button
                         type="button"
-                        className="remove-input-button"
-                        onClick={() => removeInput(idx)}
-                        aria-label={`Remove place ${idx + 1}`}
-                        title={placeEntries.length > 1 ? "Remove this place" : "Remove this place"}
+                        className="saved-trips-button"
+                        onClick={() => setPlaceEntries((s) => [...s, { value: '' }])}
                       >
-                        −
+                        Add another place
                       </button>
                     </div>
-                  ))}
+                  </div>
+                </div>
 
+                <div className="saved-trips-field">
+                  <label htmlFor="collab-link-duration">Select how long the link should be live</label>
+                  <select
+                    id="collab-link-duration"
+                    value={selectedDurationMinutes}
+                    onChange={(event) => {
+                      const value = Number(event.target.value);
+                      setSelectedDurationMinutes(Number.isFinite(value) ? value : 60);
+                    }}
+                  >
+                    {LINK_DURATION_OPTIONS.map((option) => (
+                      <option key={option.minutes} value={option.minutes}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="saved-trips-actions" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <button
                     type="button"
-                    className="saved-trips-button"
-                    onClick={() => setPlaceEntries((s) => [...s, { value: "" }])}
+                    className={`saved-trips-button ${canCreateSession && user ? 'saved-trips-button-primary' : 'saved-trips-button-muted'}`}
+                    onClick={handleCreateSessionClick}
+                    disabled={!canCreateSession || isCreatingSession || !user}
                   >
-                    Add another place
+                    {isCreatingSession ? 'Creating...' : 'Create session'}
                   </button>
+                  {!user && (
+                    <span style={{ color: '#666', fontSize: 13 }}>
+                      Creating a session requires logging in
+                    </span>
+                  )}
                 </div>
               </div>
-            </div>
 
-            <div className="saved-trips-field">
-              <label htmlFor="collab-link-duration">Select how long the link should be live</label>
-              <select
-                id="collab-link-duration"
-                value={selectedDurationMinutes}
-                onChange={(event) => {
-                  const value = Number(event.target.value);
-                  setSelectedDurationMinutes(Number.isFinite(value) ? value : 60);
-                }}
-              >
-                {LINK_DURATION_OPTIONS.map((option) => (
-                  <option key={option.minutes} value={option.minutes}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+              {placeError && <p className="attractions-state">{placeError}</p>}
+              {createSessionError && <p className="attractions-state attractions-state-error">{createSessionError}</p>}
 
-            <div className="saved-trips-actions" style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <button
-                type="button"
-                className={`saved-trips-button ${canCreateSession && user ? "saved-trips-button-primary" : "saved-trips-button-muted"}`}
-                onClick={handleCreateSessionClick}
-                disabled={!canCreateSession || isCreatingSession || !user}
-              >
-                {isCreatingSession ? "Creating..." : "Create!"}
-              </button>
-              {!user && (
-                <span style={{ color: "#666", fontSize: 13 }}>
-                  Create sessions requires logging in
-                </span>
+              {createSessionLink && (
+                <div style={{ marginTop: 12, display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <p className="attractions-state" style={{ margin: 0, flex: 1 }}>
+                        Session ready — share this link:
+                        <br />
+                        <a href={createSessionLink} target="_blank" rel="noreferrer">{createSessionLink}</a>
+                      </p>
+                    </div>
+
+                    <div style={{ marginTop: 8, display: 'flex', gap: 12, alignItems: 'center' }}>
+                      {qrDataUrl && (
+                        <img src={qrDataUrl} alt="QR code for session link" style={{ width: 120, height: 120, border: '1px solid #e6e6e6', borderRadius: 6 }} />
+                      )}
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button type="button" className="saved-trips-button" onClick={handleCopySessionLink}>Copy link</button>
+                          <button type="button" className="saved-trips-button" onClick={handleShare}>Share</button>
+                        </div>
+                        <button type="button" className="saved-trips-button" onClick={handleDownloadQr} disabled={!qrDataUrl || isDownloadingQr}>
+                          {isDownloadingQr ? 'Downloading...' : `Download QR Code`}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               )}
-            </div>
-          </div>
 
-          {placeError && <p className="attractions-state">{placeError}</p>}
-          {createSessionError && <p className="attractions-state attractions-state-error">{createSessionError}</p>}
-          {createSessionLink && (
-            <div style={{ marginTop: 8 }}>
-              <div className="saved-trips-actions" style={{ alignItems: "center" }}>
-                <p className="attractions-state" style={{ margin: 0, flex: 1 }}>
-                  Session link created: {createSessionLink}
-                </p>
-                <button
-                  type="button"
-                  className="saved-trips-button"
-                  onClick={handleCopySessionLink}
-                >
-                  Copy
-                </button>
-              </div>
-
-              <div className="saved-trips-actions" style={{ marginTop: 8, alignItems: "center", gap: 12 }}>
-                {qrDataUrl && (
-                  <img
-                    src={qrDataUrl}
-                    alt="QR code for session link"
-                    style={{ width: 100, height: 100, border: "1px solid #e6e6e6", borderRadius: 6 }}
-                  />
-                )}
-
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button
-                    type="button"
-                    className="saved-trips-button"
-                    onClick={handleDownloadQr}
-                    disabled={!qrDataUrl || isDownloadingQr}
-                  >
-                    {isDownloadingQr ? "Downloading..." : "Download QR Code"}
-                  </button>
-                </div>
-              </div>
+              {isLinkCopied && <p className="attractions-state">Link Copied!</p>}
             </div>
           )}
-          {isLinkCopied && <p className="attractions-state">Link Copied!</p>}
-        </section>
 
-        <section className="about-card">
-          <div className="saved-trips-field">
-            <label htmlFor="collab-join-link">JOIN A COLLAB SESSION</label>
-            <form onSubmit={handleJoinSubmit}>
-              <div className="saved-trips-actions" style={{ marginTop: 0 }}>
-                <input
-                  id="collab-join-link"
-                  type="url"
-                  value={joinLinkInput}
-                  onChange={(event) => setJoinLinkInput(sanitizeUrlInput(event.target.value))}
-                  placeholder="Paste a collaborate session link"
-                  autoComplete="off"
-                  spellCheck={false}
-                />
-                <button
-                  type="submit"
-                  className={`saved-trips-button ${canAttemptJoin ? "saved-trips-button-primary" : "saved-trips-button-muted"}`}
-                  disabled={!canAttemptJoin}
-                >
-                  Go!
-                </button>
+          {activeTab === 'join' && (
+            <div>
+              <p style={{ marginTop: 0, marginBottom: 12 }}>Paste a collaborate link or enter the short session code your host gave you.</p>
+              <div className="saved-trips-field">
+                <label htmlFor="collab-join-link">Join a collab session</label>
+                <form onSubmit={handleJoinSubmit}>
+                  <div className="saved-trips-actions" style={{ marginTop: 0 }}>
+                    <input
+                      id="collab-join-link"
+                      type="text"
+                      value={joinLinkInput}
+                      onChange={(event) => setJoinLinkInput(sanitizeUrlInput(event.target.value))}
+                      placeholder="Paste a collaborate link or enter code (example: abc123)"
+                      autoComplete="off"
+                      spellCheck={false}
+                    />
+                    <button type="submit" className={`saved-trips-button ${canAttemptJoin ? 'saved-trips-button-primary' : 'saved-trips-button-muted'}`} disabled={!canAttemptJoin}>Go</button>
+                  </div>
+                </form>
               </div>
-            </form>
-          </div>
 
-          {joinLinkError && <p className="attractions-state">{joinLinkError}</p>}
+              {joinLinkError && <p className="attractions-state">{joinLinkError}</p>}
+            </div>
+          )}
         </section>
       </div>
     </AppShell>
