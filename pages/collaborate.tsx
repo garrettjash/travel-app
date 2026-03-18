@@ -290,7 +290,8 @@ export default function CollaboratePage() {
       <div className="collaborate-page-content">
         <section className="about-card">
           <h1>Collaborate</h1>
-          <p>Create or join a collaborate session.</p>
+          <p>Make planning easy! Create a session, share the link or QR code, and invite others to join.</p>
+          <p>Everyone can vote on attractions with a simple thumbs up or thumbs down. When voting is finished, the session creator can use the top picks to build an itinerary.</p>
         </section>
 
         <section className="about-card">
@@ -335,6 +336,8 @@ export default function CollaboratePage() {
                             type="button"
                             className="remove-input-button"
                             onClick={() => removeInput(idx)}
+                            title="Remove attraction"
+                            aria-label={`Remove attraction ${idx + 1}`}
                           >
                             −
                           </button>
@@ -426,7 +429,7 @@ export default function CollaboratePage() {
 
           {activeTab === 'join' && (
             <div>
-              <p style={{ marginTop: 0, marginBottom: 12 }}>Paste a collaborate link or enter the short session code your host gave you.</p>
+              <p style={{ marginTop: 0, marginBottom: 12 }}>Paste a collaborate link or scan a collaborate QR code.</p>
               <div className="saved-trips-field">
                 <label htmlFor="collab-join-link">Join a collab session</label>
                 <form onSubmit={handleJoinSubmit}>
@@ -436,7 +439,7 @@ export default function CollaboratePage() {
                       type="text"
                       value={joinLinkInput}
                       onChange={(event) => setJoinLinkInput(sanitizeUrlInput(event.target.value))}
-                      placeholder="Paste a collaborate link or enter code (example: abc123)"
+                      placeholder="Paste a collaborate link here, or scan a collaborate QR code"
                       autoComplete="off"
                       spellCheck={false}
                     />
