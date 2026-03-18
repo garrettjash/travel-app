@@ -180,10 +180,33 @@ export default function CollaboratePage() {
         setQrDataUrl(null);
         return;
       }
+
       try {
-        const dataUrl = await QRCode.toDataURL(createSessionLink, { width: 300 });
-        if (!canceled) setQrDataUrl(dataUrl);
-      } catch {
+        // Prefer using the imported QRCode, but dynamically import as a fallback
+        let qlib: any = QRCode;
+        if (!qlib || typeof qlib.toDataURL !== "function") {
+          try {
+            const mod = await import("qrcode");
+            qlib = mod && (mod.default || mod);
+          } catch (err) {
+            console.error("Failed to dynamically import qrcode:", err);
+            qlib = null;
+          }
+        }
+
+        if (!qlib || typeof qlib.toDataURL !== "function") {
+          console.error("QRCode library not available or missing toDataURL");
+          if (!canceled) setQrDataUrl(null);
+          return;
+        }
+
+        const dataUrl = await qlib.toDataURL(createSessionLink, { width: 300 });
+        if (!canceled) {
+          setQrDataUrl(dataUrl);
+          console.debug("Generated QR data URL for session", createSessionId);
+        }
+      } catch (err) {
+        console.error("Error generating QR code:", err);
         if (!canceled) setQrDataUrl(null);
       }
     }
@@ -192,7 +215,7 @@ export default function CollaboratePage() {
     return () => {
       canceled = true;
     };
-  }, [createSessionLink]);
+  }, [createSessionLink, createSessionId]);
 
   async function handleDownloadQr() {
     if (!qrDataUrl || !createSessionId) return;
