@@ -1,8 +1,9 @@
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
 import AppShell from "../components/AppShell";
 import PlaceSearchInput from "../components/PlaceSearchInput";
 import { useAuth } from "../lib/auth-context";
+import QRCode from "qrcode";
 
 type FilterOptionsResponse = {
   options?: Array<{
@@ -73,6 +74,9 @@ export default function CollaboratePage() {
   const [isLinkCopied, setIsLinkCopied] = useState(false);
   const [joinLinkInput, setJoinLinkInput] = useState("");
   const [joinLinkError, setJoinLinkError] = useState<string | null>(null);
+  const [isDownloadingQr, setIsDownloadingQr] = useState(false);
+  const [createSessionId, setCreateSessionId] = useState<string | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
 
   const filteredPlaces = useMemo(() => [], []);
 
@@ -148,6 +152,7 @@ export default function CollaboratePage() {
 
       const fullSessionLink = `${window.location.origin}${payload.sessionPath}`;
       setCreateSessionLink(fullSessionLink);
+      setCreateSessionId(token);
       setIsLinkCopied(false);
     } catch (error) {
       setCreateSessionLink(null);
@@ -165,6 +170,44 @@ export default function CollaboratePage() {
       setIsLinkCopied(true);
     } catch {
       setIsLinkCopied(false);
+    }
+  }
+
+  useEffect(() => {
+    let canceled = false;
+    async function gen() {
+      if (!createSessionLink) {
+        setQrDataUrl(null);
+        return;
+      }
+      try {
+        const dataUrl = await QRCode.toDataURL(createSessionLink, { width: 300 });
+        if (!canceled) setQrDataUrl(dataUrl);
+      } catch {
+        if (!canceled) setQrDataUrl(null);
+      }
+    }
+
+    gen();
+    return () => {
+      canceled = true;
+    };
+  }, [createSessionLink]);
+
+  async function handleDownloadQr() {
+    if (!qrDataUrl || !createSessionId) return;
+    setIsDownloadingQr(true);
+    try {
+      const a = document.createElement("a");
+      a.href = qrDataUrl;
+      a.download = `travelapp_qr_collab_${createSessionId}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch {
+      // ignore
+    } finally {
+      setIsDownloadingQr(false);
     }
   }
 
@@ -271,17 +314,40 @@ export default function CollaboratePage() {
           {placeError && <p className="attractions-state">{placeError}</p>}
           {createSessionError && <p className="attractions-state attractions-state-error">{createSessionError}</p>}
           {createSessionLink && (
-            <div className="saved-trips-actions" style={{ marginTop: 8 }}>
-              <p className="attractions-state" style={{ margin: 0, flex: 1 }}>
-                Session link created: {createSessionLink}
-              </p>
-              <button
-                type="button"
-                className="saved-trips-button"
-                onClick={handleCopySessionLink}
-              >
-                Copy
-              </button>
+            <div style={{ marginTop: 8 }}>
+              <div className="saved-trips-actions" style={{ alignItems: "center" }}>
+                <p className="attractions-state" style={{ margin: 0, flex: 1 }}>
+                  Session link created: {createSessionLink}
+                </p>
+                <button
+                  type="button"
+                  className="saved-trips-button"
+                  onClick={handleCopySessionLink}
+                >
+                  Copy
+                </button>
+              </div>
+
+              <div className="saved-trips-actions" style={{ marginTop: 8, alignItems: "center", gap: 12 }}>
+                {qrDataUrl && (
+                  <img
+                    src={qrDataUrl}
+                    alt="QR code for session link"
+                    style={{ width: 100, height: 100, border: "1px solid #e6e6e6", borderRadius: 6 }}
+                  />
+                )}
+
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    type="button"
+                    className="saved-trips-button"
+                    onClick={handleDownloadQr}
+                    disabled={!qrDataUrl || isDownloadingQr}
+                  >
+                    {isDownloadingQr ? "Downloading..." : "Download QR Code"}
+                  </button>
+                </div>
+              </div>
             </div>
           )}
           {isLinkCopied && <p className="attractions-state">Link Copied!</p>}
