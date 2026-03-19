@@ -12,9 +12,11 @@ import { supabase } from "./supabaseClient";
 type AuthContextValue = {
   user: User | null;
   loading: boolean;
+  isEmailVerified: boolean;
   signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
+  resendVerificationEmail: (email: string) => Promise<{ error: Error | null }>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -76,12 +78,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (supabase) await supabase.auth.signOut();
   }, []);
 
+  const resendVerificationEmail = useCallback(async (email: string) => {
+    if (!supabase) return { error: new Error("Supabase not configured") };
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email
+    });
+    return { error: error ?? null };
+  }, []);
+
+  const isEmailVerified = Boolean(
+    (user as any)?.email_confirmed_at || (user as any)?.confirmed_at
+  );
+
   const value: AuthContextValue = {
     user,
     loading,
+    isEmailVerified,
     signUp,
     signIn,
     signOut,
+    resendVerificationEmail
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

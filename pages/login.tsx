@@ -4,7 +4,7 @@ import { useAuth } from "../lib/auth-context";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, resendVerificationEmail } = useAuth();
   const nextQuery = Array.isArray(router.query.next) ? router.query.next[0] : router.query.next;
   const redirectPath =
     typeof nextQuery === "string" && nextQuery.startsWith("/") ? nextQuery : "/";
@@ -14,11 +14,14 @@ export default function LoginPage() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setInfo(null);
     setLoading(true);
     try {
       if (mode === "login") {
@@ -34,10 +37,32 @@ export default function LoginPage() {
           setError(err.message);
           return;
         }
-        router.push(redirectPath);
+        setInfo("Account created. Check your email to verify your account, then sign in.");
+        setMode("login");
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    const trimmed = email.trim();
+    if (!trimmed) {
+      setError("Enter your email above, then click resend.");
+      return;
+    }
+    setError(null);
+    setInfo(null);
+    setResending(true);
+    try {
+      const { error: err } = await resendVerificationEmail(trimmed);
+      if (err) {
+        setError(err.message);
+        return;
+      }
+      setInfo("Verification email sent. Please check your inbox.");
+    } finally {
+      setResending(false);
     }
   };
 
@@ -144,6 +169,11 @@ export default function LoginPage() {
                 {error}
               </p>
             )}
+            {info && (
+              <p className="login-page-info" role="status">
+                {info}
+              </p>
+            )}
             <button
               type="submit"
               className="login-page-submit"
@@ -151,6 +181,17 @@ export default function LoginPage() {
             >
               {loading ? "Please wait…" : mode === "login" ? "Sign in" : "Create account"}
             </button>
+
+            {mode === "login" && (
+              <button
+                type="button"
+                className="login-page-resend"
+                onClick={handleResend}
+                disabled={resending}
+              >
+                {resending ? "Sending…" : "Resend verification email"}
+              </button>
+            )}
           </form>
         </div>
       </section>
