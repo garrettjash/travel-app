@@ -2536,6 +2536,17 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
   color: #113d68;
 }
 
+.saved-suggested-section-empty {
+  min-height: 220px;
+  align-content: center;
+}
+
+.saved-suggested-empty-message {
+  margin: 10px 0 0;
+  color: #4a627a;
+  line-height: 1.5;
+}
+
 .saved-suggested-intro {
   margin: 6px 0 12px;
   color: #4a627a;
@@ -2874,9 +2885,14 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
 
 .sample-trial-panel-head {
   display: flex;
-  align-items: baseline;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+}
+
+.sample-trial-panel-head > div:first-child {
+  display: grid;
+  gap: 4px;
 }
 
 .sample-trial-panel-head h3 {
@@ -2889,6 +2905,97 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
   color: #5b7490;
   font-size: 0.9rem;
   font-weight: 600;
+}
+
+.saved-calendar-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.saved-calendar-popover {
+  margin-top: 12px;
+  border: 1px solid #d5e3f1;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #f8fbff 0%, #eef6ff 100%);
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.saved-calendar-popover-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #395977;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.saved-calendar-popover-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.saved-calendar-popover-copy {
+  margin: 0;
+  color: #567089;
+  font-size: 0.9rem;
+}
+
+.saved-calendar-custom-draft-wrap {
+  display: grid;
+  gap: 10px;
+}
+
+.saved-calendar-custom-draft {
+  border: 1px dashed #7fb0de;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 12px 14px;
+  display: grid;
+  gap: 4px;
+  cursor: grab;
+}
+
+.saved-calendar-custom-draft:active {
+  cursor: grabbing;
+}
+
+.saved-calendar-custom-draft-dragging {
+  opacity: 0.7;
+  box-shadow: 0 4px 12px rgba(17, 61, 104, 0.15);
+}
+
+.saved-calendar-custom-draft strong {
+  color: #17395d;
+  font-size: 0.98rem;
+}
+
+.saved-calendar-custom-draft span:last-child {
+  color: #607892;
+  font-size: 0.84rem;
+}
+
+.saved-calendar-custom-draft-badge {
+  display: inline-flex;
+  width: fit-content;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #e6f1fc;
+  color: #25557e;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.saved-calendar-custom-draft-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .sample-trial-panel-copy {
@@ -3137,6 +3244,10 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
 @media (max-width: 620px) {
   .saved-trips-planner-layout {
     gap: 14px;
+  }
+
+  .saved-calendar-popover-row {
+    grid-template-columns: 1fr;
   }
 
   .sample-trial-calendar {
