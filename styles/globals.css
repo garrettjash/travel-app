@@ -2129,6 +2129,32 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
   display: flex;
   flex-direction: column;
   gap: 20px;
+  min-width: 0;
+}
+
+.saved-trips-planner-layout {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: minmax(280px, 340px) minmax(0, 1.45fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.saved-trips-planner-layout-no-suggestions {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.saved-trips-suggestions-column {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+  max-height: calc(100vh - 210px);
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.saved-trips-planner-layout .saved-trips-drag-schedule {
+  margin-top: 0;
 }
 
 .saved-unassigned-zone {
@@ -2498,7 +2524,6 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
 
 /* Suggested places (location-based) */
 .saved-suggested-section {
-  margin-top: 18px;
   border: 1px solid #d5e3f1;
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.94);
@@ -2529,6 +2554,10 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
   margin-top: 12px;
 }
 
+.saved-trips-suggestions-column .saved-suggested-grid {
+  grid-template-columns: 1fr;
+}
+
 .saved-suggested-card {
   border: 1px solid #d6e4f2;
   border-radius: 12px;
@@ -2536,6 +2565,19 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
   overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+.saved-suggested-card-draggable {
+  cursor: grab;
+}
+
+.saved-suggested-card-dragging {
+  opacity: 0.7;
+  box-shadow: 0 4px 12px rgba(17, 61, 104, 0.15);
+}
+
+.saved-suggested-card-draggable:active {
+  cursor: grabbing;
 }
 
 .saved-suggested-card-img {
@@ -3073,6 +3115,16 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
 }
 
 @media (max-width: 980px) {
+  .saved-trips-planner-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .saved-trips-suggestions-column {
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+  }
+
   .sample-trial-layout {
     grid-template-columns: 1fr;
   }
@@ -3083,6 +3135,10 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
 }
 
 @media (max-width: 620px) {
+  .saved-trips-planner-layout {
+    gap: 14px;
+  }
+
   .sample-trial-calendar {
     grid-template-columns: 58px minmax(0, 1fr);
   }
@@ -3374,6 +3430,10 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
 
 .solo-planner-page-chat-open .saved-trips-field-trip-name {
   grid-column: 1 / -1;
+}
+
+.solo-planner-page-chat-open .saved-trips-planner-layout {
+  grid-template-columns: minmax(240px, 290px) minmax(0, 1fr);
 }
 
 /* While chatbot is working, visually and interactively "lock" itinerary editor */

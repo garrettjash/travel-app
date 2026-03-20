@@ -115,7 +115,8 @@ type SavedTripBuilderProps = {
 
 type DragSource =
   | { type: "day"; dayIndex: number; slotIndex: number }
-  | { type: "unscheduled"; index: number };
+  | { type: "unscheduled"; index: number }
+  | { type: "suggested"; attraction: FavoriteAttraction };
 
 type ExtraSuggestionSection = {
   id: string;
@@ -827,10 +828,13 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
         attraction = stop.attraction;
         startTime = stop.startTime || "09:00";
         durationMinutes = stop.durationMinutes || 90;
-      } else {
+      } else if (from.type === "unscheduled") {
         const item = unscheduled[from.index];
         if (!item) return;
         attraction = item;
+      } else {
+        attraction = from.attraction;
+        addAttraction(attraction);
       }
 
       setDayPlans((current) => {
@@ -899,16 +903,24 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
           }
           return next;
         }
+        if (from.type === "suggested") {
+          if (to.type !== "unscheduled") return current;
+          if (current.some((item) => item.id === attraction.id)) return current;
+          const next = [...current];
+          next.splice(Math.min(to.insertIndex, next.length), 0, attraction);
+          return next;
+        }
         if (to.type === "unscheduled") {
           const next = [...current];
-          next.splice(to.insertIndex, 0, attraction);
+          if (next.some((item) => item.id === attraction.id)) return next;
+          next.splice(Math.min(to.insertIndex, next.length), 0, attraction);
           return next;
         }
         return current;
       });
       setDragSource(null);
     },
-    [dayPlans, unscheduled, tripDays]
+    [addAttraction, dayPlans, unscheduled, tripDays]
   );
 
   const clearPlan = () => {
@@ -929,6 +941,16 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
     setDayPlans((c) => c.map((d) => ({ ...d, stops: d.stops.filter((s) => s.attraction.id !== attractionId) })));
   }, [removeAttraction]);
 
+  const addToItineraryPool = useCallback(
+    (attraction: FavoriteAttraction) => {
+      addAttraction(attraction);
+      setUnscheduled((current) =>
+        current.some((item) => item.id === attraction.id) ? current : [...current, attraction]
+      );
+    },
+    [addAttraction]
+  );
+
   const moveStopToCalendar = useCallback(
     (from: DragSource, dayIndex: number, requestedMinute: number) => {
       let attraction: FavoriteAttraction;
@@ -939,10 +961,13 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
         if (!stop) return;
         attraction = stop.attraction;
         durationMinutes = stop.durationMinutes || SAMPLE_TRIAL_DEFAULT_DURATION;
-      } else {
+      } else if (from.type === "unscheduled") {
         const item = unscheduled[from.index];
         if (!item) return;
         attraction = item;
+      } else {
+        attraction = from.attraction;
+        addAttraction(attraction);
       }
 
       const roundedMinute =
@@ -991,7 +1016,7 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
       );
       setDragSource(null);
     },
-    [dayPlans, tripDays, unscheduled]
+    [addAttraction, dayPlans, tripDays, unscheduled]
   );
 
   const getCalendarDateLabel = useCallback(
@@ -1344,6 +1369,96 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
     setIsShareCodeCopied(true);
   }
 
+  const hasScheduleContent = unscheduled.length > 0 || dayPlans.some((day) => day.stops.length > 0);
+  const hasSuggestionPanels = Boolean(effectiveLocation) || extraSuggestionSections.length > 0;
+
+  function renderSuggestedCard(attraction: FavoriteAttraction) {
+    const added = isInItinerary(attraction.id);
+    const isDraggingSuggested =
+      dragSource?.type === "suggested" && dragSource.attraction.id === attraction.id;
+
+    return (
+      <article
+        className={`saved-suggested-card saved-suggested-card-clickable${!added ? " saved-suggested-card-draggable" : ""}${
+          isDraggingSuggested ? " saved-suggested-card-dragging" : ""
+        }`}
+        key={attraction.id}
+        draggable={!added}
+        onClick={() => setSelectedAttraction(attraction)}
+        onDragStart={() => {
+          if (!added) setDragSource({ type: "suggested", attraction });
+        }}
+        onDragEnd={() => setDragSource(null)}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setSelectedAttraction(attraction);
+          }
+        }}
+      >
+        {attraction.imageUrl ? (
+          <img
+            src={attraction.imageUrl}
+            alt=""
+            className="saved-suggested-card-img"
+          />
+        ) : (
+          <div className="saved-suggested-card-img saved-suggested-card-placeholder" aria-hidden />
+        )}
+        <div className="saved-suggested-card-body">
+          <h3>{attraction.name}</h3>
+          <p className="saved-suggested-card-meta">
+            {formatLocation(attraction.city, attraction.stateProvince, attraction.country)}
+            {formatCategoryLabel(attraction.categories) && (
+              <span className="saved-suggested-card-type">
+                {" "}
+                · {formatCategoryLabel(attraction.categories)}
+              </span>
+            )}
+          </p>
+          {attraction.summary && (
+            <p className="saved-suggested-card-summary">
+              {attraction.summary.slice(0, 120)}
+              {attraction.summary.length > 120 ? "…" : ""}
+            </p>
+          )}
+          {added ? (
+            <div className="saved-suggested-action-row">
+              <span className="saved-suggested-added-badge" aria-label={`${attraction.name} added to itinerary`}>
+                ✓ Added
+              </span>
+              <button
+                type="button"
+                className="saved-suggested-remove"
+                aria-label={`Remove ${attraction.name} from itinerary`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeFromItinerary(attraction.id);
+                }}
+              >
+                ×
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="saved-suggested-add"
+              aria-label={`Add ${attraction.name} to itinerary`}
+              onClick={(e) => {
+                e.stopPropagation();
+                addToItineraryPool(attraction);
+              }}
+            >
+              + Add
+            </button>
+          )}
+        </div>
+      </article>
+    );
+  }
+
   const body = (
     <div className={`saved-trips-content${embedded ? " saved-trips-content-embedded" : ""}`}>
           <section className="saved-trips-header">
@@ -1626,289 +1741,127 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
             </section>
           </section>
 
-          {effectiveLocation && (
-                <section className="saved-suggested-section" aria-labelledby="suggested-heading">
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      gap: 8
-                    }}
-                  >
-                    <h2 id="suggested-heading">Suggested in {effectiveLocation}</h2>
-                    <button
-                      type="button"
-                      className="saved-trips-button saved-trips-button-muted"
-                      onClick={() => setPrimarySuggestionsCollapsed((c) => !c)}
-                    >
-                      {primarySuggestionsCollapsed ? "Show" : "Hide"}
-                    </button>
-                  </div>
-                  {!primarySuggestionsCollapsed && (
-                    <>
-                      <p className="saved-suggested-intro">Click + to add a place to your itinerary.</p>
-                      <div className="saved-trips-field saved-trips-field-full" style={{ marginTop: 8 }}>
-                        <label htmlFor="saved-suggested-search">Search attractions</label>
-                        <input
-                          id="saved-suggested-search"
-                          type="text"
-                          value={suggestSearchQuery}
-                          onChange={(e) => setSuggestSearchQuery(e.target.value)}
-                          className="planning-solo-input"
-                          placeholder="Search by name or keyword…"
-                        />
+          {(hasSuggestionPanels || hasScheduleContent) ? (
+            <section
+              className={`saved-trips-planner-layout${hasSuggestionPanels ? "" : " saved-trips-planner-layout-no-suggestions"}`}
+            >
+              {hasSuggestionPanels && (
+                <div className="saved-trips-suggestions-column">
+                  {effectiveLocation && (
+                    <section className="saved-suggested-section" aria-labelledby="suggested-heading">
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          gap: 8
+                        }}
+                      >
+                        <h2 id="suggested-heading">Suggested in {effectiveLocation}</h2>
+                        <button
+                          type="button"
+                          className="saved-trips-button saved-trips-button-muted"
+                          onClick={() => setPrimarySuggestionsCollapsed((c) => !c)}
+                        >
+                          {primarySuggestionsCollapsed ? "Show" : "Hide"}
+                        </button>
                       </div>
-                      {loadingSuggested && !suggestSearchQuery ? (
-                        <p className="saved-suggested-loading">Loading suggestions…</p>
-                      ) : isSearchingSuggestions ? (
-                        <p className="saved-suggested-loading">Searching…</p>
-                      ) : (
-                        <div className="saved-suggested-grid">
-                          {(suggestSearchQuery ? suggestSearchResults : suggestedAttractions).map((attraction) => {
-                            const added = isInItinerary(attraction.id);
-                            return (
-                              <article
-                                className="saved-suggested-card saved-suggested-card-clickable"
-                                key={attraction.id}
-                                onClick={() => setSelectedAttraction(attraction)}
-                                role="button"
-                                tabIndex={0}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter" || e.key === " ") {
-                                    e.preventDefault();
-                                    setSelectedAttraction(attraction);
-                                  }
-                                }}
-                              >
-                                {attraction.imageUrl ? (
-                                  <img
-                                    src={attraction.imageUrl}
-                                    alt=""
-                                    className="saved-suggested-card-img"
-                                  />
-                                ) : (
-                                  <div className="saved-suggested-card-img saved-suggested-card-placeholder" aria-hidden />
-                                )}
-                                <div className="saved-suggested-card-body">
-                                  <h3>{attraction.name}</h3>
-                                  <p className="saved-suggested-card-meta">
-                                    {formatLocation(attraction.city, attraction.stateProvince, attraction.country)}
-                                    {formatCategoryLabel(attraction.categories) && (
-                                      <span className="saved-suggested-card-type">
-                                        {" "}
-                                        · {formatCategoryLabel(attraction.categories)}
-                                      </span>
-                                    )}
-                                  </p>
-                                  {attraction.summary && (
-                                    <p className="saved-suggested-card-summary">
-                                      {attraction.summary.slice(0, 120)}
-                                      {attraction.summary.length > 120 ? "…" : ""}
-                                    </p>
-                                  )}
-                                  {added ? (
-                                    <div className="saved-suggested-action-row">
-                                      <span className="saved-suggested-added-badge" aria-label={`${attraction.name} added to itinerary`}>
-                                        ✓ Added
-                                      </span>
-                                      <button
-                                        type="button"
-                                        className="saved-suggested-remove"
-                                        aria-label={`Remove ${attraction.name} from itinerary`}
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          removeFromItinerary(attraction.id);
-                                        }}
-                                      >
-                                        ×
-                                      </button>
-                                    </div>
-                                  ) : (
-                                    <button
-                                      type="button"
-                                      className="saved-suggested-add"
-                                      aria-label={`Add ${attraction.name} to itinerary`}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        addAttraction(attraction);
-                                        setUnscheduled((u) => [...u, attraction]);
-                                      }}
-                                    >
-                                      + Add
-                                    </button>
-                                  )}
-                                </div>
-                              </article>
-                            );
-                          })}
-                        </div>
+                      {!primarySuggestionsCollapsed && (
+                        <>
+                          <p className="saved-suggested-intro">Scroll this list and drag any attraction onto the calendar.</p>
+                          <div className="saved-trips-field saved-trips-field-full" style={{ marginTop: 8 }}>
+                            <label htmlFor="saved-suggested-search">Search attractions</label>
+                            <input
+                              id="saved-suggested-search"
+                              type="text"
+                              value={suggestSearchQuery}
+                              onChange={(e) => setSuggestSearchQuery(e.target.value)}
+                              className="planning-solo-input"
+                              placeholder="Search by name or keyword…"
+                            />
+                          </div>
+                          {loadingSuggested && !suggestSearchQuery ? (
+                            <p className="saved-suggested-loading">Loading suggestions…</p>
+                          ) : isSearchingSuggestions ? (
+                            <p className="saved-suggested-loading">Searching…</p>
+                          ) : (
+                            <div className="saved-suggested-grid">
+                              {(suggestSearchQuery ? suggestSearchResults : suggestedAttractions).map(renderSuggestedCard)}
+                            </div>
+                          )}
+                        </>
                       )}
-                    </>
+                    </section>
                   )}
-                </section>
+
+                  {extraSuggestionSections.map((section) => (
+                    <section
+                      key={section.id}
+                      className="saved-suggested-section"
+                      aria-label={`Suggested in ${section.label}`}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          gap: 8
+                        }}
+                      >
+                        <h2>Suggested in {section.label}</h2>
+                        <button
+                          type="button"
+                          className="saved-trips-button saved-trips-button-muted"
+                          onClick={() =>
+                            setExtraSuggestionSections((current) =>
+                              current.map((s) =>
+                                s.id === section.id ? { ...s, collapsed: !s.collapsed } : s
+                              )
+                            )
+                          }
+                        >
+                          {section.collapsed ? "Show" : "Hide"}
+                        </button>
+                      </div>
+                      {!section.collapsed && (
+                        <>
+                          <div className="saved-trips-field saved-trips-field-full" style={{ marginTop: 8 }}>
+                            <label htmlFor={`extra-suggested-search-${section.id}`}>
+                              Search attractions in {section.label}
+                            </label>
+                            <input
+                              id={`extra-suggested-search-${section.id}`}
+                              type="text"
+                              className="planning-solo-input"
+                              placeholder="Search by name or keyword…"
+                              value={section.searchQuery ?? ""}
+                              onChange={(e) => updateSectionSearch(section.id, e.target.value)}
+                            />
+                          </div>
+                          {section.loading ? (
+                            <p className="saved-suggested-loading">Loading suggestions…</p>
+                          ) : (
+                            <div className="saved-suggested-grid">
+                              {section.attractions
+                                .filter((attraction) => {
+                                  const q = (section.searchQuery ?? "").trim().toLowerCase();
+                                  if (!q) return true;
+                                  const haystack = `${attraction.name} ${attraction.city ?? ""} ${
+                                    attraction.stateProvince ?? ""
+                                  } ${attraction.country ?? ""} ${attraction.summary ?? ""}`.toLowerCase();
+                                  return haystack.includes(q);
+                                })
+                                .map(renderSuggestedCard)}
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </section>
+                  ))}
+                </div>
               )}
 
-          {extraSuggestionSections.map((section) => (
-                <section
-                  key={section.id}
-                  className="saved-suggested-section"
-                  aria-label={`Suggested in ${section.label}`}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      gap: 8
-                    }}
-                  >
-                    <h2>Suggested in {section.label}</h2>
-                    <button
-                      type="button"
-                      className="saved-trips-button saved-trips-button-muted"
-                      onClick={() =>
-                        setExtraSuggestionSections((current) =>
-                          current.map((s) =>
-                            s.id === section.id ? { ...s, collapsed: !s.collapsed } : s
-                          )
-                        )
-                      }
-                    >
-                      {section.collapsed ? "Show" : "Hide"}
-                    </button>
-                  </div>
-                  {!section.collapsed && (
-                    <>
-                      <p className="saved-suggested-intro">
-                        Click + to add a place from {section.label} to your itinerary.
-                      </p>
-                      <div className="saved-trips-field saved-trips-field-full" style={{ marginTop: 8 }}>
-                        <label htmlFor={`extra-suggested-search-${section.id}`}>
-                          Search attractions in {section.label}
-                        </label>
-                        <input
-                          id={`extra-suggested-search-${section.id}`}
-                          type="text"
-                          className="planning-solo-input"
-                          placeholder="Search by name or keyword…"
-                          value={section.searchQuery ?? ""}
-                          onChange={(e) => updateSectionSearch(section.id, e.target.value)}
-                        />
-                      </div>
-                      {section.loading ? (
-                        <p className="saved-suggested-loading">Loading suggestions…</p>
-                      ) : (
-                        <div className="saved-suggested-grid">
-                          {section.attractions
-                            .filter((attraction) => {
-                              const q = (section.searchQuery ?? "").trim().toLowerCase();
-                              if (!q) return true;
-                              const haystack = `${attraction.name} ${attraction.city ?? ""} ${
-                                attraction.stateProvince ?? ""
-                              } ${attraction.country ?? ""} ${attraction.summary ?? ""}`.toLowerCase();
-                              return haystack.includes(q);
-                            })
-                            .map((attraction) => {
-                            const added = isInItinerary(attraction.id);
-                            return (
-                              <article
-                                className="saved-suggested-card saved-suggested-card-clickable"
-                                key={attraction.id}
-                                onClick={() => setSelectedAttraction(attraction)}
-                                role="button"
-                                tabIndex={0}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter" || e.key === " ") {
-                                    e.preventDefault();
-                                    setSelectedAttraction(attraction);
-                                  }
-                                }}
-                              >
-                                {attraction.imageUrl ? (
-                                  <img
-                                    src={attraction.imageUrl}
-                                    alt=""
-                                    className="saved-suggested-card-img"
-                                  />
-                                ) : (
-                                  <div className="saved-suggested-card-img saved-suggested-card-placeholder" aria-hidden />
-                                )}
-                                <div className="saved-suggested-card-body">
-                                  <h3>{attraction.name}</h3>
-                                  <p className="saved-suggested-card-meta">
-                                    {formatLocation(attraction.city, attraction.stateProvince, attraction.country)}
-                                    {formatCategoryLabel(attraction.categories) && (
-                                      <span className="saved-suggested-card-type">
-                                        {" "}
-                                        · {formatCategoryLabel(attraction.categories)}
-                                      </span>
-                                    )}
-                                  </p>
-                                  {attraction.summary && (
-                                    <p className="saved-suggested-card-summary">
-                                      {attraction.summary.slice(0, 120)}
-                                      {attraction.summary.length > 120 ? "…" : ""}
-                                    </p>
-                                  )}
-                                  {added ? (
-                                    <div className="saved-suggested-action-row">
-                                      <span className="saved-suggested-added-badge" aria-label={`${attraction.name} added to itinerary`}>
-                                        ✓ Added
-                                      </span>
-                                      <button
-                                        type="button"
-                                        className="saved-suggested-remove"
-                                        aria-label={`Remove ${attraction.name} from itinerary`}
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          removeFromItinerary(attraction.id);
-                                        }}
-                                      >
-                                        ×
-                                      </button>
-                                    </div>
-                                  ) : (
-                                    <button
-                                      type="button"
-                                      className="saved-suggested-add"
-                                      aria-label={`Add ${attraction.name} to itinerary`}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        addAttraction(attraction);
-                                        setUnscheduled((u) => [...u, attraction]);
-                                      }}
-                                    >
-                                      + Add
-                                    </button>
-                                  )}
-                                </div>
-                              </article>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </>
-                  )}
-                </section>
-              ))}
-
-          {(unscheduled.length === 0 && !dayPlans.some((d) => d.stops.length > 0)) ? (
-            <section className="saved-trips-empty">
-              <h2>No places in your itinerary yet</h2>
-              <p>Pick a location above to see suggested places, or go to Destinations to add places. They’ll appear here and you can drag to reorder.</p>
-              <div className="saved-trips-empty-actions">
-                <button
-                  type="button"
-                  className="saved-trips-button saved-trips-button-primary"
-                  onClick={() => router.push("/home")}
-                >
-                  Browse Destinations
-                </button>
-              </div>
-            </section>
-          ) : (
-            <section className="saved-trips-drag-schedule" aria-label="Schedule">
+              <section className="saved-trips-drag-schedule" aria-label="Schedule">
                 <div
                   className="saved-unassigned-zone"
                   onDragOver={(e) => {
@@ -1920,8 +1873,8 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                     if (dragSource) moveStop(dragSource, { type: "unscheduled", insertIndex: unscheduled.length });
                   }}
                 >
-                  <h2 className="saved-unassigned-title">Unassigned</h2>
-                  <p className="saved-unassigned-intro">Drag places here or into a day. Drag between days to reorder.</p>
+                    <h2 className="saved-unassigned-title">Unassigned</h2>
+                  <p className="saved-unassigned-intro">Drag places here or into a day. You can also drag directly from the attraction list.</p>
                   <div className="saved-unassigned-cards">
                     {unscheduled.map((attraction, idx) => (
                       <div
@@ -1978,7 +1931,6 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                     ))}
                   </div>
                 </div>
-
                 <div className="saved-calendar-shell">
                   <div className="sample-trial-panel-head">
                     <h3>Trip Calendar</h3>
@@ -2137,6 +2089,21 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                   </div>
                 </div>
               </section>
+            </section>
+          ) : (
+            <section className="saved-trips-empty">
+              <h2>No places in your itinerary yet</h2>
+              <p>Pick a location above to see suggested places, or go to Destinations to add places. They’ll appear here and you can drag to reorder.</p>
+              <div className="saved-trips-empty-actions">
+                <button
+                  type="button"
+                  className="saved-trips-button saved-trips-button-primary"
+                  onClick={() => router.push("/home")}
+                >
+                  Browse Destinations
+                </button>
+              </div>
+            </section>
           )}
 
           <section className="saved-trips-share">
