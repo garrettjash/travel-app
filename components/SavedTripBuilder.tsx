@@ -1349,7 +1349,9 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
           <section className="saved-trips-header">
             <div>
               <h1>Itinerary Builder</h1>
-              <p>Turn your favorites into a ready-to-go itinerary in one click and save it with a shareable link.</p>
+              <p className="saved-trips-header-subtitle">
+                Turn your favorites into a ready-to-go itinerary in one click and save it with a shareable link.
+              </p>
             </div>
             <div className="saved-trips-header-actions">
               <button

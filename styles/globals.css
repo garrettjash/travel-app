@@ -891,11 +891,11 @@ body {
 }
 
 .saved-trips-content {
-  padding: 0 24px 24px;
+  padding: 18px 24px 24px;
 }
 
 .saved-trips-content-embedded {
-  padding-top: 0;
+  padding-top: 18px;
 }
 
 .solo-itinerary-field {
@@ -1728,6 +1728,7 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
+  flex-wrap: wrap;
 }
 
 .saved-trips-header-actions {
@@ -1781,6 +1782,11 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
   max-width: 64ch;
 }
 
+.saved-trips-header-subtitle {
+  white-space: nowrap;
+  max-width: none;
+}
+
 .saved-trips-builder {
   display: grid;
   gap: 14px;
@@ -1815,6 +1821,10 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
 .saved-trips-field {
   display: grid;
   gap: 8px;
+  min-width: 0;
+}
+
+.saved-trips-field-date {
   min-width: 0;
 }
 
@@ -3171,6 +3181,10 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
     align-items: stretch;
   }
 
+  .saved-trips-header-subtitle {
+    white-space: normal;
+  }
+
   .saved-trips-builder {
     grid-template-columns: 1fr;
   }
@@ -3352,6 +3366,14 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
 
 .solo-planner-page-chat-open .saved-schedule-card-handle {
   display: none;
+}
+
+.solo-planner-page-chat-open .saved-trips-builder-top-row {
+  grid-template-columns: repeat(2, minmax(150px, 1fr));
+}
+
+.solo-planner-page-chat-open .saved-trips-field-trip-name {
+  grid-column: 1 / -1;
 }
 
 /* While chatbot is working, visually and interactively "lock" itinerary editor */
