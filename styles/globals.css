@@ -3658,6 +3658,52 @@ select:focus {
   color: #25613a;
 }
 
+.attraction-card-add-dropdown-wrap {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.attraction-card-add-dropdown-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: transparent;
+  cursor: default;
+}
+
+.attraction-card-add-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 51;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 180px;
+  padding: 6px;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(15, 34, 57, 0.15);
+  border: 1px solid #e0eaf4;
+}
+
+.attraction-card-add-dropdown button {
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #2a547d;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.attraction-card-add-dropdown button:hover {
+  background: #f0f7fd;
+}
+
 .attraction-modal-overlay {
   position: fixed;
   inset: 0;

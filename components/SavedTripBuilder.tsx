@@ -7,6 +7,12 @@ import { useCart } from "../lib/cart-context";
 import { FavoriteAttraction, useFavorites } from "../lib/favorites-context";
 import { useItinerary } from "../lib/itinerary-context";
 import { useUndo } from "../lib/undo-context";
+import {
+  clearWorkingItinerary,
+  loadWorkingItinerary,
+  saveWorkingItinerary,
+  setCurrentItineraryId
+} from "../lib/working-itinerary-storage";
 
 type Pace = "relaxed" | "balanced" | "packed";
 
@@ -798,9 +804,15 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
   const OPEN_NEW_WITH_DESTINATIONS = "travel-app-open-new-with-destinations";
   const seededFromDestinationsRef = useRef(false);
 
+  const resolvedId = sanitizeItineraryId(initialItinerary?.itineraryId ?? itineraryIdFromRoute ?? "");
+
+  useEffect(() => {
+    if (resolvedId) setCurrentItineraryId(resolvedId);
+  }, [resolvedId]);
+
   /**
    * When switching itineraries (or creating new), reset the shared itinerary context.
-   * If coming from "View itinerary" (Destinations), seed from cart. Else clear or seed from itinerary.
+   * If coming from "View itinerary" (Destinations), seed from cart. Else restore from persisted, or load from API, or clear.
    */
   useEffect(() => {
     const fromDestinations =
@@ -815,7 +827,6 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
       return;
     }
 
-    // Avoid clearing when we just seeded from cart (effect can run again before next tick)
     if (seededFromDestinationsRef.current && !initialItinerary) {
       seededFromDestinationsRef.current = false;
       return;
@@ -827,15 +838,45 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
       setExtraSuggestionSections([]);
     }
 
-    if (!initialItinerary) return;
-
-    const all: FavoriteAttraction[] = [];
-    for (const day of initialItinerary.days ?? []) {
-      for (const stop of day.stops) all.push(stop.attraction);
+    const persisted = resolvedId ? loadWorkingItinerary(resolvedId) : null;
+    if (persisted) {
+      clearAttractions();
+      const all: FavoriteAttraction[] = [];
+      for (const day of persisted.days ?? []) {
+        for (const stop of day.stops ?? []) all.push(stop.attraction);
+      }
+      for (const a of persisted.unscheduled ?? []) all.push(a);
+      all.forEach((a) => addAttraction(a));
+      setTripName(persisted.tripName ?? "");
+      setTripPlace(persisted.tripPlace ?? "");
+      setStartDate(persisted.startDate ?? "");
+      setEndDate(persisted.endDate ?? "");
+      setPace(persisted.pace ?? "balanced");
+      setNotes(persisted.notes ?? "");
+      setDayPlans(
+        (persisted.days ?? []).map((d) => ({
+          dayNumber: d.dayNumber,
+          stops: (d.stops ?? []).map((s) => ({
+            attraction: s.attraction,
+            startTime: s.startTime ?? "09:00",
+            durationMinutes: s.durationMinutes ?? 90
+          }))
+        }))
+      );
+      setUnscheduled(persisted.unscheduled ?? []);
+      return;
     }
-    for (const a of initialItinerary.unscheduled ?? []) all.push(a);
-    all.forEach((a) => addAttraction(a));
-  }, [initialItinerary?.itineraryId, itineraryIdFromRoute, clearAttractions, moveCartToItinerary, addAttraction]);
+
+    if (initialItinerary) {
+      const all: FavoriteAttraction[] = [];
+      for (const day of initialItinerary.days ?? []) {
+        for (const stop of day.stops) all.push(stop.attraction);
+      }
+      for (const a of initialItinerary.unscheduled ?? []) all.push(a);
+      all.forEach((a) => addAttraction(a));
+      return;
+    }
+  }, [initialItinerary?.itineraryId, itineraryIdFromRoute, resolvedId, clearAttractions, moveCartToItinerary, addAttraction]);
 
   // Sync unscheduled so items added from Destinations (or elsewhere) appear in Unassigned (deduplicated by id)
   useEffect(() => {
@@ -854,6 +895,31 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
       return [...dedupedKept, ...toAppend];
     });
   }, [attractions, dayPlans]);
+
+  useEffect(() => {
+    if (!resolvedId) return;
+    const timer = setTimeout(() => {
+      saveWorkingItinerary({
+        itineraryId: resolvedId,
+        tripName,
+        tripPlace,
+        startDate,
+        endDate,
+        pace,
+        notes,
+        days: dayPlans.map((d) => ({
+          dayNumber: d.dayNumber,
+          stops: d.stops.map((s) => ({
+            attraction: s.attraction,
+            startTime: s.startTime ?? "09:00",
+            durationMinutes: s.durationMinutes ?? 90
+          }))
+        })),
+        unscheduled
+      });
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [resolvedId, tripName, tripPlace, startDate, endDate, pace, notes, dayPlans, unscheduled]);
 
   const handleSelectPlace = useCallback((place: PlaceOption) => {
     setSelectedPlace(place);
@@ -1295,6 +1361,7 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
       setActiveItineraryId(sanitizedId);
       setShareLink(fullShareLink);
       hasBeenSavedRef.current = true;
+      clearWorkingItinerary(sanitizedId);
 
       if (data.shareCode) {
         setShareCode(data.shareCode);

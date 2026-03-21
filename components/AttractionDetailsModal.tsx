@@ -29,6 +29,11 @@ type AttractionDetailsModalProps = {
   onToggleFavorite: (attraction: AttractionDetails) => void;
   onToggleItinerary: (attraction: AttractionDetails) => void;
   onClose: () => void;
+  /** When provided with addToNewItinerary, show "Add to current" / "Add to new" instead of single add. */
+  addToCurrentItinerary?: (attraction: AttractionDetails) => void;
+  addToNewItinerary?: (attraction: AttractionDetails) => void;
+  onRemoveFromCurrentItinerary?: (attraction: AttractionDetails) => void;
+  isInCurrentItinerary?: boolean;
 };
 
 function formatLocation(city: string, stateProvince: string, country: string) {
@@ -98,7 +103,11 @@ export default function AttractionDetailsModal({
   isInItinerary,
   onToggleFavorite,
   onToggleItinerary,
-  onClose
+  onClose,
+  addToCurrentItinerary,
+  addToNewItinerary,
+  onRemoveFromCurrentItinerary,
+  isInCurrentItinerary = false
 }: AttractionDetailsModalProps) {
   if (!attraction) return null;
 
@@ -133,14 +142,53 @@ export default function AttractionDetailsModal({
           >
             {isFavorited ? "♥" : "♡"}
           </button>
-          <button
-            type="button"
-            className={`attraction-modal-itinerary-button ${isInItinerary ? "attraction-modal-itinerary-button-active" : ""
-              }`}
-            onClick={() => onToggleItinerary(attraction)}
-          >
-            {isInItinerary ? "Remove from itinerary" : "Add to itinerary"}
-          </button>
+          {addToCurrentItinerary && addToNewItinerary ? (
+            <>
+              {isInCurrentItinerary && onRemoveFromCurrentItinerary ? (
+                <button
+                  type="button"
+                  className="attraction-modal-itinerary-button attraction-modal-itinerary-button-active"
+                  onClick={() => onRemoveFromCurrentItinerary(attraction)}
+                >
+                  Remove from current itinerary
+                </button>
+              ) : isInItinerary ? (
+                <button
+                  type="button"
+                  className="attraction-modal-itinerary-button attraction-modal-itinerary-button-active"
+                  onClick={() => onToggleItinerary(attraction)}
+                >
+                  Remove from itinerary
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className="attraction-modal-itinerary-button"
+                    onClick={() => addToCurrentItinerary(attraction)}
+                  >
+                    Add to current itinerary
+                  </button>
+                  <button
+                    type="button"
+                    className="attraction-modal-itinerary-button"
+                    onClick={() => addToNewItinerary(attraction)}
+                  >
+                    Add to new itinerary
+                  </button>
+                </>
+              )}
+            </>
+          ) : (
+            <button
+              type="button"
+              className={`attraction-modal-itinerary-button ${isInItinerary ? "attraction-modal-itinerary-button-active" : ""
+                }`}
+              onClick={() => onToggleItinerary(attraction)}
+            >
+              {isInItinerary ? "Remove from itinerary" : "Add to itinerary"}
+            </button>
+          )}
         </div>
 
         <h2>{attraction.name}</h2>

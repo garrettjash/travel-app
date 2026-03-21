@@ -1,5 +1,8 @@
+<<<<<<< HEAD
 import fetch from "node-fetch";
 
+=======
+>>>>>>> 33e0f11 (Cached itinerary)
 export type Bucket = { label: string; ids: number[] };
 
 export async function bucketAttractions(attractions: { id: number; name: string; summary?: string; categories?: string[] }[]) {
