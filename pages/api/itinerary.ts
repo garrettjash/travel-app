@@ -263,12 +263,15 @@ function toDbShape(days: DayPlan[], unscheduled: FavoriteAttraction[]): {
   const seen = new Set<number>();
   const dbUnscheduled: DbUnscheduledItem[] = [];
   for (const item of unscheduled ?? []) {
-    const id = item && typeof item.id === "number" ? item.id : NaN;
+    const id = item && (typeof item.id === "number" ? item.id : typeof (item as any).attractionId === "number" ? (item as any).attractionId : NaN);
     if (!Number.isFinite(id)) continue;
     const n = Number(id);
     if (seen.has(n)) continue;
     seen.add(n);
-    const name = typeof item.name === "string" ? item.name.trim() || "Unnamed attraction" : "Unnamed attraction";
+    const name =
+      typeof item.name === "string" ? item.name.trim() || "Unnamed attraction"
+      : typeof (item as any).attractionName === "string" ? String((item as any).attractionName).trim() || "Unnamed attraction"
+      : "Unnamed attraction";
     dbUnscheduled.push({ attractionId: n, attractionName: name });
   }
 
@@ -426,11 +429,10 @@ function collectAttractionIds(rawDays: unknown, rawUnscheduled: unknown): { ids:
   for (const day of daysArray) {
     const stops = Array.isArray(day?.stops) ? day.stops : [];
     for (const stop of stops) {
-      if (typeof stop?.attractionId === "number") {
+      const id = stop?.attractionId ?? stop?.attraction_id ?? (stop?.attraction && typeof stop.attraction.id === "number" ? stop.attraction.id : null);
+      if (typeof id === "number" && Number.isFinite(id)) {
         hasNormalizedIds = true;
-        idsSet.add(stop.attractionId);
-      } else if (stop?.attraction && typeof stop.attraction.id === "number") {
-        idsSet.add(stop.attraction.id);
+        idsSet.add(id);
       }
     }
   }
@@ -440,11 +442,12 @@ function collectAttractionIds(rawDays: unknown, rawUnscheduled: unknown): { ids:
     if (typeof item === "number") {
       hasNormalizedIds = true;
       idsSet.add(item);
-    } else if (item && typeof item.attractionId === "number") {
-      hasNormalizedIds = true;
-      idsSet.add(item.attractionId);
-    } else if (item && typeof item.id === "number") {
-      idsSet.add(item.id);
+    } else if (item) {
+      const id = item.attractionId ?? item.attraction_id ?? item.id;
+      if (typeof id === "number" && Number.isFinite(id)) {
+        hasNormalizedIds = true;
+        idsSet.add(id);
+      }
     }
   }
 
@@ -748,12 +751,14 @@ export default async function handler(
             const id =
               typeof stop?.attractionId === "number"
                 ? stop.attractionId
+                : typeof stop?.attraction_id === "number"
+                ? stop.attraction_id
                 : stop?.attraction && typeof stop.attraction.id === "number"
                 ? stop.attraction.id
                 : null;
             if (!Number.isFinite(id)) continue;
             const n = Number(id);
-            const storedName = stop?.attractionName ?? stop?.attraction?.name;
+            const storedName = stop?.attractionName ?? stop?.attraction_name ?? stop?.attraction?.name;
             let attraction = byId.get(n);
             if (!attraction && typeof storedName === "string" && storedName.trim()) {
               attraction = {
@@ -806,11 +811,11 @@ export default async function handler(
         const seenUnscheduled = new Set<number>();
         collabVoteStats = {};
         for (const item of unsArray) {
-          const id = typeof item === "number" ? item : item?.attractionId ?? item?.id;
+          const id = typeof item === "number" ? item : item?.attractionId ?? item?.attraction_id ?? item?.id;
           if (!Number.isFinite(id)) continue;
           const n = Number(id);
           if (usedInDays.has(n) || seenUnscheduled.has(n)) continue;
-          const storedName = item?.attractionName ?? item?.name;
+          const storedName = item?.attractionName ?? item?.attraction_name ?? item?.name;
           const yesVotes = typeof item?.yesVotes === "number" ? item.yesVotes : undefined;
           const noVotes = typeof item?.noVotes === "number" ? item.noVotes : undefined;
           if (yesVotes !== undefined && noVotes !== undefined) {
