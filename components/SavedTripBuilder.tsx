@@ -128,6 +128,8 @@ type ExtraSuggestionSection = {
   searchQuery?: string;
 };
 
+type SuggestSort = "name-asc" | "name-desc" | "rating-desc" | "popularity-desc";
+
 function formatLocation(city: string, stateProvince: string, country: string) {
   return [city, stateProvince, country].filter(Boolean).join(", ") || "Location unavailable";
 }
@@ -135,6 +137,40 @@ function formatLocation(city: string, stateProvince: string, country: string) {
 function formatCategoryLabel(categories: string[] | undefined): string {
   if (!categories?.length) return "";
   return categories.slice(0, 2).join(" • ").trim();
+}
+
+function filterAndSortAttractions(
+  list: FavoriteAttraction[],
+  searchQuery: string,
+  sortBy: SuggestSort,
+  maxPriceLevel: string
+) {
+  const q = searchQuery.trim().toLowerCase();
+  const maxPrice = Number(maxPriceLevel);
+  const hasPriceFilter = Number.isFinite(maxPrice) && maxPrice > 0;
+
+  const filtered = list.filter((attraction) => {
+    if (q) {
+      const haystack = `${attraction.name} ${attraction.city ?? ""} ${attraction.stateProvince ?? ""} ${
+        attraction.country ?? ""
+      } ${attraction.summary ?? ""}`.toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
+    if (hasPriceFilter) {
+      const level = (attraction.priceLevel ?? "").trim();
+      if (!level) return false;
+      const priceCount = (level.match(/\$/g) ?? []).length;
+      if (priceCount === 0 || priceCount > maxPrice) return false;
+    }
+    return true;
+  });
+
+  return filtered.sort((left, right) => {
+    if (sortBy === "name-desc") return right.name.localeCompare(left.name);
+    if (sortBy === "rating-desc") return (right.rating ?? -1) - (left.rating ?? -1);
+    if (sortBy === "popularity-desc") return (right.popularityScore ?? -1) - (left.popularityScore ?? -1);
+    return left.name.localeCompare(right.name);
+  });
 }
 
 function isCustomEvent(attraction: FavoriteAttraction | null | undefined) {
@@ -575,6 +611,8 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
   const [suggestSearchQuery, setSuggestSearchQuery] = useState("");
   const [suggestSearchResults, setSuggestSearchResults] = useState<FavoriteAttraction[]>([]);
   const [isSearchingSuggestions, setIsSearchingSuggestions] = useState(false);
+  const [suggestSortBy, setSuggestSortBy] = useState<SuggestSort>("name-asc");
+  const [suggestMaxPriceLevel, setSuggestMaxPriceLevel] = useState("0");
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
   const [customEventMenuOpen, setCustomEventMenuOpen] = useState(false);
   const [customEventName, setCustomEventName] = useState("");
@@ -1445,6 +1483,16 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
   }
 
   const hasSuggestionPanels = Boolean(effectiveLocation) || extraSuggestionSections.length > 0;
+  const visiblePrimarySuggestions = useMemo(() => {
+    const source = suggestSearchQuery ? suggestSearchResults : suggestedAttractions;
+    return filterAndSortAttractions(source, suggestSearchQuery, suggestSortBy, suggestMaxPriceLevel);
+  }, [
+    suggestSearchQuery,
+    suggestSearchResults,
+    suggestedAttractions,
+    suggestSortBy,
+    suggestMaxPriceLevel
+  ]);
 
   function renderSuggestedCard(attraction: FavoriteAttraction) {
     const added = isInItinerary(attraction.id);
@@ -1856,13 +1904,45 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                             placeholder="Search by name or keyword…"
                           />
                         </div>
+                        <div
+                          className="saved-trips-field saved-trips-field-full"
+                          style={{ marginTop: 8, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}
+                        >
+                          <div>
+                            <label htmlFor="saved-suggested-sort">Sort</label>
+                            <select
+                              id="saved-suggested-sort"
+                              value={suggestSortBy}
+                              onChange={(e) => setSuggestSortBy(e.target.value as SuggestSort)}
+                            >
+                              <option value="name-asc">Name (A-Z)</option>
+                              <option value="name-desc">Name (Z-A)</option>
+                              <option value="rating-desc">Highest rating</option>
+                              <option value="popularity-desc">Most popular</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label htmlFor="saved-suggested-price">Max cost</label>
+                            <select
+                              id="saved-suggested-price"
+                              value={suggestMaxPriceLevel}
+                              onChange={(e) => setSuggestMaxPriceLevel(e.target.value)}
+                            >
+                              <option value="0">All</option>
+                              <option value="1">$</option>
+                              <option value="2">$$</option>
+                              <option value="3">$$$</option>
+                              <option value="4">$$$$</option>
+                            </select>
+                          </div>
+                        </div>
                         {loadingSuggested && !suggestSearchQuery ? (
                           <p className="saved-suggested-loading">Loading suggestions…</p>
                         ) : isSearchingSuggestions ? (
                           <p className="saved-suggested-loading">Searching…</p>
                         ) : (
                           <div className="saved-suggested-grid">
-                            {(suggestSearchQuery ? suggestSearchResults : suggestedAttractions).map(renderSuggestedCard)}
+                            {visiblePrimarySuggestions.map(renderSuggestedCard)}
                           </div>
                         )}
                       </>
@@ -1914,20 +1994,48 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                             onChange={(e) => updateSectionSearch(section.id, e.target.value)}
                           />
                         </div>
+                        <div
+                          className="saved-trips-field saved-trips-field-full"
+                          style={{ marginTop: 8, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}
+                        >
+                          <div>
+                            <label htmlFor={`extra-suggested-sort-${section.id}`}>Sort</label>
+                            <select
+                              id={`extra-suggested-sort-${section.id}`}
+                              value={suggestSortBy}
+                              onChange={(e) => setSuggestSortBy(e.target.value as SuggestSort)}
+                            >
+                              <option value="name-asc">Name (A-Z)</option>
+                              <option value="name-desc">Name (Z-A)</option>
+                              <option value="rating-desc">Highest rating</option>
+                              <option value="popularity-desc">Most popular</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label htmlFor={`extra-suggested-price-${section.id}`}>Max cost</label>
+                            <select
+                              id={`extra-suggested-price-${section.id}`}
+                              value={suggestMaxPriceLevel}
+                              onChange={(e) => setSuggestMaxPriceLevel(e.target.value)}
+                            >
+                              <option value="0">All</option>
+                              <option value="1">$</option>
+                              <option value="2">$$</option>
+                              <option value="3">$$$</option>
+                              <option value="4">$$$$</option>
+                            </select>
+                          </div>
+                        </div>
                         {section.loading ? (
                           <p className="saved-suggested-loading">Loading suggestions…</p>
                         ) : (
                           <div className="saved-suggested-grid">
-                            {section.attractions
-                              .filter((attraction) => {
-                                const q = (section.searchQuery ?? "").trim().toLowerCase();
-                                if (!q) return true;
-                                const haystack = `${attraction.name} ${attraction.city ?? ""} ${
-                                  attraction.stateProvince ?? ""
-                                } ${attraction.country ?? ""} ${attraction.summary ?? ""}`.toLowerCase();
-                                return haystack.includes(q);
-                              })
-                              .map(renderSuggestedCard)}
+                            {filterAndSortAttractions(
+                              section.attractions,
+                              section.searchQuery ?? "",
+                              suggestSortBy,
+                              suggestMaxPriceLevel
+                            ).map(renderSuggestedCard)}
                           </div>
                         )}
                       </>
