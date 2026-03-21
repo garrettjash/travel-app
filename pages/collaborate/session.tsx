@@ -560,7 +560,7 @@ export default function CollaborateSessionPage() {
           >
             {viewMode !== 'cardsFocused' && (
               <div style={{ textAlign: 'center', marginBottom: 8 }}>
-                <strong style={{ fontSize: 16 }}>{viewMode === 'subdecks' ? 'Choose an attraction type' : 'Choose a Place'}</strong>
+                <strong style={{ fontSize: 16 }}>{viewMode === 'subdecks' ? 'Choose an attraction type' : 'Choose a place'}</strong>
               </div>
             )}
 
@@ -573,6 +573,9 @@ export default function CollaborateSessionPage() {
                     const offset = i - center;
                     const rotate = offset * 6;
                     const translateY = -Math.abs(offset) * 6;
+                    const deckIds = (d.attractions || []).map((a) => Number(a.id));
+                    const deckAllVoted = deckIds.length > 0 && deckIds.every((id) => Boolean(votesByAttraction[id]));
+
                     return (
                       <button
                         key={i}
@@ -616,6 +619,9 @@ export default function CollaborateSessionPage() {
                             <div style={{ color: '#9ca3af' }}>No image</div>
                           )}
                         </div>
+                        {deckAllVoted && (
+                          <div style={{ textAlign: 'center', color: '#1f8f4a', fontSize: 12, marginTop: 6 }}>Already voted</div>
+                        )}
                         {/* bottom: count */}
                         <div style={{ marginTop: 6, textAlign: 'right', fontSize: 13, color: '#374151' }}>{(d.attractions || []).length} items</div>
                       </button>
@@ -690,14 +696,18 @@ export default function CollaborateSessionPage() {
                               <div style={{ width: '100%', height: '100%', background: '#f3f7fb', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>No image</div>
                             )}
                           </div>
+                          {/* show badge above title so it's visible despite tilt */}
+                          {allVotedForSubdeck && (
+                            <div style={{ textAlign: 'center', color: '#1f8f4a', fontSize: 12, marginTop: 6 }}>
+                              Already voted
+                            </div>
+                          )}
                           <div style={{ padding: '8px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div style={{ fontWeight: 700, fontSize: 13, lineHeight: '1.1', textAlign: 'left' }}>{s.label}</div>
                             <div style={{ color: '#374151', fontSize: 13 }}>{ids.length}</div>
                           </div>
                         </button>
-                        {allVotedForSubdeck && (
-                          <div style={{ color: '#1f8f4a', fontSize: 12, marginTop: 6 }}>Already voted</div>
-                        )}
+                        
                       </div>
                     );
                   })}
@@ -737,11 +747,7 @@ export default function CollaborateSessionPage() {
               </div>
             )}
 
-            {viewMode !== 'cardsFocused' && (
-              <div style={{ marginTop: 8, textAlign: 'center', color: '#6b7280', fontSize: 13 }}>
-                Decks: {decks.map((d) => d.placeName || '').filter(Boolean).join(' • ')}
-              </div>
-            )}
+            {/* Removed footer listing of decks to keep selection UI focused */}
           </section>
         )}
 
