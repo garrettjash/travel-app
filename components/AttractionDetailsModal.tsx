@@ -48,6 +48,15 @@ function priceLevelLabel(value: string | null | undefined): string {
   return PRICE_LEVEL_LABELS[value] ?? value;
 }
 
+function popularityLabel(score: number | null): { label: string; className: string } {
+  if (score === null || !Number.isFinite(score)) return { label: "N/A", className: "popularity-na" };
+  const s = Number(score);
+  if (s >= 90) return { label: "Very Popular", className: "popularity-very-popular" };
+  if (s >= 75) return { label: "Popular", className: "popularity-popular" };
+  if (s >= 60) return { label: "Semi-Popular", className: "popularity-semi-popular" };
+  return { label: "Unpopular", className: "popularity-unpopular" };
+}
+
 function capitalizeCommaList(value: string): string {
   return value
     .split(",")
@@ -95,6 +104,7 @@ export default function AttractionDetailsModal({
   const rawDataEntries = parseRawData(attraction.rawData);
   const previewImage = attraction.imageUrls[0] ?? attraction.imageUrl;
   const hasCoordinates = attraction.latitude !== null && attraction.longitude !== null;
+  const popularityInfo = popularityLabel(attraction.popularityScore);
 
   return (
     <div className="attraction-modal-overlay" role="dialog" aria-modal="true" aria-label="Attraction details">
@@ -115,9 +125,8 @@ export default function AttractionDetailsModal({
         <div className="attraction-modal-action-row">
           <button
             type="button"
-            className={`attraction-modal-favorite ${
-              isFavorited ? "attraction-modal-favorite-active" : ""
-            }`}
+            className={`attraction-modal-favorite ${isFavorited ? "attraction-modal-favorite-active" : ""
+              }`}
             onClick={() => onToggleFavorite(attraction)}
             aria-label={isFavorited ? "Unfavorite attraction" : "Favorite attraction"}
           >
@@ -125,9 +134,8 @@ export default function AttractionDetailsModal({
           </button>
           <button
             type="button"
-            className={`attraction-modal-itinerary-button ${
-              isInItinerary ? "attraction-modal-itinerary-button-active" : ""
-            }`}
+            className={`attraction-modal-itinerary-button ${isInItinerary ? "attraction-modal-itinerary-button-active" : ""
+              }`}
             onClick={() => onToggleItinerary(attraction)}
           >
             {isInItinerary ? "Remove from itinerary" : "Add to itinerary"}
@@ -148,7 +156,19 @@ export default function AttractionDetailsModal({
           <div><dt>Rating</dt><dd>{attraction.rating !== null ? `${attraction.rating.toFixed(2)}/10` : "N/A"}</dd></div>
           <div><dt>Total Ratings</dt><dd>{attraction.totalCountRatings ?? "N/A"}</dd></div>
           <div><dt>Price</dt><dd>{priceLevelLabel(attraction.priceLevel)}</dd></div>
-          <div><dt>Popularity</dt><dd>{attraction.popularityScore ?? "N/A"}</dd></div>
+          <div>
+            <dt>Popularity</dt>
+            <dd>
+              {attraction.popularityScore != null ? (
+                <>
+                  <span>{attraction.popularityScore}</span>
+                  <span className={`popularity-label ${popularityInfo.className}`}>{popularityInfo.label}</span>
+                </>
+              ) : (
+                "N/A"
+              )}
+            </dd>
+          </div>
         </dl>
 
         {attraction.reviewsSummary && (
