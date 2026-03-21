@@ -288,7 +288,8 @@ async function applyCollabResultsIfNeeded(
   itineraryId: string,
   tripName: string | null,
   rawDays: unknown,
-  rawUnscheduled: unknown
+  rawUnscheduled: unknown,
+  collabSessionIdFromQuery?: string | null
 ): Promise<{ rawDays: unknown; rawUnscheduled: unknown }> {
   const name = normalizeText(tripName) || "";
   if (!name.startsWith("Collab:")) return { rawDays, rawUnscheduled };
@@ -296,17 +297,48 @@ async function applyCollabResultsIfNeeded(
   const unsArr = Array.isArray(rawUnscheduled) ? (rawUnscheduled as any[]) : [];
   if (unsArr.length > 0) return { rawDays, rawUnscheduled };
 
-  const { data: sessionRow } = await supabase
-    .from("collab_session")
-    .select("collab_session_id, created_at")
-    .eq("itinerary_id", itineraryId)
-    .limit(1)
-    .maybeSingle();
+  let sessionId = "";
+  let createdAtIso = "";
 
-  if (!sessionRow) return { rawDays, rawUnscheduled };
+  const sanitizedCollabSession = collabSessionIdFromQuery
+    ? String(collabSessionIdFromQuery).normalize("NFKC").replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 80)
+    : "";
+  if (sanitizedCollabSession) {
+    const { data: directRow } = await supabase
+      .from("collab_session")
+      .select("collab_session_id, created_at, itinerary_id")
+      .eq("collab_session_id", sanitizedCollabSession)
+      .limit(1)
+      .maybeSingle();
+    const linkedItineraryId = directRow && (directRow as any).itinerary_id ? String((directRow as any).itinerary_id) : null;
+    if (directRow && (!linkedItineraryId || linkedItineraryId === itineraryId)) {
+      sessionId = String(directRow.collab_session_id || "");
+      createdAtIso = normalizeText(directRow.created_at);
+    }
+  }
 
-  const sessionId = String(sessionRow.collab_session_id || "");
-  const createdAtIso = normalizeText(sessionRow.created_at);
+  if (!sessionId) {
+    const { data: sessionRow, error: sessionErr } = await supabase
+      .from("collab_session")
+      .select("collab_session_id, created_at")
+      .eq("itinerary_id", itineraryId)
+      .limit(1)
+      .maybeSingle();
+
+    if (sessionErr) {
+      if (/column.*itinerary_id.*does not exist/i.test(sessionErr.message)) {
+        console.warn("[itinerary] collab_session.itinerary_id column missing - run migration 20250305000000");
+      } else {
+        console.error("[itinerary] collab session lookup failed:", sessionErr.message);
+      }
+      return { rawDays, rawUnscheduled };
+    }
+    if (!sessionRow) return { rawDays, rawUnscheduled };
+
+    sessionId = String(sessionRow.collab_session_id || "");
+    createdAtIso = normalizeText(sessionRow.created_at);
+  }
+
   const createdAt = Date.parse(createdAtIso);
   if (!Number.isFinite(createdAt)) return { rawDays, rawUnscheduled };
 
@@ -314,16 +346,22 @@ async function applyCollabResultsIfNeeded(
   const expiresAt = createdAt + durationMinutes * 60 * 1000;
   if (Date.now() <= expiresAt) return { rawDays, rawUnscheduled };
 
-  const [pollRes, itemsRes, placesRes] = await Promise.all([
+  const [pollRes, placesRes] = await Promise.all([
     supabase.from("poll").select("attraction_id, vote").eq("collab_session_id", sessionId).limit(10000),
-    supabase.from("collab_items").select("attraction_id").eq("collab_session_id", sessionId).limit(5000),
     supabase.from("collab_session_places").select("place_id").eq("session_id", sessionId).limit(1000)
   ]);
 
-  if (pollRes.error || itemsRes.error) return { rawDays, rawUnscheduled };
+  if (pollRes.error) return { rawDays, rawUnscheduled };
 
-  const resolvedPlaceIds = (placesRes.data ?? []).map((r: any) => Number(r.place_id)).filter(Number.isFinite);
-  if (resolvedPlaceIds.length === 0) return { rawDays, rawUnscheduled };
+  let resolvedPlaceIds = (placesRes.data ?? []).map((r: any) => Number(r.place_id)).filter(Number.isFinite);
+  if (resolvedPlaceIds.length === 0 && !placesRes.error) {
+    const alt = await supabase
+      .from("collab_session_places")
+      .select("place_id")
+      .eq("collab_session_id", sessionId)
+      .limit(1000);
+    resolvedPlaceIds = (alt.data ?? []).map((r: any) => Number(r.place_id)).filter(Number.isFinite);
+  }
 
   const resultByAttraction = new Map<number, { yesVotes: number; noVotes: number }>();
   for (const row of pollRes.data ?? []) {
@@ -342,12 +380,15 @@ async function applyCollabResultsIfNeeded(
   if (results.length === 0) return { rawDays, rawUnscheduled };
 
   const attractionIds = results.map(([id]) => id);
-  const { data: attrRows } = await supabase
+  const attrQuery = supabase
     .from("attraction")
-    .select("attraction_id, attraction_name, place_id")
+    .select("attraction_id, attraction_name")
     .in("attraction_id", attractionIds)
-    .in("place_id", resolvedPlaceIds)
     .limit(5000);
+  const { data: attrRows } =
+    resolvedPlaceIds.length > 0
+      ? await attrQuery.in("place_id", resolvedPlaceIds)
+      : await attrQuery;
 
   const nameById = new Map<number, string>();
   for (const r of attrRows ?? []) {
@@ -670,12 +711,17 @@ export default async function handler(
       let rawDays = (data.days ?? []) as unknown;
       let rawUnscheduled = (data.unscheduled ?? []) as unknown;
 
+      const rawCollabSession = request.query.collabSession;
+      const collabSessionFromQuery =
+        typeof rawCollabSession === "string" ? rawCollabSession.trim() : Array.isArray(rawCollabSession) ? (rawCollabSession[0] ?? "").trim() : null;
+
       const applied = await applyCollabResultsIfNeeded(
         supabase,
         itineraryId,
         data.trip_name,
         rawDays,
-        rawUnscheduled
+        rawUnscheduled,
+        collabSessionFromQuery || undefined
       );
       rawDays = applied.rawDays;
       rawUnscheduled = applied.rawUnscheduled;

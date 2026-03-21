@@ -319,12 +319,13 @@ export default async function handler(
         const { error: insertErr } = await supabase.from("itinerary").insert(insertRow);
         if (!insertErr) {
           createdItineraryId = itineraryId;
-          // Link session -> itinerary if none set (avoid overwriting existing linkage)
-          await supabase
+          const { error: linkErr } = await supabase
             .from("collab_session")
             .update({ itinerary_id: itineraryId })
-            .eq("collab_session_id", sessionId)
-            .is("itinerary_id", null);
+            .eq("collab_session_id", sessionId);
+          if (linkErr) {
+            console.error("[collab-session] Failed to link session to itinerary:", linkErr.message);
+          }
         } else {
           createdItineraryError = insertErr.message;
         }
@@ -682,16 +683,19 @@ export default async function handler(
             if (!itineraryResult.error) {
               const ownerId = itineraryResult.data?.user_id ?? null;
               if (ownerId === userId) {
-                itineraryPath = `/solo-planner/${encodeURIComponent(existingItineraryId)}?fromCollab=1`;
+                itineraryPath = `/solo-planner/${encodeURIComponent(existingItineraryId)}?fromCollab=1&collabSession=${encodeURIComponent(sessionId)}`;
               } else if (!ownerId) {
                 // Itinerary has no owner (created by guest) - let this user claim it
                 await supabase
                   .from("itinerary")
                   .update({ user_id: userId })
                   .eq("itinerary_id", existingItineraryId);
-                itineraryPath = `/solo-planner/${encodeURIComponent(existingItineraryId)}?fromCollab=1`;
+                itineraryPath = `/solo-planner/${encodeURIComponent(existingItineraryId)}?fromCollab=1&collabSession=${encodeURIComponent(sessionId)}`;
               }
             }
+          }
+          if (!itineraryPath && isExpired && results.length > 0) {
+            itineraryPath = `/solo-planner/${encodeURIComponent(existingItineraryId)}?fromCollab=1&collabSession=${encodeURIComponent(sessionId)}`;
           }
 
           // Update the existing itinerary with collab results (unscheduled/top-voted).
