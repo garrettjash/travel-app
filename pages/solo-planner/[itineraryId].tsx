@@ -92,7 +92,14 @@ export default function SoloPlannerItineraryPage() {
       if (collabSessionFromUrl) params.set("collabSession", collabSessionFromUrl);
       const res = await fetch(`/api/itinerary?${params.toString()}`);
       const data = (await res.json()) as { itinerary?: SavedItinerary; error?: string };
-      if (res.ok && data.itinerary) return data.itinerary;
+      if (res.ok && data.itinerary) {
+        console.log("[solo-planner] fetchItinerary received", {
+          itineraryId: data.itinerary.itineraryId,
+          unscheduledCount: data.itinerary.unscheduled?.length ?? 0,
+          daysCount: data.itinerary.days?.length ?? 0
+        });
+        return data.itinerary;
+      }
     } catch {
       /* ignore */
     }

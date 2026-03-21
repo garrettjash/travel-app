@@ -394,6 +394,12 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
   const dayPlansRef = useRef(dayPlans);
   dayPlansRef.current = dayPlans;
   const [unscheduled, setUnscheduled] = useState<FavoriteAttraction[]>(initialItinerary?.unscheduled ?? []);
+  if (typeof window !== "undefined" && initialItinerary?.unscheduled?.length) {
+    console.log("[SavedTripBuilder] initial state", {
+      initialUnscheduledCount: initialItinerary.unscheduled.length,
+      itineraryId: initialItinerary.itineraryId
+    });
+  }
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [activeItineraryId, setActiveItineraryId] = useState<string>(
@@ -858,6 +864,15 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
     }
 
     const persisted = resolvedId ? loadWorkingItinerary(resolvedId) : null;
+    if (typeof window !== "undefined") {
+      console.log("[SavedTripBuilder] load effect", {
+        hasInitialItinerary: !!initialItinerary,
+        initialUnscheduledCount: initialItinerary?.unscheduled?.length ?? 0,
+        hasPersisted: !!persisted,
+        persistedUnscheduledCount: persisted?.unscheduled?.length ?? 0,
+        resolvedId
+      });
+    }
     if (persisted) {
       clearAttractions();
       const all: FavoriteAttraction[] = [];
@@ -905,7 +920,16 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
     const inDayIds = new Set(dayPlans.flatMap((d) => d.stops.map((s) => s.attraction.id)));
     const unassigned = attractions.filter((a) => !inDayIds.has(a.id));
     setUnscheduled((current) => {
-      if (unassigned.length === 0 && current.length > 0) return current;
+      const preserved = unassigned.length === 0 && current.length > 0;
+      if (typeof window !== "undefined") {
+        console.log("[SavedTripBuilder] sync effect", {
+          attractionsCount: attractions.length,
+          unassignedCount: unassigned.length,
+          currentUnscheduledCount: current.length,
+          preserved
+        });
+      }
+      if (preserved) return current;
       const kept = current.filter((c) => unassigned.some((u) => u.id === c.id));
       const seenIds = new Set<number>();
       const dedupedKept = kept.filter((c) => {
