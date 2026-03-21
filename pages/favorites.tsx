@@ -3,6 +3,7 @@ import AttractionDetailsModal from "../components/AttractionDetailsModal";
 import AppShell from "../components/AppShell";
 import { useFavorites } from "../lib/favorites-context";
 import { useItinerary } from "../lib/itinerary-context";
+import { useUndo } from "../lib/undo-context";
 
 function formatLocation(city: string, stateProvince: string, country: string) {
   return [city, stateProvince, country].filter(Boolean).join(", ") || "Location unavailable";
@@ -17,10 +18,20 @@ function formatCommaList(value: string) {
 }
 
 export default function FavoritesPage() {
-  const { favorites, toggleFavorite, isFavorite } = useFavorites();
+  const { favorites, isFavorite, addFavorite, removeFavorite } = useFavorites();
   const { addAttraction, removeAttraction, isInItinerary } = useItinerary();
+  const { addUndo } = useUndo();
   const [imageIndexByAttraction, setImageIndexByAttraction] = useState<Record<number, number>>({});
   const [selectedAttraction, setSelectedAttraction] = useState<(typeof favorites)[number] | null>(null);
+
+  const handleToggleFavorite = (attraction: (typeof favorites)[number]) => {
+    if (isFavorite(attraction.id)) {
+      removeFavorite(attraction.id);
+      addUndo(`Removed ${attraction.name} from favorites`, () => addFavorite(attraction));
+      return;
+    }
+    addFavorite(attraction);
+  };
 
   return (
     <AppShell activeTab="favorites">
@@ -86,7 +97,7 @@ export default function FavoritesPage() {
                           }`}
                           onClick={(event) => {
                             event.stopPropagation();
-                            toggleFavorite(attraction);
+                            handleToggleFavorite(attraction);
                           }}
                           aria-label={`Remove ${attraction.name} from favorites`}
                         >
@@ -128,7 +139,7 @@ export default function FavoritesPage() {
         attraction={selectedAttraction}
         isFavorited={selectedAttraction ? isFavorite(selectedAttraction.id) : false}
         isInItinerary={selectedAttraction ? isInItinerary(selectedAttraction.id) : false}
-        onToggleFavorite={toggleFavorite}
+        onToggleFavorite={handleToggleFavorite}
         onToggleItinerary={(attraction) => {
           if (isInItinerary(attraction.id)) {
             removeAttraction(attraction.id);

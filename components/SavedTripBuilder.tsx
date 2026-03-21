@@ -6,6 +6,7 @@ import { useAuth } from "../lib/auth-context";
 import { useCart } from "../lib/cart-context";
 import { FavoriteAttraction, useFavorites } from "../lib/favorites-context";
 import { useItinerary } from "../lib/itinerary-context";
+import { useUndo } from "../lib/undo-context";
 
 type Pace = "relaxed" | "balanced" | "packed";
 
@@ -358,7 +359,8 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
   ) {
   const router = useRouter();
   const { user } = useAuth();
-  const { toggleFavorite, isFavorite } = useFavorites();
+  const { toggleFavorite, isFavorite, addFavorite, removeFavorite } = useFavorites();
+  const { addUndo } = useUndo();
   const { attractions, addAttraction, removeAttraction, clearAttractions, isInItinerary } = useItinerary();
   const { moveCartToItinerary } = useCart();
 
@@ -1077,10 +1079,35 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
 
   /** Remove an attraction from the entire itinerary (context, unscheduled, all days). Use for every remove action. */
   const removeFromItinerary = useCallback((attractionId: number) => {
+    const previousUnscheduled = unscheduled;
+    const previousDayPlans = dayPlans;
+    const removedAttraction =
+      previousUnscheduled.find((item) => item.id === attractionId) ??
+      previousDayPlans.flatMap((day) => day.stops.map((stop) => stop.attraction)).find((item) => item.id === attractionId) ??
+      attractions.find((item) => item.id === attractionId) ??
+      null;
     removeAttraction(attractionId);
     setUnscheduled((c) => c.filter((x) => x.id !== attractionId));
     setDayPlans((c) => c.map((d) => ({ ...d, stops: d.stops.filter((s) => s.attraction.id !== attractionId) })));
-  }, [removeAttraction]);
+    if (removedAttraction) {
+      addUndo(`Removed ${removedAttraction.name}`, () => {
+        addAttraction(removedAttraction);
+        setUnscheduled(previousUnscheduled);
+        setDayPlans(previousDayPlans);
+      });
+    }
+  }, [addAttraction, addUndo, attractions, dayPlans, removeAttraction, unscheduled]);
+
+  const removeExtraLocation = useCallback((sectionId: string) => {
+    const removed = extraSuggestionSections.find((section) => section.id === sectionId);
+    if (!removed) return;
+    setExtraSuggestionSections((current) => current.filter((section) => section.id !== sectionId));
+    addUndo(`Removed ${removed.label}`, () => {
+      setExtraSuggestionSections((current) =>
+        current.some((section) => section.id === removed.id) ? current : [...current, removed]
+      );
+    });
+  }, [addUndo, extraSuggestionSections]);
 
   const addToItineraryPool = useCallback(
     (attraction: FavoriteAttraction) => {
@@ -1913,11 +1940,7 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                       type="button"
                       className="saved-schedule-card-remove"
                       aria-label={`Remove ${section.label}`}
-                      onClick={() =>
-                        setExtraSuggestionSections((current) =>
-                          current.filter((s) => s.id !== section.id)
-                        )
-                      }
+                      onClick={() => removeExtraLocation(section.id)}
                     >
                       <img
                         src="https://img.icons8.com/fluent-systems-regular/24/FA5252/trash.png"
@@ -2629,7 +2652,14 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
         attraction={selectedAttraction}
         isFavorited={selectedAttraction ? isFavorite(selectedAttraction.id) : false}
         isInItinerary={selectedAttraction ? isInItinerary(selectedAttraction.id) : false}
-        onToggleFavorite={toggleFavorite}
+        onToggleFavorite={(attraction) => {
+          if (isFavorite(attraction.id)) {
+            removeFavorite(attraction.id);
+            addUndo(`Removed ${attraction.name} from favorites`, () => addFavorite(attraction));
+            return;
+          }
+          addFavorite(attraction);
+        }}
         onToggleItinerary={(attraction) => {
           if (isInItinerary(attraction.id)) {
             removeFromItinerary(attraction.id);

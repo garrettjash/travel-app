@@ -2,6 +2,7 @@ import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import AttractionDetailsModal from "./AttractionDetailsModal";
 import { FavoriteAttraction, useFavorites } from "../lib/favorites-context";
 import { useCart } from "../lib/cart-context";
+import { useUndo } from "../lib/undo-context";
 
 type Attraction = {
   id: number;
@@ -153,8 +154,9 @@ function dedupeAttractionsById(list: Attraction[]) {
 }
 
 export default function AttractionsExplorer({ title, subtitle, initialPlace }: AttractionsExplorerProps) {
-  const { toggleFavorite, isFavorite } = useFavorites();
+  const { isFavorite, addFavorite, removeFavorite } = useFavorites();
   const { addToCart, removeFromCart, isInCart } = useCart();
+  const { addUndo } = useUndo();
   const [filters, setFilters] = useState<Filters>(defaultFilters);
   const [visibleFilters, setVisibleFilters] = useState<FilterKey[]>(defaultVisibleFilters);
   const [selectedFilterToAdd, setSelectedFilterToAdd] = useState<FilterKey | "">("");
@@ -346,6 +348,15 @@ export default function AttractionsExplorer({ title, subtitle, initialPlace }: A
     imageUrl: attraction.imageUrl,
     imageUrls: attraction.imageUrls
   });
+
+  const handleToggleFavorite = (attraction: FavoriteAttraction) => {
+    if (isFavorite(attraction.id)) {
+      removeFavorite(attraction.id);
+      addUndo(`Removed ${attraction.name} from favorites`, () => addFavorite(attraction));
+      return;
+    }
+    addFavorite(attraction);
+  };
 
   const renderFilterField = (key: FilterKey) => {
     const canRemove = true;
@@ -668,7 +679,7 @@ export default function AttractionsExplorer({ title, subtitle, initialPlace }: A
                           }`}
                           onClick={(event) => {
                             event.stopPropagation();
-                            toggleFavorite(toFavoriteAttraction(attraction));
+                            handleToggleFavorite(toFavoriteAttraction(attraction));
                           }}
                           aria-label={
                             isFavorite(attraction.id)
@@ -749,7 +760,7 @@ export default function AttractionsExplorer({ title, subtitle, initialPlace }: A
         attraction={selectedAttraction}
         isFavorited={selectedAttraction ? isFavorite(selectedAttraction.id) : false}
         isInItinerary={selectedAttraction ? isInCart(selectedAttraction.id) : false}
-        onToggleFavorite={(attraction) => toggleFavorite(toFavoriteAttraction(attraction))}
+        onToggleFavorite={(attraction) => handleToggleFavorite(toFavoriteAttraction(attraction))}
         onToggleItinerary={(attraction) => {
           if (isInCart(attraction.id)) {
             removeFromCart(attraction.id);

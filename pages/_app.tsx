@@ -5,6 +5,7 @@ import { AuthProvider } from "../lib/auth-context";
 import { CartProvider } from "../lib/cart-context";
 import { FavoritesProvider } from "../lib/favorites-context";
 import { ItineraryProvider } from "../lib/itinerary-context";
+import { UndoProvider } from "../lib/undo-context";
 import "../styles/globals.css";
 
 export default function App({ Component, pageProps }: AppProps) {
@@ -17,8 +18,10 @@ export default function App({ Component, pageProps }: AppProps) {
         <FavoritesProvider>
           <CartProvider>
             <ItineraryProvider>
-              <Component {...pageProps} />
-              <ViewItineraryFloating />
+              <UndoProvider>
+                <Component {...pageProps} />
+                <ViewItineraryFloating />
+              </UndoProvider>
             </ItineraryProvider>
           </CartProvider>
         </FavoritesProvider>

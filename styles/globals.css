@@ -4391,3 +4391,44 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
   border-radius: 999px;
   font-size: 0.85rem;
 }
+
+.undo-toast-stack {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 200;
+  display: grid;
+  gap: 8px;
+  width: min(420px, calc(100vw - 24px));
+}
+
+.undo-toast {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(17, 24, 39, 0.95);
+  color: #f8fafc;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.28);
+}
+
+.undo-toast-button {
+  border: 1px solid rgba(148, 190, 255, 0.6);
+  background: rgba(59, 130, 246, 0.18);
+  color: #dbeafe;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.undo-toast-dismiss {
+  border: none;
+  background: transparent;
+  color: #cbd5e1;
+  font-size: 1rem;
+  cursor: pointer;
+}
