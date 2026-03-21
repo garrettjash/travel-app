@@ -51,6 +51,7 @@ function priceLevelLabel(value: string | null | undefined): string {
 function popularityLabel(score: number | null): { label: string; className: string } {
   if (score === null || !Number.isFinite(score)) return { label: "N/A", className: "popularity-na" };
   const s = Number(score);
+  if (s === 0) return { label: "No Data", className: "popularity-na" };
   if (s >= 90) return { label: "Very Popular", className: "popularity-very-popular" };
   if (s >= 75) return { label: "Popular", className: "popularity-popular" };
   if (s >= 60) return { label: "Semi-Popular", className: "popularity-semi-popular" };

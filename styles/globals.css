@@ -236,9 +236,10 @@ body {
 
 .landing-topbar {
   height: 64px;
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  justify-content: space-between;
+  gap: 18px;
   padding: 0 20px;
   border-bottom: 1px solid #d4e1ef;
   background: rgba(255, 255, 255, 0.84);
@@ -251,6 +252,7 @@ body {
 .landing-topbar-actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 10px;
 }
 
