@@ -5,8 +5,6 @@ type AgentResponse = {
   session_id: string;
 };
 
-const agentEndpointUrl = "https://2e4vwg7nk5.execute-api.us-east-1.amazonaws.com/prod/agent";
-
 export default async function handler(
   request: NextApiRequest,
   response: NextApiResponse<AgentResponse | { error: string }>
@@ -33,8 +31,13 @@ export default async function handler(
     return;
   }
 
+  const url = process.env.AGENT_ENDPOINT_URL;
+  if (!url) {
+    return response.status(500).json({ error: "AGENT_ENDPOINT_URL is not set" });
+  }
+
   try {
-    const agentResponse = await fetch(agentEndpointUrl, {
+    const agentResponse = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

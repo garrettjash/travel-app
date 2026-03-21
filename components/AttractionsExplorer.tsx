@@ -3,6 +3,13 @@ import AttractionDetailsModal from "./AttractionDetailsModal";
 import { FavoriteAttraction, useFavorites } from "../lib/favorites-context";
 import { useCart } from "../lib/cart-context";
 import { useUndo } from "../lib/undo-context";
+import {
+  addAttractionToWorkingItinerary,
+  getCurrentItineraryId,
+  hasWorkingItinerary,
+  isInWorkingItinerary,
+  removeAttractionFromWorkingItinerary
+} from "../lib/working-itinerary-storage";
 
 type Attraction = {
   id: number;
@@ -156,6 +163,8 @@ function dedupeAttractionsById(list: Attraction[]) {
 export default function AttractionsExplorer({ title, subtitle, initialPlace }: AttractionsExplorerProps) {
   const { isFavorite, addFavorite, removeFavorite } = useFavorites();
   const { addToCart, removeFromCart, isInCart } = useCart();
+  const showAddChoices = hasWorkingItinerary();
+  const refreshWorkingItinerary = () => setWorkingItineraryVersion((v) => v + 1);
   const { addUndo } = useUndo();
   const [filters, setFilters] = useState<Filters>(defaultFilters);
   const [visibleFilters, setVisibleFilters] = useState<FilterKey[]>(defaultVisibleFilters);
@@ -168,6 +177,8 @@ export default function AttractionsExplorer({ title, subtitle, initialPlace }: A
   const [error, setError] = useState<string | null>(null);
   const [imageIndexByAttraction, setImageIndexByAttraction] = useState<Record<number, number>>({});
   const [selectedAttraction, setSelectedAttraction] = useState<Attraction | null>(null);
+  const [addMenuAttractionId, setAddMenuAttractionId] = useState<number | null>(null);
+  const [workingItineraryVersion, setWorkingItineraryVersion] = useState(0);
 
   const hasMore = attractions.length < totalCount;
 
@@ -689,27 +700,91 @@ export default function AttractionsExplorer({ title, subtitle, initialPlace }: A
                         >
                           {isFavorite(attraction.id) ? "♥" : "♡"}
                         </button>
-                        <button
-                          type="button"
-                          className={`attraction-card-itinerary-button ${
-                            isInCart(attraction.id) ? "attraction-card-itinerary-button-active" : ""
-                          }`}
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            if (isInCart(attraction.id)) {
-                              removeFromCart(attraction.id);
-                            } else {
-                              addToCart(toFavoriteAttraction(attraction));
+                        {showAddChoices && !isInCart(attraction.id) && !isInWorkingItinerary(attraction.id) ? (
+                          <div className="attraction-card-add-dropdown-wrap">
+                            <button
+                              type="button"
+                              className="attraction-card-itinerary-button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setAddMenuAttractionId(addMenuAttractionId === attraction.id ? null : attraction.id);
+                              }}
+                              title={`Add ${attraction.name} to itinerary`}
+                            >
+                              Add to itinerary ▾
+                            </button>
+                            {addMenuAttractionId === attraction.id && (
+                              <>
+                                <div
+                                  className="attraction-card-add-dropdown-backdrop"
+                                  aria-hidden
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setAddMenuAttractionId(null);
+                                  }}
+                                />
+                                <div className="attraction-card-add-dropdown">
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                    const id = getCurrentItineraryId();
+                                    if (id) {
+                                      addAttractionToWorkingItinerary(id, toFavoriteAttraction(attraction));
+                                      refreshWorkingItinerary();
+                                    }
+                                    setAddMenuAttractionId(null);
+                                    }}
+                                  >
+                                    Add to current itinerary
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      addToCart(toFavoriteAttraction(attraction));
+                                      setAddMenuAttractionId(null);
+                                    }}
+                                  >
+                                    Add to new itinerary
+                                  </button>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            className={`attraction-card-itinerary-button ${
+                              isInCart(attraction.id) || isInWorkingItinerary(attraction.id)
+                                ? "attraction-card-itinerary-button-active"
+                                : ""
+                            }`}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              if (isInWorkingItinerary(attraction.id)) {
+                                const id = getCurrentItineraryId();
+                                if (id) {
+                                  removeAttractionFromWorkingItinerary(id, attraction.id);
+                                  refreshWorkingItinerary();
+                                }
+                              } else if (isInCart(attraction.id)) {
+                                removeFromCart(attraction.id);
+                              } else {
+                                addToCart(toFavoriteAttraction(attraction));
+                              }
+                            }}
+                            title={
+                              isInCart(attraction.id) || isInWorkingItinerary(attraction.id)
+                                ? `Remove ${attraction.name} from itinerary`
+                                : `Add ${attraction.name} to itinerary`
                             }
-                          }}
-                          title={
-                            isInCart(attraction.id)
-                              ? `Remove ${attraction.name} from itinerary`
-                              : `Add ${attraction.name} to itinerary`
-                          }
-                        >
-                          {isInCart(attraction.id) ? "In itinerary" : "Add to itinerary"}
-                        </button>
+                          >
+                            {isInCart(attraction.id) || isInWorkingItinerary(attraction.id)
+                              ? "In itinerary"
+                              : "Add to itinerary"}
+                          </button>
+                        )}
                       </div>
                     </div>
                     <p>{formatLocation(attraction.city, attraction.country)}</p>
@@ -769,6 +844,34 @@ export default function AttractionsExplorer({ title, subtitle, initialPlace }: A
           addToCart(toFavoriteAttraction(attraction));
         }}
         onClose={() => setSelectedAttraction(null)}
+        addToCurrentItinerary={
+          showAddChoices && selectedAttraction
+            ? (att) => {
+                const id = getCurrentItineraryId();
+                if (id) {
+                  addAttractionToWorkingItinerary(id, toFavoriteAttraction(att));
+                  refreshWorkingItinerary();
+                }
+              }
+            : undefined
+        }
+        addToNewItinerary={
+          showAddChoices && selectedAttraction
+            ? (att) => addToCart(toFavoriteAttraction(att))
+            : undefined
+        }
+        onRemoveFromCurrentItinerary={
+          showAddChoices && selectedAttraction
+            ? (att) => {
+                const id = getCurrentItineraryId();
+                if (id) {
+                  removeAttractionFromWorkingItinerary(id, att.id);
+                  refreshWorkingItinerary();
+                }
+              }
+            : undefined
+        }
+        isInCurrentItinerary={selectedAttraction ? isInWorkingItinerary(selectedAttraction.id) : false}
       />
     </>
   );

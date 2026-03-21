@@ -1,5 +1,3 @@
-import fetch from "node-fetch";
-
 export type Bucket = { label: string; ids: number[] };
 
 export async function bucketAttractions(attractions: { id: number; name: string; summary?: string; categories?: string[] }[]) {
