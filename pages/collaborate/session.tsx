@@ -550,8 +550,8 @@ export default function CollaborateSessionPage() {
               <strong style={{ fontSize: 16 }}>Choose a place deck</strong>
             </div>
 
-            {/* Deck fan */}
-            {viewMode !== 'cardsFocused' && (
+            {/* Deck fan (only in decks view) */}
+            {viewMode === 'decks' && (
               <div style={{ display: 'flex', justifyContent: 'center', padding: 8 }}>
                 <div style={{ position: 'relative', height: 160, width: Math.min(1000, decks.length * 180), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {decks.map((d, i) => {
@@ -611,34 +611,53 @@ export default function CollaborateSessionPage() {
               </div>
             )}
 
-            {/* Subdeck cards shown when a deck is selected and has subdecks (not yet focused) */}
-            {selectedDeckIndex !== null && decks[selectedDeckIndex] && decks[selectedDeckIndex].subdecks && viewMode !== 'cardsFocused' && (
-              <div style={{ marginTop: 12, display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
-                {(decks[selectedDeckIndex].subdecks || []).map((s, si) => (
-                  <button
-                    key={si}
-                    onClick={() => {
-                      setSelectedSubdeckIndex(si);
-                      // enter focused view: hide other decks
-                      setViewMode('cardsFocused');
-                    }}
-                    style={{
-                      width: 180,
-                      height: 120,
-                      borderRadius: 10,
-                      border: selectedSubdeckIndex === si ? '2px solid #2563eb' : '1px solid #e6edf3',
-                      background: '#fff',
-                      padding: 10,
-                      boxShadow: '0 6px 14px rgba(0,0,0,0.06)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between'
-                    }}
-                  >
-                    <div style={{ fontWeight: 700 }}>{s.label}</div>
-                    <div style={{ textAlign: 'right', color: '#374151' }}>{(s.ids || []).length}</div>
-                  </button>
-                ))}
+            {/* Subdeck fan: show when a deck is selected and we're in subdecks view */}
+            {selectedDeckIndex !== null && decks[selectedDeckIndex] && decks[selectedDeckIndex].subdecks && viewMode === 'subdecks' && (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: 8, marginTop: 12 }}>
+                <div style={{ position: 'relative', height: 160, width: Math.min(900, decks[selectedDeckIndex].subdecks!.length * 160), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {decks[selectedDeckIndex].subdecks!.map((s, si) => {
+                    const list = decks[selectedDeckIndex].subdecks!;
+                    const center = (list.length - 1) / 2;
+                    const offset = si - center;
+                    const rotate = offset * 6;
+                    const translateY = -Math.abs(offset) * 6;
+                    return (
+                      <button
+                        key={si}
+                        onClick={() => {
+                          setSelectedSubdeckIndex(si);
+                          setViewMode('cardsFocused');
+                        }}
+                        style={{
+                          position: 'absolute',
+                          left: '50%',
+                          transform: `translateX(${offset * 120 - 50}%) rotate(${rotate}deg) translateY(${translateY}px)`,
+                          transformOrigin: 'bottom center',
+                          width: 180,
+                          height: 120,
+                          padding: 10,
+                          boxShadow: selectedSubdeckIndex === si ? '0 8px 20px rgba(0,0,0,0.12)' : '0 6px 14px rgba(0,0,0,0.08)',
+                          borderRadius: 12,
+                          border: selectedSubdeckIndex === si ? '2px solid #2563eb' : '1px solid #e6edf3',
+                          background: '#ffffff',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                          alignItems: 'stretch',
+                          overflow: 'hidden'
+                        }}
+                      >
+                        <div style={{ fontWeight: 700, fontSize: 14 }}>{s.label}</div>
+                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>
+                          {/* show small badge or icon */}
+                          <div style={{ fontSize: 40 }}>🗂️</div>
+                        </div>
+                        <div style={{ textAlign: 'right', fontSize: 13, color: '#374151' }}>{(s.ids || []).length} items</div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             )}
 
