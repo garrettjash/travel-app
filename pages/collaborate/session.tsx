@@ -545,26 +545,35 @@ export default function CollaborateSessionPage() {
         {/* Deck selector */}
         {!isLoading && !error && decks && decks.length > 0 && (
           <section className="about-card" style={{ marginTop: 12 }}>
+            <div style={{ textAlign: "center", marginBottom: 8 }}>
+              <strong>Choose a place deck</strong>
+            </div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
               {decks.map((d, i) => (
                 <button
                   key={i}
                   type="button"
-                  className={`saved-trips-button ${selectedDeckIndex === i ? "saved-trips-button-primary" : ""}`}
                   onClick={() => { setSelectedDeckIndex(i); setSelectedSubdeckIndex(null); }}
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: 6,
+                    border: selectedDeckIndex === i ? "2px solid #2563eb" : "1px solid #d1d5db",
+                    background: selectedDeckIndex === i ? "#e0f2ff" : "#f8fafc",
+                    cursor: "pointer",
+                    minWidth: 120
+                  }}
                 >
                   {d.placeName || `Place ${i + 1}`} ({(d.attractions || []).length})
                 </button>
               ))}
             </div>
 
-            {/* Subdeck selector for selected deck */}
             {selectedDeckIndex !== null && decks[selectedDeckIndex] && decks[selectedDeckIndex].subdecks && (
               <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
                 <button
                   type="button"
-                  className={`saved-trips-button ${selectedSubdeckIndex === null ? "saved-trips-button-primary" : ""}`}
                   onClick={() => setSelectedSubdeckIndex(null)}
+                  style={{ padding: "6px 10px", borderRadius: 6, border: selectedSubdeckIndex === null ? "2px solid #2563eb" : "1px solid #d1d5db", background: selectedSubdeckIndex === null ? "#eef6ff" : "#fbfdff", cursor: "pointer" }}
                 >
                   All ({decks[selectedDeckIndex].attractions.length})
                 </button>
@@ -572,14 +581,19 @@ export default function CollaborateSessionPage() {
                   <button
                     key={si}
                     type="button"
-                    className={`saved-trips-button ${selectedSubdeckIndex === si ? "saved-trips-button-primary" : ""}`}
                     onClick={() => setSelectedSubdeckIndex(si)}
+                    style={{ padding: "6px 10px", borderRadius: 6, border: selectedSubdeckIndex === si ? "2px solid #2563eb" : "1px solid #d1d5db", background: selectedSubdeckIndex === si ? "#eef6ff" : "#fbfdff", cursor: "pointer" }}
                   >
                     {s.label} ({s.ids.length})
                   </button>
                 ))}
               </div>
             )}
+
+            {/* Debug: show deck names compactly so it's obvious */}
+            <div style={{ marginTop: 8, textAlign: "center", color: "#6b7280", fontSize: 13 }}>
+              Decks: {decks.map((d) => d.placeName || "").filter(Boolean).join(" • ")}
+            </div>
           </section>
         )}
 
