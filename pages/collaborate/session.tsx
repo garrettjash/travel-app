@@ -545,10 +545,23 @@ export default function CollaborateSessionPage() {
 
         {/* Deck selector */}
         {!isLoading && !error && decks && decks.length > 0 && (
-          <section className="about-card" style={{ marginTop: 12, maxWidth: 980, marginLeft: 'auto', marginRight: 'auto', paddingBottom: 28, minHeight: 240 }}>
-            <div style={{ textAlign: 'center', marginBottom: 8 }}>
-              <strong style={{ fontSize: 16 }}>Choose a place deck</strong>
-            </div>
+          <section
+            className="about-card"
+            style={{
+              marginTop: 12,
+              maxWidth: 980,
+              marginLeft: 'auto',
+              marginRight: 'auto',
+              paddingBottom: viewMode === 'cardsFocused' ? 12 : 28,
+              minHeight: viewMode === 'cardsFocused' ? 72 : 240,
+              transition: 'min-height 220ms ease, padding 220ms ease'
+            }}
+          >
+            {viewMode !== 'cardsFocused' && (
+              <div style={{ textAlign: 'center', marginBottom: 8 }}>
+                <strong style={{ fontSize: 16 }}>Choose a place deck</strong>
+              </div>
+            )}
 
             {/* Deck fan (only in decks view) */}
             {viewMode === 'decks' && (
@@ -693,14 +706,16 @@ export default function CollaborateSessionPage() {
               </div>
             )}
 
-            <div style={{ marginTop: 8, textAlign: 'center', color: '#6b7280', fontSize: 13 }}>
-              Decks: {decks.map((d) => d.placeName || '').filter(Boolean).join(' • ')}
-            </div>
+            {viewMode !== 'cardsFocused' && (
+              <div style={{ marginTop: 8, textAlign: 'center', color: '#6b7280', fontSize: 13 }}>
+                Decks: {decks.map((d) => d.placeName || '').filter(Boolean).join(' • ')}
+              </div>
+            )}
           </section>
         )}
 
         {isLoading && (
-          <section className="about-card">
+          <section className="about-card" style={{ maxWidth: 980, marginLeft: 'auto', marginRight: 'auto', textAlign: 'center' }}>
             <p className="attractions-state">Loading attractions...</p>
           </section>
         )}
