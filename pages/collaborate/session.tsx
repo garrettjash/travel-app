@@ -193,6 +193,7 @@ export default function CollaborateSessionPage() {
   const [decks, setDecks] = useState<SessionPayload["decks"] | null>(null);
   const [selectedDeckIndex, setSelectedDeckIndex] = useState<number | null>(null);
   const [selectedSubdeckIndex, setSelectedSubdeckIndex] = useState<number | null>(null);
+  const [viewMode, setViewMode] = useState<'decks' | 'subdecks' | 'cardsFocused'>('decks');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -545,54 +546,122 @@ export default function CollaborateSessionPage() {
         {/* Deck selector */}
         {!isLoading && !error && decks && decks.length > 0 && (
           <section className="about-card" style={{ marginTop: 12 }}>
-            <div style={{ textAlign: "center", marginBottom: 8 }}>
-              <strong>Choose a place deck</strong>
-            </div>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
-              {decks.map((d, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => { setSelectedDeckIndex(i); setSelectedSubdeckIndex(null); }}
-                  style={{
-                    padding: "8px 12px",
-                    borderRadius: 6,
-                    border: selectedDeckIndex === i ? "2px solid #2563eb" : "1px solid #d1d5db",
-                    background: selectedDeckIndex === i ? "#e0f2ff" : "#f8fafc",
-                    cursor: "pointer",
-                    minWidth: 120
-                  }}
-                >
-                  {d.placeName || `Place ${i + 1}`} ({(d.attractions || []).length})
-                </button>
-              ))}
+            <div style={{ textAlign: 'center', marginBottom: 8 }}>
+              <strong style={{ fontSize: 16 }}>Choose a place deck</strong>
             </div>
 
-            {selectedDeckIndex !== null && decks[selectedDeckIndex] && decks[selectedDeckIndex].subdecks && (
-              <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
-                <button
-                  type="button"
-                  onClick={() => setSelectedSubdeckIndex(null)}
-                  style={{ padding: "6px 10px", borderRadius: 6, border: selectedSubdeckIndex === null ? "2px solid #2563eb" : "1px solid #d1d5db", background: selectedSubdeckIndex === null ? "#eef6ff" : "#fbfdff", cursor: "pointer" }}
-                >
-                  All ({decks[selectedDeckIndex].attractions.length})
-                </button>
-                {decks[selectedDeckIndex].subdecks!.map((s, si) => (
+            {/* Deck fan */}
+            {viewMode !== 'cardsFocused' && (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: 8 }}>
+                <div style={{ position: 'relative', height: 160, width: Math.min(1000, decks.length * 180), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {decks.map((d, i) => {
+                    const center = (decks.length - 1) / 2;
+                    const offset = i - center;
+                    const rotate = offset * 6;
+                    const translateY = -Math.abs(offset) * 6;
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => {
+                          setSelectedDeckIndex(i);
+                          setSelectedSubdeckIndex(null);
+                          // if deck has no subdecks, go straight to focused cards
+                          if (!d.subdecks || d.subdecks.length === 0) {
+                            setViewMode('cardsFocused');
+                          } else {
+                            setViewMode('subdecks');
+                          }
+                        }}
+                        style={{
+                          position: 'absolute',
+                          left: '50%',
+                          transform: `translateX(${offset * 140 - 50}%) rotate(${rotate}deg) translateY(${translateY}px)`,
+                          transformOrigin: 'bottom center',
+                          width: 220,
+                          height: 140,
+                          padding: 8,
+                          boxShadow: selectedDeckIndex === i ? '0 8px 20px rgba(0,0,0,0.12)' : '0 6px 14px rgba(0,0,0,0.08)',
+                          borderRadius: 12,
+                          border: selectedDeckIndex === i ? '2px solid #2563eb' : '1px solid #e6edf3',
+                          background: '#ffffff',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                          alignItems: 'stretch',
+                          overflow: 'hidden'
+                        }}
+                      >
+                        {/* top: place name */}
+                        <div style={{ fontWeight: 700, fontSize: 14, textAlign: 'left', marginBottom: 4 }}>{d.placeName || `Place ${i + 1}`}</div>
+                        {/* middle: small preview image from first attraction if available */}
+                        <div style={{ flex: 1, background: '#f3f7fb', borderRadius: 8, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          {d.attractions && d.attractions[0] && d.attractions[0].imageUrl ? (
+                            <img src={d.attractions[0].imageUrl} alt={d.placeName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          ) : (
+                            <div style={{ color: '#9ca3af' }}>No image</div>
+                          )}
+                        </div>
+                        {/* bottom: count */}
+                        <div style={{ marginTop: 6, textAlign: 'right', fontSize: 13, color: '#374151' }}>{(d.attractions || []).length} items</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Subdeck cards shown when a deck is selected and has subdecks (not yet focused) */}
+            {selectedDeckIndex !== null && decks[selectedDeckIndex] && decks[selectedDeckIndex].subdecks && viewMode !== 'cardsFocused' && (
+              <div style={{ marginTop: 12, display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
+                {(decks[selectedDeckIndex].subdecks || []).map((s, si) => (
                   <button
                     key={si}
-                    type="button"
-                    onClick={() => setSelectedSubdeckIndex(si)}
-                    style={{ padding: "6px 10px", borderRadius: 6, border: selectedSubdeckIndex === si ? "2px solid #2563eb" : "1px solid #d1d5db", background: selectedSubdeckIndex === si ? "#eef6ff" : "#fbfdff", cursor: "pointer" }}
+                    onClick={() => {
+                      setSelectedSubdeckIndex(si);
+                      // enter focused view: hide other decks
+                      setViewMode('cardsFocused');
+                    }}
+                    style={{
+                      width: 180,
+                      height: 120,
+                      borderRadius: 10,
+                      border: selectedSubdeckIndex === si ? '2px solid #2563eb' : '1px solid #e6edf3',
+                      background: '#fff',
+                      padding: 10,
+                      boxShadow: '0 6px 14px rgba(0,0,0,0.06)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between'
+                    }}
                   >
-                    {s.label} ({s.ids.length})
+                    <div style={{ fontWeight: 700 }}>{s.label}</div>
+                    <div style={{ textAlign: 'right', color: '#374151' }}>{(s.ids || []).length}</div>
                   </button>
                 ))}
               </div>
             )}
 
-            {/* Debug: show deck names compactly so it's obvious */}
-            <div style={{ marginTop: 8, textAlign: "center", color: "#6b7280", fontSize: 13 }}>
-              Decks: {decks.map((d) => d.placeName || "").filter(Boolean).join(" • ")}
+            {/* Back button when focused */}
+            {viewMode === 'cardsFocused' && (
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: 12 }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    // clear focus and return to deck selection
+                    setSelectedSubdeckIndex(null);
+                    setSelectedDeckIndex(null);
+                    setViewMode('decks');
+                  }}
+                  className="saved-trips-button"
+                >
+                  ← Back to decks
+                </button>
+              </div>
+            )}
+
+            <div style={{ marginTop: 8, textAlign: 'center', color: '#6b7280', fontSize: 13 }}>
+              Decks: {decks.map((d) => d.placeName || '').filter(Boolean).join(' • ')}
             </div>
           </section>
         )}
