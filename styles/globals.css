@@ -4437,31 +4437,17 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
   overflow: hidden;
 }
 
-.collab-results-bar-center {
-  position: absolute;
-  left: 50%;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: #b7c8da;
-  transform: translateX(-1px);
-  z-index: 1;
+.collab-results-bar-single {
+  display: flex;
+  align-items: stretch;
 }
 
-.collab-results-bar-positive {
-  position: absolute;
-  left: 50%;
-  top: 0;
-  bottom: 0;
+.collab-results-bar-fill {
+  height: 100%;
+  min-width: 0;
+  border-radius: 999px;
   background: linear-gradient(90deg, #6ed39d, #25a55f);
-}
-
-.collab-results-bar-negative {
-  position: absolute;
-  right: 50%;
-  top: 0;
-  bottom: 0;
-  background: linear-gradient(90deg, #f29b9b, #dc5f5f);
+  transition: width 0.2s ease;
 }
 
 .collab-results-row-meta {

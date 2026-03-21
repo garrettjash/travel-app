@@ -334,21 +334,16 @@ export default function CollaborateSessionPage() {
       }))
       .filter((row): row is { result: SessionAttractionResult; attraction: Attraction } => Boolean(row.attraction))
       .sort((left, right) => {
-        const leftNet = left.result.yesVotes - left.result.noVotes;
-        const rightNet = right.result.yesVotes - right.result.noVotes;
-        if (rightNet !== leftNet) return rightNet - leftNet;
+        // Rank by thumbs up (yesVotes) only — ignore undecideds
         if (right.result.yesVotes !== left.result.yesVotes) {
           return right.result.yesVotes - left.result.yesVotes;
         }
-        return right.result.totalVotes - left.result.totalVotes;
+        // Tie-break by fewer thumbs down
+        return left.result.noVotes - right.result.noVotes;
       });
   }, [attractions, resultsByAttraction]);
-  const maxVoteCount = useMemo(
-    () =>
-      Math.max(
-        1,
-        ...rankedVoteRows.map((row) => Math.max(row.result.yesVotes, row.result.noVotes))
-      ),
+  const maxYesVotes = useMemo(
+    () => Math.max(1, ...rankedVoteRows.map((row) => row.result.yesVotes)),
     [rankedVoteRows]
   );
 
@@ -522,7 +517,7 @@ export default function CollaborateSessionPage() {
         {!isLoading && !error && isSessionExpired && (
           <section className="about-card" style={{ maxWidth: 980, marginLeft: "auto", marginRight: "auto" }}>
             <p style={{ margin: "0 0 10px", color: "#1f8f4a", fontWeight: 600 }}>
-              Polling is no longer live. Results are ranked by net votes (YES - NO).
+              Polling is no longer live. Results are ranked by thumbs up (👍).
             </p>
             {rankedVoteRows.length === 0 ? (
               <p className="attractions-state">
@@ -531,9 +526,7 @@ export default function CollaborateSessionPage() {
             ) : (
               <div className="collab-results-chart">
                 {rankedVoteRows.map(({ attraction, result }) => {
-                  const positiveWidth = (result.yesVotes / maxVoteCount) * 50;
-                  const negativeWidth = (result.noVotes / maxVoteCount) * 50;
-                  const net = result.yesVotes - result.noVotes;
+                  const barWidthPct = (result.yesVotes / maxYesVotes) * 100;
                   return (
                     <article key={attraction.id} className="collab-results-row">
                       <div className="collab-results-row-head">
@@ -542,21 +535,14 @@ export default function CollaborateSessionPage() {
                           <p>{formatLocation(attraction.city, attraction.country)}</p>
                         </div>
                         <span className="collab-results-row-score">
-                          Net {net >= 0 ? "+" : ""}
-                          {net}
+                          👍 {result.yesVotes}
                         </span>
                       </div>
-                      <div className="collab-results-bar">
-                        <div className="collab-results-bar-center" />
+                      <div className="collab-results-bar collab-results-bar-single">
                         <div
-                          className="collab-results-bar-negative"
-                          style={{ width: `${negativeWidth}%` }}
-                          title={`No votes: ${result.noVotes}`}
-                        />
-                        <div
-                          className="collab-results-bar-positive"
-                          style={{ width: `${positiveWidth}%` }}
-                          title={`Yes votes: ${result.yesVotes}`}
+                          className="collab-results-bar-fill"
+                          style={{ width: `${barWidthPct}%` }}
+                          title={`Thumbs up: ${result.yesVotes}`}
                         />
                       </div>
                       <p className="collab-results-row-meta">
