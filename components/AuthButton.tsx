@@ -97,6 +97,17 @@ export default function AuthButton({ loginHref = "/login" }: AuthButtonProps) {
               className="auth-button-menu-item"
               role="menuitem"
               onClick={() => {
+                router.push("/my-collab-sessions");
+                setMenuOpen(false);
+              }}
+            >
+              Collab Sessions
+            </button>
+            <button
+              type="button"
+              className="auth-button-menu-item"
+              role="menuitem"
+              onClick={() => {
                 router.push("/settings");
                 setMenuOpen(false);
               }}

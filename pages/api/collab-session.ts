@@ -607,7 +607,7 @@ export default async function handler(
 
         if (existingItineraryId) {
           const votedIds = results
-            .filter((r) => r.yesVotes >= r.noVotes)
+            .filter((r) => r.yesVotes > r.noVotes)
             .sort((a, b) => b.yesVotes - b.noVotes - (a.yesVotes - a.noVotes))
             .map((r) => r.attractionId);
 

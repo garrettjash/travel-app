@@ -317,7 +317,7 @@ export default function CollaborateSessionPage() {
       .filter((attraction) => {
         const result = resultsByAttraction[attraction.id];
         if (!result) return false;
-        return result.yesVotes >= result.noVotes;
+        return result.yesVotes > result.noVotes;
       })
       .sort((left, right) => {
         const leftYes = resultsByAttraction[left.id]?.yesVotes ?? 0;
@@ -325,6 +325,32 @@ export default function CollaborateSessionPage() {
         return rightYes - leftYes;
       });
   }, [attractions, isSessionExpired, resultsByAttraction]);
+  const rankedVoteRows = useMemo(() => {
+    const attractionById = new Map(attractions.map((attraction) => [attraction.id, attraction]));
+    return Object.values(resultsByAttraction)
+      .map((result) => ({
+        result,
+        attraction: attractionById.get(result.attractionId)
+      }))
+      .filter((row): row is { result: SessionAttractionResult; attraction: Attraction } => Boolean(row.attraction))
+      .sort((left, right) => {
+        const leftNet = left.result.yesVotes - left.result.noVotes;
+        const rightNet = right.result.yesVotes - right.result.noVotes;
+        if (rightNet !== leftNet) return rightNet - leftNet;
+        if (right.result.yesVotes !== left.result.yesVotes) {
+          return right.result.yesVotes - left.result.yesVotes;
+        }
+        return right.result.totalVotes - left.result.totalVotes;
+      });
+  }, [attractions, resultsByAttraction]);
+  const maxVoteCount = useMemo(
+    () =>
+      Math.max(
+        1,
+        ...rankedVoteRows.map((row) => Math.max(row.result.yesVotes, row.result.noVotes))
+      ),
+    [rankedVoteRows]
+  );
 
   const currentAttraction = displayedAttractions[currentIndex] ?? null;
   const currentVote = currentAttraction ? votesByAttraction[currentAttraction.id] : undefined;
@@ -485,25 +511,79 @@ export default function CollaborateSessionPage() {
           </section>
         )}
 
-        {!isLoading && !error && !currentAttraction && (
+        {!isLoading && !error && !currentAttraction && !isSessionExpired && (
           <section className="about-card">
             <p className="attractions-state">
-              {isSessionExpired
-                ? itineraryPath
-                  ? "Use the link above or the button on the right to view your itinerary."
-                  : "Polling is closed. No attractions met the YES-over-NO results criteria."
-                : "No attractions found for this session."}
+              No attractions found for this session.
             </p>
           </section>
         )}
 
-        {!isLoading && !error && currentAttraction && (
+        {!isLoading && !error && isSessionExpired && (
           <section className="about-card" style={{ maxWidth: 980, marginLeft: "auto", marginRight: "auto" }}>
-            {isSessionExpired && (
-              <p style={{ margin: "0 0 10px", color: "#1f8f4a", fontWeight: 600 }}>
-                Polling is no longer live, but these are the results.
+            <p style={{ margin: "0 0 10px", color: "#1f8f4a", fontWeight: 600 }}>
+              Polling is no longer live. Results are ranked by net votes (YES - NO).
+            </p>
+            {rankedVoteRows.length === 0 ? (
+              <p className="attractions-state">
+                No votes were recorded for this session.
               </p>
+            ) : (
+              <div className="collab-results-chart">
+                {rankedVoteRows.map(({ attraction, result }) => {
+                  const positiveWidth = (result.yesVotes / maxVoteCount) * 50;
+                  const negativeWidth = (result.noVotes / maxVoteCount) * 50;
+                  const net = result.yesVotes - result.noVotes;
+                  return (
+                    <article key={attraction.id} className="collab-results-row">
+                      <div className="collab-results-row-head">
+                        <div>
+                          <strong>{attraction.name}</strong>
+                          <p>{formatLocation(attraction.city, attraction.country)}</p>
+                        </div>
+                        <span className="collab-results-row-score">
+                          Net {net >= 0 ? "+" : ""}
+                          {net}
+                        </span>
+                      </div>
+                      <div className="collab-results-bar">
+                        <div className="collab-results-bar-center" />
+                        <div
+                          className="collab-results-bar-negative"
+                          style={{ width: `${negativeWidth}%` }}
+                          title={`No votes: ${result.noVotes}`}
+                        />
+                        <div
+                          className="collab-results-bar-positive"
+                          style={{ width: `${positiveWidth}%` }}
+                          title={`Yes votes: ${result.yesVotes}`}
+                        />
+                      </div>
+                      <p className="collab-results-row-meta">
+                        👍 {result.yesVotes} · 👎 {result.noVotes} · {result.yesVotes > result.noVotes ? "Included" : "Excluded"}
+                      </p>
+                    </article>
+                  );
+                })}
+              </div>
             )}
+
+            {itineraryPath && (
+              <div style={{ marginTop: 16, textAlign: "center" }}>
+                <button
+                  type="button"
+                  className="saved-trips-button saved-trips-button-primary"
+                  onClick={() => router.push(itineraryPath)}
+                >
+                  View itinerary
+                </button>
+              </div>
+            )}
+          </section>
+        )}
+
+        {!isLoading && !error && !isSessionExpired && currentAttraction && (
+          <section className="about-card" style={{ maxWidth: 980, marginLeft: "auto", marginRight: "auto" }}>
             {currentVoteMessage && (
               <p style={{ margin: "0 0 10px", color: "#1f8f4a", fontWeight: 600 }}>
                 {currentVoteMessage}
@@ -575,15 +655,6 @@ export default function CollaborateSessionPage() {
                     <dt>Price</dt>
                     <dd>{currentAttraction.priceLevel || "N/A"}</dd>
                   </div>
-                  {isSessionExpired && currentResult && (
-                    <div>
-                      <dt>Group votes</dt>
-                      <dd>
-                        👍 {currentResult.yesVotes} · 👎 {currentResult.noVotes}
-                        {currentResult.yesVotes > currentResult.noVotes && " — Recommended"}
-                      </dd>
-                    </div>
-                  )}
                 </dl>
               </article>
 
@@ -600,17 +671,6 @@ export default function CollaborateSessionPage() {
               )}
             </div>
 
-            {isSessionExpired && itineraryPath && (
-              <div style={{ marginTop: 16, textAlign: "center" }}>
-                <button
-                  type="button"
-                  className="saved-trips-button saved-trips-button-primary"
-                  onClick={() => router.push(itineraryPath)}
-                >
-                  View itinerary
-                </button>
-              </div>
-            )}
             <div className="saved-trips-actions" style={{ marginTop: 12, justifyContent: "center", alignItems: "center" }}>
               <button
                 type="button"
