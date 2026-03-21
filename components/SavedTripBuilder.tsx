@@ -329,6 +329,15 @@ function sanitizeItineraryId(raw: string | null | undefined) {
     .slice(0, 80);
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 const SUGGESTED_LIMIT = 24;
 const SAMPLE_TRIAL_START_MINUTE = 8 * 60;
 const SAMPLE_TRIAL_END_MINUTE = 20 * 60;
@@ -632,6 +641,7 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
   const [suggestMaxPriceLevel, setSuggestMaxPriceLevel] = useState("0");
   const [suggestCategoryFilter, setSuggestCategoryFilter] = useState("all");
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const [customEventMenuOpen, setCustomEventMenuOpen] = useState(false);
   const [customEventName, setCustomEventName] = useState("");
   const [customEventDurationMinutes, setCustomEventDurationMinutes] = useState(90);
@@ -1326,7 +1336,7 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
     return () => clearTimeout(timer);
   }, autoSaveDeps);
 
-  async function handleExport() {
+  async function handleExportIcs() {
     if (!startDate || dayPlans.length === 0) return;
 
     const events: string[] = [];
@@ -1402,6 +1412,71 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  }
+
+  function handleExportPdf() {
+    const tripTitle = activeTripName || "Trip Itinerary";
+    const daySections = paddedDayPlans
+      .map((day) => {
+        const stops = day.stops
+          .slice()
+          .sort((a, b) => (a.startTime || "").localeCompare(b.startTime || ""))
+          .map((stop) => {
+            const name = escapeHtml(stop.attraction.name || "Untitled stop");
+            const time = escapeHtml(formatTimeLabel(stop.startTime, stop.durationMinutes));
+            const location = escapeHtml(
+              formatLocation(
+                stop.attraction.city,
+                stop.attraction.stateProvince,
+                stop.attraction.country
+              )
+            );
+            return `<li><strong>${name}</strong><br /><span>${time} - ${location}</span></li>`;
+          })
+          .join("");
+        return `<section><h2>Day ${day.dayNumber}</h2>${
+          stops ? `<ul>${stops}</ul>` : "<p>No scheduled stops.</p>"
+        }</section>`;
+      })
+      .join("");
+
+    const unscheduledItems = unscheduled
+      .map((item) => `<li>${escapeHtml(item.name || "Untitled stop")}</li>`)
+      .join("");
+
+    const html = `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>${escapeHtml(tripTitle)} - Itinerary</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 24px; color: #1f2933; }
+      h1 { margin: 0 0 12px; }
+      h2 { margin: 18px 0 8px; font-size: 18px; }
+      p { margin: 6px 0; }
+      ul { margin: 8px 0 0 18px; padding: 0; }
+      li { margin: 8px 0; }
+      span { color: #52606d; font-size: 14px; }
+    </style>
+  </head>
+  <body>
+    <h1>${escapeHtml(tripTitle)}</h1>
+    <p><strong>Dates:</strong> ${escapeHtml(startDate)} to ${escapeHtml(endDate)}</p>
+    ${daySections}
+    <section>
+      <h2>Unassigned</h2>
+      ${unscheduledItems ? `<ul>${unscheduledItems}</ul>` : "<p>No unassigned items.</p>"}
+    </section>
+  </body>
+</html>`;
+
+    const printWindow = window.open("", "_blank", "noopener,noreferrer");
+    if (!printWindow) return;
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
   }
 
   async function handleAddExtraLocationForSection(
@@ -1655,19 +1730,42 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
               </p>
             </div>
             <div className="saved-trips-header-actions">
-              <button
-                type="button"
-                className="saved-trips-button saved-trips-header-action"
-                onClick={handleExport}
-              >
-                <img
-                  src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJQAAACUCAMAAABC4vDmAAAAXVBMVEX///8AAACbm5tQUFDv7+94eHi1tbV9fX1ERETQ0NCpqank5OQzMzMqKirJycnExMQXFxcICAj4+PglJSUeHh5hYWE5OTnb29u7u7sRERGRkZFKSkpVVVVsbGyKioovde/pAAACaElEQVR4nO3ca5OCIBQG4INprZey0i7W7v7/n7maylHCQkehmX3fLzXVwDNABF4imifxLct+45kKmyn+WZQ5+64d3YRb8UhycS3hxIloknxMD7btVGUbutbUuXRMpeojejDMRS/ZB7RVuBVK3Pfgbq+ahNjvHJuyZ1PZg05VqY5UJXVoyodQuTMVt9O+mT0THmGOVNdCCsJN/bgJ5UvF1YmJ608pqJ8FlLLUgWotKz+U85JEUXiQb6xtmzrtVH3/GUU7Z20V8Rh/zN8dFIU82iObpn7fKShHPejJSvNmTdBD0YXnL8+WiftOtL+9fRTxzGCrrW6ywq1cZyooinntcLNh4nY68HpORdGFx5WF0c5jvLsef0J11u0WZoZTW1XR3SM8oyiW89VpcVRbVX+Pp0E1e8GKvziqaamsv+/UocjPbLVU/W2/K3thLYr8e2/eWFJVduBJ3Z/rUeSf7JjKHJ9fGkDpP2wrwyiHAco0QJkGKNMAZRqgTAOUaSygYm/zJoFy+EmPSoN35XjGJwOugwfoOMq+SY+KXpdRJTfc6vjvi5oPJYTZSSajouZDme1VvfcFzYkyOwQC1EhU8fUiiXKER49aJ6/KKCagvsdsjiZMnsfvCajVmBPCE1D+CiiggAIKKKCAAgoooIACCiiggAIKKKCAAgoooOZHtZd+fxSqub55zHWKy6Pq/ht1ttYCiq5BMO56Thuo0QEKKKCAAgoooIACCiiggAIKKKCAAgoooIACCiiggHKEGnWLyoRMukXlvF445wkoWwHqH6AG/2dumRj+I9uPTdOPmYmOkcHttfMkj3Sz4R8cySgb1UR8OgAAAABJRU5ErkJggg=="
-                  alt=""
-                  width={18}
-                  height={18}
-                />
-                <span>Export</span>
-              </button>
+              <div className="saved-trips-share-dropdown">
+                <button
+                  type="button"
+                  className="saved-trips-button saved-trips-header-action"
+                  onClick={() => setExportMenuOpen((open) => !open)}
+                >
+                  <span>Export</span>
+                  <span className="saved-trips-share-caret" aria-hidden="true">
+                    ▾
+                  </span>
+                </button>
+                {exportMenuOpen && (
+                  <div className="saved-trips-share-menu">
+                    <button
+                      type="button"
+                      className="saved-trips-share-menu-item"
+                      onClick={() => {
+                        void handleExportIcs();
+                        setExportMenuOpen(false);
+                      }}
+                    >
+                      Export as iCal (.ics)
+                    </button>
+                    <button
+                      type="button"
+                      className="saved-trips-share-menu-item"
+                      onClick={() => {
+                        handleExportPdf();
+                        setExportMenuOpen(false);
+                      }}
+                    >
+                      Export as PDF
+                    </button>
+                  </div>
+                )}
+              </div>
               {(shareLink || (user?.id && shareCode)) && (
                 <div className="saved-trips-share-dropdown">
                   <button
