@@ -275,6 +275,106 @@ function toDbShape(days: DayPlan[], unscheduled: FavoriteAttraction[]): {
   return { dbDays, dbUnscheduled };
 }
 
+function parseDurationFromSessionId(sessionId: string): number {
+  const match = String(sessionId).match(/_d(\d+)$/i);
+  if (!match) return 1440;
+  const parsed = Number(match[1]);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1440;
+}
+
+/** When fetching a collab itinerary with empty unscheduled, apply voted places from the linked session. */
+async function applyCollabResultsIfNeeded(
+  supabase: any,
+  itineraryId: string,
+  tripName: string | null,
+  rawDays: unknown,
+  rawUnscheduled: unknown
+): Promise<{ rawDays: unknown; rawUnscheduled: unknown }> {
+  const name = normalizeText(tripName) || "";
+  if (!name.startsWith("Collab:")) return { rawDays, rawUnscheduled };
+
+  const unsArr = Array.isArray(rawUnscheduled) ? (rawUnscheduled as any[]) : [];
+  if (unsArr.length > 0) return { rawDays, rawUnscheduled };
+
+  const { data: sessionRow } = await supabase
+    .from("collab_session")
+    .select("collab_session_id, created_at")
+    .eq("itinerary_id", itineraryId)
+    .limit(1)
+    .maybeSingle();
+
+  if (!sessionRow) return { rawDays, rawUnscheduled };
+
+  const sessionId = String(sessionRow.collab_session_id || "");
+  const createdAtIso = normalizeText(sessionRow.created_at);
+  const createdAt = Date.parse(createdAtIso);
+  if (!Number.isFinite(createdAt)) return { rawDays, rawUnscheduled };
+
+  const durationMinutes = parseDurationFromSessionId(sessionId);
+  const expiresAt = createdAt + durationMinutes * 60 * 1000;
+  if (Date.now() <= expiresAt) return { rawDays, rawUnscheduled };
+
+  const [pollRes, itemsRes, placesRes] = await Promise.all([
+    supabase.from("poll").select("attraction_id, vote").eq("collab_session_id", sessionId).limit(10000),
+    supabase.from("collab_items").select("attraction_id").eq("collab_session_id", sessionId).limit(5000),
+    supabase.from("collab_session_places").select("place_id").eq("session_id", sessionId).limit(1000)
+  ]);
+
+  if (pollRes.error || itemsRes.error) return { rawDays, rawUnscheduled };
+
+  const resolvedPlaceIds = (placesRes.data ?? []).map((r: any) => Number(r.place_id)).filter(Number.isFinite);
+  if (resolvedPlaceIds.length === 0) return { rawDays, rawUnscheduled };
+
+  const resultByAttraction = new Map<number, { yesVotes: number; noVotes: number }>();
+  for (const row of pollRes.data ?? []) {
+    const aid = Number(row.attraction_id);
+    if (!Number.isFinite(aid)) continue;
+    const cur = resultByAttraction.get(aid) ?? { yesVotes: 0, noVotes: 0 };
+    if (row.vote === true) cur.yesVotes += 1;
+    if (row.vote === false) cur.noVotes += 1;
+    resultByAttraction.set(aid, cur);
+  }
+
+  const results = Array.from(resultByAttraction.entries())
+    .filter(([, v]) => v.yesVotes > v.noVotes)
+    .sort((a, b) => (b[1].yesVotes - b[1].noVotes) - (a[1].yesVotes - a[1].noVotes));
+
+  if (results.length === 0) return { rawDays, rawUnscheduled };
+
+  const attractionIds = results.map(([id]) => id);
+  const { data: attrRows } = await supabase
+    .from("attraction")
+    .select("attraction_id, attraction_name, place_id")
+    .in("attraction_id", attractionIds)
+    .in("place_id", resolvedPlaceIds)
+    .limit(5000);
+
+  const nameById = new Map<number, string>();
+  for (const r of attrRows ?? []) {
+    const id = Number(r.attraction_id);
+    if (Number.isFinite(id)) nameById.set(id, normalizeText(r.attraction_name) || "Unnamed attraction");
+  }
+
+  const unscheduled = results.map(([attractionId]) => ({
+    attractionId,
+    attractionName: nameById.get(attractionId) ?? "Unnamed attraction",
+    yesVotes: resultByAttraction.get(attractionId)!.yesVotes,
+    noVotes: resultByAttraction.get(attractionId)!.noVotes
+  }));
+
+  const { error: updateErr } = await supabase
+    .from("itinerary")
+    .update({ days: [], unscheduled })
+    .eq("itinerary_id", itineraryId);
+
+  if (updateErr) {
+    console.error("[itinerary] Failed to apply collab results:", updateErr.message);
+    return { rawDays, rawUnscheduled };
+  }
+
+  return { rawDays: [], rawUnscheduled: unscheduled };
+}
+
 function collectAttractionIds(rawDays: unknown, rawUnscheduled: unknown): { ids: number[]; hasNormalizedIds: boolean } {
   const idsSet = new Set<number>();
   let hasNormalizedIds = false;
@@ -567,8 +667,18 @@ export default async function handler(
       const primaryPlace = placeArr[0];
       const tripPlace = primaryPlace?.placeName ?? "";
 
-      const rawDays = (data.days ?? []) as unknown;
-      const rawUnscheduled = (data.unscheduled ?? []) as unknown;
+      let rawDays = (data.days ?? []) as unknown;
+      let rawUnscheduled = (data.unscheduled ?? []) as unknown;
+
+      const applied = await applyCollabResultsIfNeeded(
+        supabase,
+        itineraryId,
+        data.trip_name,
+        rawDays,
+        rawUnscheduled
+      );
+      rawDays = applied.rawDays;
+      rawUnscheduled = applied.rawUnscheduled;
 
       // Collect all attraction IDs referenced in days/unscheduled, supporting both legacy and new formats.
       const { ids, hasNormalizedIds } = collectAttractionIds(rawDays, rawUnscheduled);
