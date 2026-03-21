@@ -650,6 +650,13 @@ export default function CollaborateSessionPage() {
                     const ids = (s.ids || []).map(Number);
                     const allVotedForSubdeck = ids.length > 0 && ids.every((id) => Boolean(votesByAttraction[id]));
 
+                    // compute slight fan tilt per column (max 5 columns)
+                    const colIndex = si % 5;
+                    const colCenter = 2; // center column index
+                    const colOffset = colIndex - colCenter;
+                    const rotate = colOffset * 6;
+                    const translateY = -Math.abs(colOffset) * 6;
+
                     return (
                       <div key={si} style={{ width: 170, textAlign: 'center' }}>
                         <button
@@ -669,7 +676,9 @@ export default function CollaborateSessionPage() {
                             display: 'flex',
                             flexDirection: 'column',
                             justifyContent: 'space-between',
-                            transition: 'transform 220ms ease'
+                            transition: 'transform 220ms ease',
+                            transform: `rotate(${rotate}deg) translateY(${translateY}px)`,
+                            transformOrigin: 'bottom center'
                           }}
                         >
                           <div style={{ height: 88, overflow: 'hidden', borderTopLeftRadius: 12, borderTopRightRadius: 12 }}>
@@ -701,10 +710,15 @@ export default function CollaborateSessionPage() {
                   <button
                     type="button"
                     onClick={() => {
-                      // clear focus and return to deck selection
-                      setSelectedSubdeckIndex(null);
-                      setSelectedDeckIndex(null);
-                      setViewMode('decks');
+                      // Prefer returning to subdecks for the current deck if available, otherwise to the decks list
+                      if (selectedDeckIndex !== null && decks?.[selectedDeckIndex]?.subdecks && decks[selectedDeckIndex].subdecks!.length > 0) {
+                        setSelectedSubdeckIndex(null); // clear the subdeck selection
+                        setViewMode('subdecks');
+                      } else {
+                        setSelectedSubdeckIndex(null);
+                        setSelectedDeckIndex(null);
+                        setViewMode('decks');
+                      }
                     }}
                     className="saved-trips-button"
                   >
