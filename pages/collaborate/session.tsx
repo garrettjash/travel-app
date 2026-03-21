@@ -559,7 +559,7 @@ export default function CollaborateSessionPage() {
           >
             {viewMode !== 'cardsFocused' && (
               <div style={{ textAlign: 'center', marginBottom: 8 }}>
-                <strong style={{ fontSize: 16 }}>Choose a place deck</strong>
+                <strong style={{ fontSize: 16 }}>Choose a Place</strong>
               </div>
             )}
 
@@ -655,7 +655,8 @@ export default function CollaborateSessionPage() {
                     const colCenter = 2; // center column index
                     const colOffset = colIndex - colCenter;
                     const rotate = colOffset * 6;
-                    const translateY = -Math.abs(colOffset) * 6;
+                    // translate down slightly (positive) so cards stay inside the parent card
+                    const translateY = Math.abs(colOffset) * 6;
 
                     return (
                       <div key={si} style={{ width: 170, textAlign: 'center' }}>
