@@ -702,10 +702,10 @@ export default async function handler(
               .update({ days: [], unscheduled })
               .eq("itinerary_id", existingItineraryId);
             if (updateErr) {
-              // Non-fatal; owner can still open itinerary
+              console.error("[collab-session] Failed to update itinerary with voted places:", updateErr.message);
             }
-          } catch {
-            // ignore
+          } catch (err) {
+            console.error("[collab-session] Exception updating itinerary:", err);
           }
         }
         // If there is no existingItineraryId, we no longer create a new itinerary here.
