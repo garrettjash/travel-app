@@ -128,7 +128,7 @@ type ExtraSuggestionSection = {
   searchQuery?: string;
 };
 
-type SuggestSort = "name-asc" | "name-desc" | "rating-desc" | "popularity-desc";
+type SuggestSort = "name-asc" | "category-asc" | "rating-desc" | "popularity-desc";
 
 function formatLocation(city: string, stateProvince: string, country: string) {
   return [city, stateProvince, country].filter(Boolean).join(", ") || "Location unavailable";
@@ -143,7 +143,8 @@ function filterAndSortAttractions(
   list: FavoriteAttraction[],
   searchQuery: string,
   sortBy: SuggestSort,
-  maxPriceLevel: string
+  maxPriceLevel: string,
+  categoryFilter: string
 ) {
   const q = searchQuery.trim().toLowerCase();
   const maxPrice = Number(maxPriceLevel);
@@ -162,11 +163,23 @@ function filterAndSortAttractions(
       const priceCount = (level.match(/\$/g) ?? []).length;
       if (priceCount === 0 || priceCount > maxPrice) return false;
     }
+    if (categoryFilter !== "all") {
+      const categories = attraction.categories ?? [];
+      const hasCategory = categories.some(
+        (category) => category.trim().toLowerCase() === categoryFilter
+      );
+      if (!hasCategory) return false;
+    }
     return true;
   });
 
   return filtered.sort((left, right) => {
-    if (sortBy === "name-desc") return right.name.localeCompare(left.name);
+    if (sortBy === "category-asc") {
+      const leftCategory = (left.categories?.[0] ?? "zzz").toLowerCase();
+      const rightCategory = (right.categories?.[0] ?? "zzz").toLowerCase();
+      if (leftCategory !== rightCategory) return leftCategory.localeCompare(rightCategory);
+      return left.name.localeCompare(right.name);
+    }
     if (sortBy === "rating-desc") return (right.rating ?? -1) - (left.rating ?? -1);
     if (sortBy === "popularity-desc") return (right.popularityScore ?? -1) - (left.popularityScore ?? -1);
     return left.name.localeCompare(right.name);
@@ -613,6 +626,7 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
   const [isSearchingSuggestions, setIsSearchingSuggestions] = useState(false);
   const [suggestSortBy, setSuggestSortBy] = useState<SuggestSort>("name-asc");
   const [suggestMaxPriceLevel, setSuggestMaxPriceLevel] = useState("0");
+  const [suggestCategoryFilter, setSuggestCategoryFilter] = useState("all");
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
   const [customEventMenuOpen, setCustomEventMenuOpen] = useState(false);
   const [customEventName, setCustomEventName] = useState("");
@@ -646,9 +660,14 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
         params.set("search", q);
         if (effectiveLocation) params.set("place", effectiveLocation);
         const res = await fetch(`/api/attractions?${params.toString()}`);
-        const data = await res.json();
-        if (!cancelled && Array.isArray(data.attractions)) {
-          const mapped = (data.attractions as ApiAttraction[]).map(apiAttractionToFavorite);
+        const data = (await res.json()) as { data?: ApiAttraction[]; attractions?: ApiAttraction[] };
+        const rawAttractions = Array.isArray(data.data)
+          ? data.data
+          : Array.isArray(data.attractions)
+            ? data.attractions
+            : [];
+        if (!cancelled && rawAttractions.length > 0) {
+          const mapped = rawAttractions.map(apiAttractionToFavorite);
           setSuggestSearchResults(mapped);
         } else if (!cancelled) {
           setSuggestSearchResults([]);
@@ -1485,14 +1504,32 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
   const hasSuggestionPanels = Boolean(effectiveLocation) || extraSuggestionSections.length > 0;
   const visiblePrimarySuggestions = useMemo(() => {
     const source = suggestSearchQuery ? suggestSearchResults : suggestedAttractions;
-    return filterAndSortAttractions(source, suggestSearchQuery, suggestSortBy, suggestMaxPriceLevel);
+    return filterAndSortAttractions(
+      source,
+      suggestSearchQuery,
+      suggestSortBy,
+      suggestMaxPriceLevel,
+      suggestCategoryFilter
+    );
   }, [
     suggestSearchQuery,
     suggestSearchResults,
     suggestedAttractions,
     suggestSortBy,
-    suggestMaxPriceLevel
+    suggestMaxPriceLevel,
+    suggestCategoryFilter
   ]);
+  const suggestionCategoryOptions = useMemo(() => {
+    const source = suggestSearchQuery ? suggestSearchResults : suggestedAttractions;
+    const categories = new Set<string>();
+    for (const attraction of source) {
+      for (const category of attraction.categories ?? []) {
+        const normalized = category.trim();
+        if (normalized) categories.add(normalized);
+      }
+    }
+    return Array.from(categories).sort((a, b) => a.localeCompare(b));
+  }, [suggestSearchQuery, suggestSearchResults, suggestedAttractions]);
 
   function renderSuggestedCard(attraction: FavoriteAttraction) {
     const added = isInItinerary(attraction.id);
@@ -1906,7 +1943,7 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                         </div>
                         <div
                           className="saved-trips-field saved-trips-field-full"
-                          style={{ marginTop: 8, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}
+                          style={{ marginTop: 8, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}
                         >
                           <div>
                             <label htmlFor="saved-suggested-sort">Sort</label>
@@ -1916,9 +1953,24 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                               onChange={(e) => setSuggestSortBy(e.target.value as SuggestSort)}
                             >
                               <option value="name-asc">Name (A-Z)</option>
-                              <option value="name-desc">Name (Z-A)</option>
+                              <option value="category-asc">Category (A-Z)</option>
                               <option value="rating-desc">Highest rating</option>
                               <option value="popularity-desc">Most popular</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label htmlFor="saved-suggested-category">Category</label>
+                            <select
+                              id="saved-suggested-category"
+                              value={suggestCategoryFilter}
+                              onChange={(e) => setSuggestCategoryFilter(e.target.value)}
+                            >
+                              <option value="all">All categories</option>
+                              {suggestionCategoryOptions.map((category) => (
+                                <option key={category} value={category.toLowerCase()}>
+                                  {category}
+                                </option>
+                              ))}
                             </select>
                           </div>
                           <div>
@@ -1996,7 +2048,7 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                         </div>
                         <div
                           className="saved-trips-field saved-trips-field-full"
-                          style={{ marginTop: 8, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}
+                          style={{ marginTop: 8, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}
                         >
                           <div>
                             <label htmlFor={`extra-suggested-sort-${section.id}`}>Sort</label>
@@ -2006,9 +2058,32 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                               onChange={(e) => setSuggestSortBy(e.target.value as SuggestSort)}
                             >
                               <option value="name-asc">Name (A-Z)</option>
-                              <option value="name-desc">Name (Z-A)</option>
+                              <option value="category-asc">Category (A-Z)</option>
                               <option value="rating-desc">Highest rating</option>
                               <option value="popularity-desc">Most popular</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label htmlFor={`extra-suggested-category-${section.id}`}>Category</label>
+                            <select
+                              id={`extra-suggested-category-${section.id}`}
+                              value={suggestCategoryFilter}
+                              onChange={(e) => setSuggestCategoryFilter(e.target.value)}
+                            >
+                              <option value="all">All categories</option>
+                              {Array.from(
+                                new Set(
+                                  section.attractions.flatMap((attraction) =>
+                                    (attraction.categories ?? []).map((category) => category.trim()).filter(Boolean)
+                                  )
+                                )
+                              )
+                                .sort((a, b) => a.localeCompare(b))
+                                .map((category) => (
+                                  <option key={category} value={category.toLowerCase()}>
+                                    {category}
+                                  </option>
+                                ))}
                             </select>
                           </div>
                           <div>
@@ -2034,7 +2109,8 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                               section.attractions,
                               section.searchQuery ?? "",
                               suggestSortBy,
-                              suggestMaxPriceLevel
+                              suggestMaxPriceLevel,
+                              suggestCategoryFilter
                             ).map(renderSuggestedCard)}
                           </div>
                         )}
