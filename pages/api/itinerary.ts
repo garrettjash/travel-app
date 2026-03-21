@@ -46,6 +46,8 @@ type DbStop = {
 type DbUnscheduledItem = {
   attractionId: number;
   attractionName: string;
+  yesVotes?: number;
+  noVotes?: number;
 };
 
 type DbDayPlan = {
@@ -122,6 +124,7 @@ type ItineraryResponse =
         notes: string;
         days: DayPlan[];
         unscheduled: FavoriteAttraction[];
+        collabVoteStats?: Record<number, { yesVotes: number; noVotes: number }>;
         createdAt?: string;
         updatedAt?: string;
         requiresShareCode?: boolean;
@@ -572,6 +575,7 @@ export default async function handler(
 
       let hydratedDays: DayPlan[] = [];
       let hydratedUnscheduled: FavoriteAttraction[] = [];
+      let collabVoteStats: Record<number, { yesVotes: number; noVotes: number }> = {};
 
       if (ids.length > 0 && hasNormalizedIds) {
         // New normalized shape (IDs only) — hydrate from DB.
@@ -642,12 +646,18 @@ export default async function handler(
 
         const unsArray = Array.isArray(rawUnscheduled) ? (rawUnscheduled as any[]) : [];
         const seenUnscheduled = new Set<number>();
+        collabVoteStats = {};
         for (const item of unsArray) {
           const id = typeof item === "number" ? item : item?.attractionId ?? item?.id;
           if (!Number.isFinite(id)) continue;
           const n = Number(id);
           if (usedInDays.has(n) || seenUnscheduled.has(n)) continue;
           const storedName = item?.attractionName ?? item?.name;
+          const yesVotes = typeof item?.yesVotes === "number" ? item.yesVotes : undefined;
+          const noVotes = typeof item?.noVotes === "number" ? item.noVotes : undefined;
+          if (yesVotes !== undefined && noVotes !== undefined) {
+            collabVoteStats[n] = { yesVotes, noVotes };
+          }
           let attraction = byId.get(n);
           if (attraction) {
             hydratedUnscheduled.push(attraction);
@@ -735,11 +745,11 @@ export default async function handler(
         extraPlaces?: ExtraPlaceItem[];
         startDate: string;
         endDate: string;
-        // pace is now purely a derived/client concept
         pace: Pace;
         notes: string;
         days: DayPlan[];
         unscheduled: FavoriteAttraction[];
+        collabVoteStats?: Record<number, { yesVotes: number; noVotes: number }>;
         createdAt?: string;
         updatedAt?: string;
         requiresShareCode?: boolean;
@@ -755,6 +765,7 @@ export default async function handler(
         notes: normalizeText(data.notes),
         days: hydratedDays,
         unscheduled: hydratedUnscheduled,
+        collabVoteStats: Object.keys(collabVoteStats).length > 0 ? collabVoteStats : undefined,
         createdAt: data.created_at ?? undefined,
         updatedAt: data.updated_at ?? undefined,
         requiresShareCode: Boolean(data.share_code_required)
@@ -906,7 +917,26 @@ export default async function handler(
       }
 
       if (request.method === "PATCH") {
-        const { dbDays, dbUnscheduled } = toDbShape(days, unscheduled);
+        let { dbDays, dbUnscheduled } = toDbShape(days, unscheduled);
+        const { data: existing } = await supabase
+          .from("itinerary")
+          .select("unscheduled")
+          .eq("itinerary_id", itineraryId)
+          .maybeSingle();
+        const existingUnscheduled = Array.isArray((existing as any)?.unscheduled) ? (existing as any).unscheduled : [];
+        const voteStatsByAttraction: Record<number, { yesVotes: number; noVotes: number }> = {};
+        for (const item of existingUnscheduled) {
+          const id = item?.attractionId ?? item?.id;
+          if (Number.isFinite(id) && typeof item?.yesVotes === "number" && typeof item?.noVotes === "number") {
+            voteStatsByAttraction[Number(id)] = { yesVotes: item.yesVotes, noVotes: item.noVotes };
+          }
+        }
+        if (Object.keys(voteStatsByAttraction).length > 0) {
+          dbUnscheduled = dbUnscheduled.map((u) => {
+            const stats = voteStatsByAttraction[u.attractionId];
+            return stats ? { ...u, yesVotes: stats.yesVotes, noVotes: stats.noVotes } : u;
+          });
+        }
         const { error } = await supabase
           .from("itinerary")
           .update({

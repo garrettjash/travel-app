@@ -656,17 +656,18 @@ export default async function handler(
         const existingItineraryId = sessionResult.data.itinerary_id;
 
         if (existingItineraryId) {
-          const votedIds = results
+          const sortedResults = results
             .filter((r) => r.yesVotes > r.noVotes)
-            .sort((a, b) => b.yesVotes - b.noVotes - (a.yesVotes - a.noVotes))
-            .map((r) => r.attractionId);
+            .sort((a, b) => (b.yesVotes - b.noVotes) - (a.yesVotes - a.noVotes));
 
           const nameById = new Map(
             attractions.map((a) => [a.id, normalizeText(a.name) || "Unnamed attraction"])
           );
-          const unscheduled = votedIds.map((id) => ({
-            attractionId: id,
-            attractionName: nameById.get(id) ?? "Unnamed attraction"
+          const unscheduled = sortedResults.map((r) => ({
+            attractionId: r.attractionId,
+            attractionName: nameById.get(r.attractionId) ?? "Unnamed attraction",
+            yesVotes: r.yesVotes,
+            noVotes: r.noVotes
           }));
 
           // Return itineraryPath to owner; if itinerary has no user_id, let logged-in user claim it

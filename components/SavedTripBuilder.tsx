@@ -105,6 +105,7 @@ export type SavedItinerary = {
   notes: string;
   days: DayPlan[];
   unscheduled: FavoriteAttraction[];
+  collabVoteStats?: Record<number, { yesVotes: number; noVotes: number }>;
   createdAt?: string;
   updatedAt?: string;
   requiresShareCode?: boolean;
@@ -404,6 +405,10 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
   const [isShareCodeCopied, setIsShareCodeCopied] = useState(false);
   const [dragSource, setDragSource] = useState<DragSource | null>(null);
   const [shareCode, setShareCode] = useState<string | null>(initialItinerary?.shareCode ?? null);
+  const [collabVoteStats, setCollabVoteStats] = useState<
+    Record<number, { yesVotes: number; noVotes: number }> | undefined
+  >(initialItinerary?.collabVoteStats);
+  const [unscheduledSort, setUnscheduledSort] = useState<"votes" | "name">("votes");
   const [extraSuggestionSections, setExtraSuggestionSections] = useState<ExtraSuggestionSection[]>([]);
   const [newSuggestionLocation, setNewSuggestionLocation] = useState("");
   const isCollabItinerary =
@@ -662,6 +667,20 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
     );
   }
 
+  const displayedUnscheduled = useMemo(() => {
+    if (!collabVoteStats || Object.keys(collabVoteStats).length === 0) return unscheduled;
+    if (unscheduledSort === "name") {
+      return [...unscheduled].sort((a, b) => a.name.localeCompare(b.name));
+    }
+    return [...unscheduled].sort((a, b) => {
+      const aStats = collabVoteStats[a.id];
+      const bStats = collabVoteStats[b.id];
+      const aNet = aStats ? aStats.yesVotes - aStats.noVotes : -Infinity;
+      const bNet = bStats ? bStats.yesVotes - bStats.noVotes : -Infinity;
+      return bNet - aNet;
+    });
+  }, [unscheduled, collabVoteStats, unscheduledSort]);
+
   /** Effective trip location: from dropdown selection, input, or saved/prop value */
   const effectiveLocation = useMemo(
     () =>
@@ -868,6 +887,7 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
     }
 
     if (initialItinerary) {
+      setCollabVoteStats(initialItinerary.collabVoteStats);
       const all: FavoriteAttraction[] = [];
       for (const day of initialItinerary.days ?? []) {
         for (const stop of day.stops) all.push(stop.attraction);
@@ -2369,16 +2389,32 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                     if (dragSource) moveStop(dragSource, { type: "unscheduled", insertIndex: unscheduled.length });
                   }}
                 >
-                    <h2 className="saved-unassigned-title">Unassigned</h2>
+                    <div className="saved-unassigned-header">
+                      <h2 className="saved-unassigned-title">Unassigned</h2>
+                      {collabVoteStats && Object.keys(collabVoteStats).length > 0 && (
+                        <select
+                          className="saved-unassigned-sort"
+                          value={unscheduledSort}
+                          onChange={(e) => setUnscheduledSort(e.target.value as "votes" | "name")}
+                          aria-label="Sort unassigned attractions"
+                        >
+                          <option value="votes">Sort by votes</option>
+                          <option value="name">Sort A–Z</option>
+                        </select>
+                      )}
+                    </div>
                   <p className="saved-unassigned-intro">Drag places here or into a day. You can also drag directly from the attraction list.</p>
                   <div className="saved-unassigned-cards">
-                    {unscheduled.map((attraction, idx) => (
+                    {displayedUnscheduled.map((attraction, displayIdx) => {
+                      const unscheduledIdx = unscheduled.findIndex((a) => a.id === attraction.id);
+                      const voteStats = collabVoteStats?.[attraction.id];
+                      return (
                       <div
                         key={attraction.id}
-                        className={`saved-schedule-card saved-schedule-card-clickable ${dragSource?.type === "unscheduled" && dragSource.index === idx ? "saved-schedule-card-dragging" : ""}`}
+                        className={`saved-schedule-card saved-schedule-card-clickable ${dragSource?.type === "unscheduled" && dragSource.index === unscheduledIdx ? "saved-schedule-card-dragging" : ""}`}
                         draggable
                         onClick={() => openAttractionDetails(attraction)}
-                        onDragStart={() => setDragSource({ type: "unscheduled", index: idx })}
+                        onDragStart={() => setDragSource({ type: "unscheduled", index: unscheduledIdx })}
                         onDragEnd={() => setDragSource(null)}
                         onDragOver={(e) => {
                           e.preventDefault();
@@ -2387,7 +2423,7 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                         onDrop={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          if (dragSource) moveStop(dragSource, { type: "unscheduled", insertIndex: idx });
+                          if (dragSource) moveStop(dragSource, { type: "unscheduled", insertIndex: unscheduledIdx });
                         }}
                       >
                         <span className="saved-schedule-card-handle" aria-hidden>⋮⋮</span>
@@ -2401,6 +2437,24 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                           <p className="saved-schedule-card-meta">
                             {getAttractionMeta(attraction)}
                           </p>
+                          {voteStats && (voteStats.yesVotes + voteStats.noVotes) > 0 && (
+                            <div className="saved-schedule-card-vote-bar" title={`👍 ${voteStats.yesVotes} · 👎 ${voteStats.noVotes}`}>
+                              <div
+                                className="saved-schedule-card-vote-fill-yes"
+                                style={{ width: `${(voteStats.yesVotes / (voteStats.yesVotes + voteStats.noVotes)) * 100}%` }}
+                              />
+                              <div
+                                className="saved-schedule-card-vote-fill-no"
+                                style={{
+                                  left: `${(voteStats.yesVotes / (voteStats.yesVotes + voteStats.noVotes)) * 100}%`,
+                                  width: `${(voteStats.noVotes / (voteStats.yesVotes + voteStats.noVotes)) * 100}%`
+                                }}
+                              />
+                              <span className="saved-schedule-card-vote-label">
+                                👍 {voteStats.yesVotes} · 👎 {voteStats.noVotes}
+                              </span>
+                            </div>
+                          )}
                         </div>
                         <button
                           type="button"
@@ -2421,7 +2475,7 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                           />
                         </button>
                       </div>
-                    ))}
+                    );})}
                   </div>
                 </div>
                 <div className="saved-calendar-shell">
