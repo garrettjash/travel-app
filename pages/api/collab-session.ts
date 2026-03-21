@@ -711,9 +711,60 @@ export default async function handler(
           } catch (err) {
             console.error("[collab-session] Exception updating itinerary:", err);
           }
+        } else {
+          // No itinerary linked yet — create one now so the collab results are saved.
+          const sortedResults = results
+            .filter((r) => r.yesVotes > r.noVotes)
+            .sort((a, b) => (b.yesVotes - b.noVotes) - (a.yesVotes - a.noVotes));
+
+          const nameById = new Map(
+            attractions.map((a) => [a.id, normalizeText(a.name) || "Unnamed attraction"])
+          );
+          const unscheduled = sortedResults.map((r) => ({
+            attractionId: r.attractionId,
+            attractionName: nameById.get(r.attractionId) ?? "Unnamed attraction",
+            yesVotes: r.yesVotes,
+            noVotes: r.noVotes
+          }));
+
+          const newItineraryId = typeof crypto !== "undefined" && "randomUUID" in crypto
+            ? crypto.randomUUID()
+            : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+          const today = new Date();
+          const startDate = today.toISOString().slice(0, 10);
+          const endDate = new Date(today.getTime() + 1000 * 60 * 60 * 24).toISOString().slice(0, 10);
+          const placeRows = Array.isArray(placeRowsResult?.data) ? (placeRowsResult.data as any[]) : [];
+          const placeEntries = placeRows.length > 0
+            ? placeRows.map((r) => ({
+                placeId: Number(r.place_id),
+                placeName: normalizeText(r.place_city) || collabName || ""
+              }))
+            : [{ placeId: undefined, placeName: collabName || "Your destination" }];
+
+          const insertRow: Record<string, unknown> = {
+            itinerary_id: newItineraryId,
+            trip_name: `Collab: ${collabName}`,
+            place: placeEntries,
+            start_date: startDate,
+            end_date: endDate,
+            notes: "",
+            days: [],
+            unscheduled
+          };
+          if (userId) insertRow.user_id = userId;
+
+          const { error: insertErr } = await supabase.from("itinerary").insert(insertRow);
+          if (!insertErr) {
+            const { error: linkErr } = await supabase
+              .from("collab_session")
+              .update({ itinerary_id: newItineraryId })
+              .eq("collab_session_id", sessionId);
+            if (linkErr) {
+              console.error("[collab-session] Failed to link session to new itinerary:", linkErr.message);
+            }
+            itineraryPath = `/solo-planner/${encodeURIComponent(newItineraryId)}?fromCollab=1&collabSession=${encodeURIComponent(sessionId)}`;
+          }
         }
-        // If there is no existingItineraryId, we no longer create a new itinerary here.
-        // The only itinerary for this collab is the one created at session POST time.
       }
 
       res.status(200).json({ sessionId, placeId: resolvedPlaceIds[0] ?? null, place, attractions, decks, isExpired, results, itineraryPath, expiresAt: expiresAtIso });

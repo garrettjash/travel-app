@@ -295,7 +295,9 @@ async function applyCollabResultsIfNeeded(
   if (!name.startsWith("Collab:")) return { rawDays, rawUnscheduled };
 
   const unsArr = Array.isArray(rawUnscheduled) ? (rawUnscheduled as any[]) : [];
-  if (unsArr.length > 0) return { rawDays, rawUnscheduled };
+  const daysArr = Array.isArray(rawDays) ? (rawDays as any[]) : [];
+  const hasStopsInDays = daysArr.some((d) => Array.isArray(d?.stops) && d.stops.length > 0);
+  if (unsArr.length > 0 || hasStopsInDays) return { rawDays, rawUnscheduled };
 
   let sessionId = "";
   let createdAtIso = "";

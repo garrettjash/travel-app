@@ -264,7 +264,8 @@ export default function CollabPlannerPage() {
         body: JSON.stringify({
           sessionId: token,
           placeId: selectedPlaceId,
-          durationMinutes: selectedDurationMinutes
+          durationMinutes: selectedDurationMinutes,
+          userId: user?.id ?? undefined
         })
       });
 
