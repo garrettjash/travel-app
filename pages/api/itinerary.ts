@@ -716,6 +716,13 @@ export default async function handler(
       let rawDays = (data.days ?? []) as unknown;
       let rawUnscheduled = (data.unscheduled ?? []) as unknown;
 
+      console.log("[itinerary] raw from DB", {
+        itineraryId,
+        rawUnscheduledLength: Array.isArray(rawUnscheduled) ? (rawUnscheduled as any[]).length : 0,
+        rawUnscheduledSample: Array.isArray(rawUnscheduled) ? (rawUnscheduled as any[])[0] : null,
+        rawDaysLength: Array.isArray(rawDays) ? (rawDays as any[]).length : 0
+      });
+
       const rawCollabSession = request.query.collabSession;
       const collabSessionFromQuery =
         typeof rawCollabSession === "string" ? rawCollabSession.trim() : Array.isArray(rawCollabSession) ? (rawCollabSession[0] ?? "").trim() : null;
@@ -733,6 +740,13 @@ export default async function handler(
 
       // Collect all attraction IDs referenced in days/unscheduled, supporting both legacy and new formats.
       const { ids, hasNormalizedIds } = collectAttractionIds(rawDays, rawUnscheduled);
+
+      console.log("[itinerary] after collectAttractionIds", {
+        itineraryId,
+        ids,
+        hasNormalizedIds,
+        idsLength: ids.length
+      });
 
       let hydratedDays: DayPlan[] = [];
       let hydratedUnscheduled: FavoriteAttraction[] = [];

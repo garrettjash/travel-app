@@ -873,6 +873,16 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
         resolvedId
       });
     }
+    if (initialItinerary) {
+      setCollabVoteStats(initialItinerary.collabVoteStats);
+      const all: FavoriteAttraction[] = [];
+      for (const day of initialItinerary.days ?? []) {
+        for (const stop of day.stops) all.push(stop.attraction);
+      }
+      for (const a of initialItinerary.unscheduled ?? []) all.push(a);
+      all.forEach((a) => addAttraction(a));
+      return;
+    }
     if (persisted) {
       clearAttractions();
       const all: FavoriteAttraction[] = [];
@@ -898,17 +908,6 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
         }))
       );
       setUnscheduled(persisted.unscheduled ?? []);
-      return;
-    }
-
-    if (initialItinerary) {
-      setCollabVoteStats(initialItinerary.collabVoteStats);
-      const all: FavoriteAttraction[] = [];
-      for (const day of initialItinerary.days ?? []) {
-        for (const stop of day.stops) all.push(stop.attraction);
-      }
-      for (const a of initialItinerary.unscheduled ?? []) all.push(a);
-      all.forEach((a) => addAttraction(a));
       return;
     }
   }, [initialItinerary?.itineraryId, itineraryIdFromRoute, resolvedId, clearAttractions, moveCartToItinerary, addAttraction]);
