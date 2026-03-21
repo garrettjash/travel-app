@@ -28,9 +28,9 @@ export function setCurrentItineraryId(itineraryId: string | null): void {
   try {
     if (typeof window === "undefined") return;
     if (itineraryId) {
-      window.sessionStorage.setItem(CURRENT_ITINERARY_KEY, itineraryId);
+      window.localStorage.setItem(CURRENT_ITINERARY_KEY, itineraryId);
     } else {
-      window.sessionStorage.removeItem(CURRENT_ITINERARY_KEY);
+      window.localStorage.removeItem(CURRENT_ITINERARY_KEY);
     }
   } catch {
     /* ignore */
@@ -40,7 +40,7 @@ export function setCurrentItineraryId(itineraryId: string | null): void {
 export function getCurrentItineraryId(): string | null {
   try {
     if (typeof window === "undefined") return null;
-    return window.sessionStorage.getItem(CURRENT_ITINERARY_KEY);
+    return window.localStorage.getItem(CURRENT_ITINERARY_KEY);
   } catch {
     return null;
   }
@@ -68,7 +68,7 @@ export function isInWorkingItinerary(attractionId: number): boolean {
 export function loadWorkingItinerary(itineraryId: string): PersistedWorkingItinerary | null {
   try {
     if (typeof window === "undefined") return null;
-    const raw = window.sessionStorage.getItem(storageKey(itineraryId));
+    const raw = window.localStorage.getItem(storageKey(itineraryId));
     if (!raw) return null;
     const parsed = JSON.parse(raw) as unknown;
     if (!parsed || typeof parsed !== "object") return null;
@@ -89,7 +89,7 @@ export function loadWorkingItinerary(itineraryId: string): PersistedWorkingItine
 export function saveWorkingItinerary(data: PersistedWorkingItinerary): void {
   try {
     if (typeof window === "undefined") return;
-    window.sessionStorage.setItem(storageKey(data.itineraryId), JSON.stringify(data));
+    window.localStorage.setItem(storageKey(data.itineraryId), JSON.stringify(data));
   } catch {
     /* ignore */
   }
@@ -151,7 +151,7 @@ export function removeAttractionFromWorkingItinerary(
 export function clearWorkingItinerary(itineraryId: string): void {
   try {
     if (typeof window === "undefined") return;
-    window.sessionStorage.removeItem(storageKey(itineraryId));
+    window.localStorage.removeItem(storageKey(itineraryId));
   } catch {
     /* ignore */
   }

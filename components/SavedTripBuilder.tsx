@@ -896,30 +896,39 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
     });
   }, [attractions, dayPlans]);
 
+  const persistData = useCallback(() => {
+    if (!resolvedId) return;
+    saveWorkingItinerary({
+      itineraryId: resolvedId,
+      tripName,
+      tripPlace,
+      startDate,
+      endDate,
+      pace,
+      notes,
+      days: dayPlans.map((d) => ({
+        dayNumber: d.dayNumber,
+        stops: d.stops.map((s) => ({
+          attraction: s.attraction,
+          startTime: s.startTime ?? "09:00",
+          durationMinutes: s.durationMinutes ?? 90
+        }))
+      })),
+      unscheduled
+    });
+  }, [resolvedId, tripName, tripPlace, startDate, endDate, pace, notes, dayPlans, unscheduled]);
+
   useEffect(() => {
     if (!resolvedId) return;
-    const timer = setTimeout(() => {
-      saveWorkingItinerary({
-        itineraryId: resolvedId,
-        tripName,
-        tripPlace,
-        startDate,
-        endDate,
-        pace,
-        notes,
-        days: dayPlans.map((d) => ({
-          dayNumber: d.dayNumber,
-          stops: d.stops.map((s) => ({
-            attraction: s.attraction,
-            startTime: s.startTime ?? "09:00",
-            durationMinutes: s.durationMinutes ?? 90
-          }))
-        })),
-        unscheduled
-      });
-    }, 400);
+    const timer = setTimeout(persistData, 200);
     return () => clearTimeout(timer);
-  }, [resolvedId, tripName, tripPlace, startDate, endDate, pace, notes, dayPlans, unscheduled]);
+  }, [resolvedId, persistData]);
+
+  useEffect(() => {
+    const onBeforeUnload = () => persistData();
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [persistData]);
 
   const handleSelectPlace = useCallback((place: PlaceOption) => {
     setSelectedPlace(place);

@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import { getCurrentItineraryId } from "../lib/working-itinerary-storage";
 
 export type AppTabKey =
   | "start"
@@ -25,6 +27,17 @@ const NAV_ITEMS: Array<{ key: AppTabKey; label: string; href: string }> = [
 
 export default function AppTopNav({ activeTab }: AppTopNavProps) {
   const router = useRouter();
+  const [soloPlannerHref, setSoloPlannerHref] = useState("/solo-planner");
+
+  useEffect(() => {
+    const currentId = getCurrentItineraryId();
+    setSoloPlannerHref(
+      currentId ? `/solo-planner/${encodeURIComponent(currentId)}` : "/solo-planner"
+    );
+  }, [router.asPath]);
+
+  const getHref = (item: (typeof NAV_ITEMS)[0]) =>
+    item.key === "solo-planner" ? soloPlannerHref : item.href;
 
   return (
     <nav className="app-top-nav" aria-label="Main navigation">
@@ -33,7 +46,7 @@ export default function AppTopNav({ activeTab }: AppTopNavProps) {
           key={item.key}
           type="button"
           className={`app-top-nav-item ${activeTab === item.key ? "app-top-nav-item-active" : ""}`}
-          onClick={() => router.push(item.href)}
+          onClick={() => router.push(getHref(item))}
           aria-current={activeTab === item.key ? "page" : undefined}
         >
           {item.label}
