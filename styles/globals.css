@@ -236,9 +236,10 @@ body {
 
 .landing-topbar {
   height: 64px;
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  justify-content: space-between;
+  gap: 18px;
   padding: 0 20px;
   border-bottom: 1px solid #d4e1ef;
   background: rgba(255, 255, 255, 0.84);
@@ -251,6 +252,7 @@ body {
 .landing-topbar-actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 10px;
 }
 
@@ -535,11 +537,11 @@ body {
   overflow-wrap: anywhere;
 }
 
-.chat-message-content > * {
+.chat-message-content>* {
   margin: 0;
 }
 
-.chat-message-content > * + * {
+.chat-message-content>*+* {
   margin-top: 0.55rem;
 }
 
@@ -553,7 +555,7 @@ body {
   padding-left: 1.25rem;
 }
 
-.chat-message-content li + li {
+.chat-message-content li+li {
   margin-top: 0.3rem;
 }
 
@@ -1091,12 +1093,14 @@ body {
 }
 
 @keyframes chatTypingBounce {
+
   0%,
   80%,
   100% {
     transform: translateY(0);
     opacity: 0.5;
   }
+
   40% {
     transform: translateY(-3px);
     opacity: 1;
@@ -1121,8 +1125,8 @@ body {
     min-width: 0;
   }
 
-  .solo-planner-page > .destinations-sidebar,
-  .collab-planner-page > .destinations-sidebar {
+  .solo-planner-page>.destinations-sidebar,
+  .collab-planner-page>.destinations-sidebar {
     position: static;
     width: auto;
     bottom: auto;
@@ -1320,7 +1324,7 @@ body {
   line-height: 1.2;
 }
 
-.planning-options-card > p {
+.planning-options-card>p {
   margin: 12px 0 0;
   color: #425b73;
 }
@@ -1437,13 +1441,17 @@ body {
   font-size: 1.1rem;
   cursor: pointer;
 }
+
 .remove-input-button:hover {
   background: #fff5f6;
   border-color: #ffd6d9;
 }
 
 /* Improve global inputs to match planning UI */
-input[type="text"], input[type="email"], textarea, select {
+input[type="text"],
+input[type="email"],
+textarea,
+select {
   border: 1px solid #c6d8ec;
   border-radius: 10px;
   background: #fff;
@@ -1452,7 +1460,11 @@ input[type="text"], input[type="email"], textarea, select {
   color: #1a2a3b;
   transition: box-shadow 0.12s ease, border-color 0.12s ease;
 }
-input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focus {
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+textarea:focus,
+select:focus {
   outline: none;
   border-color: #89b3d8;
   box-shadow: 0 8px 20px rgba(13, 68, 115, 0.06);
@@ -1461,19 +1473,24 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
 /* Settings page specific adjustments */
 .settings-form label {
   display: block;
-  margin-bottom: 10px; /* more padding between label (text) and input */
+  margin-bottom: 10px;
+  /* more padding between label (text) and input */
   font-weight: 600;
   color: #214262;
 }
+
 .settings-form input[type="text"],
 .settings-form input[type="email"],
 .settings-form textarea,
 .settings-form select {
-  width: 60%; /* shorten inputs a bit */
+  width: 60%;
+  /* shorten inputs a bit */
   max-width: 420px;
   min-width: 220px;
 }
+
 @media (max-width: 700px) {
+
   .settings-form input[type="text"],
   .settings-form input[type="email"],
   .settings-form textarea,
@@ -2197,13 +2214,14 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
 }
 
 @media (min-width: 1024px) {
+
   /* On desktop, show up to 4 day cards per row, then wrap */
   .saved-days-drag {
     grid-template-columns: repeat(4, minmax(260px, 1fr));
   }
 }
 
-.saved-days-drag > * {
+.saved-days-drag>* {
   min-width: 0;
 }
 
@@ -2890,7 +2908,7 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
   gap: 12px;
 }
 
-.sample-trial-panel-head > div:first-child {
+.sample-trial-panel-head>div:first-child {
   display: grid;
   gap: 4px;
 }
@@ -3798,6 +3816,7 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
   min-height: 100vh;
   background: #f4f6fb;
 }
+
 .login-page-header {
   height: 64px;
   display: flex;
@@ -3807,6 +3826,7 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
   border-bottom: 1px solid #d4e1ef;
   background: rgba(255, 255, 255, 0.9);
 }
+
 .login-page-content {
   display: flex;
   align-items: center;
@@ -3814,6 +3834,7 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
   min-height: calc(100vh - 64px);
   padding: 24px;
 }
+
 .login-page-card {
   width: min(400px, 100%);
   background: #fff;
@@ -3822,12 +3843,14 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
   box-shadow: 0 22px 48px rgba(15, 34, 57, 0.12);
   padding: 24px;
 }
+
 .login-page-tabs {
   display: flex;
   gap: 4px;
   margin-bottom: 20px;
   border-bottom: 1px solid #e0e9f2;
 }
+
 .login-page-tab {
   border: none;
   background: none;
@@ -3839,18 +3862,22 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
 }
+
 .login-page-tab:hover {
   color: #11385b;
 }
+
 .login-page-tab-active {
   color: #11385b;
   border-bottom-color: #11385b;
 }
+
 .login-page-form {
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
+
 .login-page-field label {
   display: block;
   font-size: 0.9rem;
@@ -3858,6 +3885,7 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
   color: #2d4f71;
   margin-bottom: 4px;
 }
+
 .login-page-field input {
   width: 100%;
   padding: 10px 12px;
@@ -3865,11 +3893,13 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
   border-radius: 10px;
   font-size: 1rem;
 }
+
 .login-page-field input:focus {
   outline: none;
   border-color: #11385b;
   box-shadow: 0 0 0 2px rgba(17, 56, 91, 0.15);
 }
+
 .login-page-error {
   margin: 0;
   padding: 10px 12px;
@@ -3910,6 +3940,7 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
   opacity: 0.55;
   filter: grayscale(0.1);
 }
+
 .login-page-submit {
   margin-top: 4px;
   padding: 12px 16px;
@@ -3921,9 +3952,11 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
   font-weight: 600;
   cursor: pointer;
 }
+
 .login-page-submit:hover:not(:disabled) {
   background: #0d2a46;
 }
+
 .login-page-submit:disabled {
   opacity: 0.7;
   cursor: not-allowed;
@@ -3933,19 +3966,23 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
 .auth-button-wrap {
   position: relative;
 }
+
 .auth-button-trigger {
   display: inline-flex;
   align-items: center;
   gap: 8px;
 }
+
 .auth-button-chevron {
   font-size: 0.8rem;
   line-height: 1;
   transition: transform 0.16s ease;
 }
+
 .auth-button-chevron-open {
   transform: rotate(180deg);
 }
+
 .auth-button-backdrop {
   position: fixed;
   inset: 0;
@@ -3954,6 +3991,7 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
   background: transparent;
   cursor: default;
 }
+
 .auth-button-menu {
   position: absolute;
   top: calc(100% + 8px);
@@ -3966,6 +4004,7 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
   padding: 8px 0;
   z-index: 50;
 }
+
 .auth-button-menu-email {
   display: block;
   padding: 8px 14px;
@@ -3973,6 +4012,7 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
   color: #4d6883;
   border-bottom: 1px solid #e8eef4;
 }
+
 .auth-button-menu-item {
   display: block;
   width: 100%;
@@ -3984,6 +4024,7 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
   color: #11385b;
   cursor: pointer;
 }
+
 .auth-button-menu-item:hover {
   background: #f5f9fd;
 }
@@ -3994,12 +4035,14 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
   margin: 0;
   padding: 0;
 }
+
 .my-itineraries-row {
   display: flex;
   align-items: center;
   gap: 12px;
   margin-bottom: 8px;
 }
+
 .my-itineraries-item {
   flex: 1;
   display: block;
@@ -4012,22 +4055,26 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
 }
+
 .my-itineraries-item:hover {
   background: #f5f9fd;
   border-color: #11385b;
 }
+
 .my-itineraries-name {
   display: block;
   font-weight: 600;
   font-size: 1.05rem;
   color: #11385b;
 }
+
 .my-itineraries-location {
   display: block;
   margin-top: 4px;
   font-size: 0.9rem;
   color: #4d6883;
 }
+
 .my-itineraries-delete {
   flex-shrink: 0;
   padding: 8px;
@@ -4040,9 +4087,11 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
   justify-content: center;
   transition: background 0.15s;
 }
+
 .my-itineraries-delete:hover:not(:disabled) {
   background: #fef2f2;
 }
+
 .my-itineraries-delete:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -4128,6 +4177,27 @@ input[type="text"]:focus, input[type="email"]:focus, textarea:focus, select:focu
   color: #1f3348;
   font-weight: 600;
   overflow-wrap: anywhere;
+}
+
+/* Popularity score labels */
+.popularity-label {
+  margin-left: 6px;
+  font-weight: 600;
+}
+.popularity-very-popular {
+  color: #15803d;
+}
+.popularity-popular {
+  color: #c2410c;
+}
+.popularity-semi-popular {
+  color: #a16207;
+}
+.popularity-unpopular {
+  color: #b91c1c;
+}
+.popularity-na {
+  color: #4f6480;
 }
 
 .attraction-modal-map-wrap {

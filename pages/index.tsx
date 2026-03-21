@@ -1,5 +1,6 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import AppTopNav from "../components/AppTopNav";
 import AuthButton from "../components/AuthButton";
 import { useAuth } from "../lib/auth-context";
 
@@ -27,6 +28,7 @@ export default function MarketingHomePage() {
         >
           TravelApp
         </button>
+        <AppTopNav />
         <div className="landing-topbar-actions">
           <AuthButton loginHref="/login?next=%2Fmy-itineraries" />
         </div>
