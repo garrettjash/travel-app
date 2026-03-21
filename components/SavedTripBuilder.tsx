@@ -2454,21 +2454,21 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                             {getAttractionMeta(attraction)}
                           </p>
                           {voteStats && (voteStats.yesVotes + voteStats.noVotes) > 0 && (
-                            <div className="saved-schedule-card-vote-bar" title={`👍 ${voteStats.yesVotes} · 👎 ${voteStats.noVotes}`}>
-                              <div
-                                className="saved-schedule-card-vote-fill-yes"
-                                style={{ width: `${(voteStats.yesVotes / (voteStats.yesVotes + voteStats.noVotes)) * 100}%` }}
-                              />
-                              <div
-                                className="saved-schedule-card-vote-fill-no"
-                                style={{
-                                  left: `${(voteStats.yesVotes / (voteStats.yesVotes + voteStats.noVotes)) * 100}%`,
-                                  width: `${(voteStats.noVotes / (voteStats.yesVotes + voteStats.noVotes)) * 100}%`
-                                }}
-                              />
-                              <span className="saved-schedule-card-vote-label">
-                                👍 {voteStats.yesVotes} · 👎 {voteStats.noVotes}
-                              </span>
+                            <div className="saved-schedule-card-vote-bar-wrap" title={`👍 ${voteStats.yesVotes} · 👎 ${voteStats.noVotes}`}>
+                              <div className="saved-schedule-card-vote-bar">
+                                <div
+                                  className="saved-schedule-card-vote-fill-yes"
+                                  style={{ width: `${(voteStats.yesVotes / (voteStats.yesVotes + voteStats.noVotes)) * 100}%` }}
+                                />
+                                <div
+                                  className="saved-schedule-card-vote-fill-no"
+                                  style={{
+                                    left: `${(voteStats.yesVotes / (voteStats.yesVotes + voteStats.noVotes)) * 100}%`,
+                                    width: `${(voteStats.noVotes / (voteStats.yesVotes + voteStats.noVotes)) * 100}%`
+                                  }}
+                                />
+                              </div>
+                              <span className="saved-schedule-card-vote-count">{voteStats.yesVotes}</span>
                             </div>
                           )}
                         </div>

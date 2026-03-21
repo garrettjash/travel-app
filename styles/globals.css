@@ -2224,13 +2224,27 @@ select:focus {
   gap: 10px;
 }
 
+.saved-schedule-card-vote-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
 .saved-schedule-card-vote-bar {
+  flex: 1;
   position: relative;
   height: 6px;
   border-radius: 3px;
   background: #e8eef4;
   overflow: hidden;
-  margin-top: 8px;
+}
+
+.saved-schedule-card-vote-count {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #22c55e;
+  min-width: 1.25em;
 }
 
 .saved-schedule-card-vote-fill-yes {
@@ -2250,12 +2264,6 @@ select:focus {
   border-radius: 0 3px 3px 0;
 }
 
-.saved-schedule-card-vote-label {
-  display: block;
-  font-size: 0.75rem;
-  color: #5a6f87;
-  margin-top: 4px;
-}
 
 .saved-days-drag {
   display: grid;
