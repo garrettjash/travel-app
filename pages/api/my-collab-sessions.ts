@@ -181,7 +181,7 @@ export default async function handler(
         totalVotes: voteStats.totalVotes,
         itineraryId,
         resultsPath: `/collaborate/session?session=${encodeURIComponent(sessionId)}`,
-        itineraryPath: `/solo-planner/${encodeURIComponent(itineraryId)}?fromCollab=1`
+        itineraryPath: `/solo-planner/${encodeURIComponent(itineraryId)}?fromCollab=1&collabSession=${encodeURIComponent(sessionId)}`
       };
     });
 

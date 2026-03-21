@@ -1170,6 +1170,17 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
     setDayPlans([]);
     setUnscheduled([]);
     setNotes("");
+    const newId =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+    setActiveItineraryId(newId);
+    hasBeenSavedRef.current = false;
+    setShareLink(null);
+    setShareCode(null);
+    if (embedded) {
+      router.replace(`/solo-planner/${encodeURIComponent(newId)}`, undefined, { shallow: false });
+    }
   };
 
   /** Remove an attraction from the entire itinerary (context, unscheduled, all days). Use for every remove action. */

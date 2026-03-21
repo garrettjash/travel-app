@@ -79,11 +79,17 @@ export default function SoloPlannerItineraryPage() {
 
   const itineraryIdFromRoute = Array.isArray(itineraryId) ? itineraryId[0] : itineraryId;
 
+  const collabSessionFromUrl = useMemo(() => {
+    const raw = router.query.collabSession;
+    return typeof raw === "string" ? raw.trim() : Array.isArray(raw) ? (raw[0] ?? "").trim() : "";
+  }, [router.query.collabSession]);
+
   const fetchItinerary = useCallback(async () => {
     if (!itineraryIdFromRoute) return null;
     try {
       const params = new URLSearchParams({ itineraryId: itineraryIdFromRoute });
       if (user?.id) params.set("userId", user.id);
+      if (collabSessionFromUrl) params.set("collabSession", collabSessionFromUrl);
       const res = await fetch(`/api/itinerary?${params.toString()}`);
       const data = (await res.json()) as { itinerary?: SavedItinerary; error?: string };
       if (res.ok && data.itinerary) return data.itinerary;
@@ -91,7 +97,7 @@ export default function SoloPlannerItineraryPage() {
       /* ignore */
     }
     return null;
-  }, [itineraryIdFromRoute, user?.id]);
+  }, [itineraryIdFromRoute, user?.id, collabSessionFromUrl]);
 
   // Load existing itinerary for this ID (e.g. from My Itineraries or collab)
   useEffect(() => {
