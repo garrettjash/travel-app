@@ -2182,10 +2182,34 @@ select:focus {
   min-height: 80px;
 }
 
+.saved-unassigned-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
 .saved-unassigned-title {
-  margin: 0 0 4px;
+  margin: 0;
   font-size: 1.1rem;
   color: #113d68;
+}
+
+.saved-unassigned-sort {
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #2a547d;
+  background: #fff;
+  border: 1px solid #c6d8ec;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.saved-unassigned-sort:hover {
+  border-color: #89b3d8;
 }
 
 .saved-unassigned-intro {
@@ -2198,6 +2222,39 @@ select:focus {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+.saved-schedule-card-vote-bar {
+  position: relative;
+  height: 6px;
+  border-radius: 3px;
+  background: #e8eef4;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.saved-schedule-card-vote-fill-yes {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: #22c55e;
+  border-radius: 3px 0 0 3px;
+}
+
+.saved-schedule-card-vote-fill-no {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: #ef4444;
+  border-radius: 0 3px 3px 0;
+}
+
+.saved-schedule-card-vote-label {
+  display: block;
+  font-size: 0.75rem;
+  color: #5a6f87;
+  margin-top: 4px;
 }
 
 .saved-days-drag {
