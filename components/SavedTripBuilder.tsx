@@ -1497,13 +1497,23 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
   </body>
 </html>`;
 
-    const printWindow = window.open("", "_blank", "noopener,noreferrer");
-    if (!printWindow) return;
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      window.alert("Please allow pop-ups to export as PDF.");
+      return;
+    }
     printWindow.document.open();
     printWindow.document.write(html);
     printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
+    const runPrint = () => {
+      printWindow.focus();
+      printWindow.print();
+    };
+    if (printWindow.document.readyState === "complete") {
+      runPrint();
+    } else {
+      printWindow.onload = runPrint;
+    }
   }
 
   async function handleAddExtraLocationForSection(
