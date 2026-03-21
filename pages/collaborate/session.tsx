@@ -624,55 +624,70 @@ export default function CollaborateSessionPage() {
               </div>
             )}
 
-            {/* Subdeck fan: show when a deck is selected and we're in subdecks view */}
+            {/* Subdeck grid: show when a deck is selected and we're in subdecks view */}
             {selectedDeckIndex !== null && decks[selectedDeckIndex] && decks[selectedDeckIndex].subdecks && viewMode === 'subdecks' && (
-              <div style={{ display: 'flex', justifyContent: 'center', padding: 8, marginTop: 12, overflow: 'visible' }}>
-                <div style={{ display: 'flex', gap: 18, alignItems: 'flex-end', justifyContent: 'center', width: '100%', padding: '8px 16px' }}>
+              <div style={{ padding: 8, marginTop: 12 }}>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // go back to place deck selection
+                      setSelectedSubdeckIndex(null);
+                      setSelectedDeckIndex(null);
+                      setViewMode('decks');
+                    }}
+                    className="saved-trips-button"
+                  >
+                    ← Back to decks
+                  </button>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 18, justifyItems: 'center', padding: '8px 16px' }}>
                   {decks[selectedDeckIndex].subdecks!.map((s, si) => {
-                    // pick preview image from first attraction id in subdeck
                     const firstId = Array.isArray(s.ids) && s.ids.length > 0 ? Number(s.ids[0]) : null;
                     const previewAttraction = firstId ? (decks[selectedDeckIndex].attractions || []).find((a) => Number(a.id) === firstId) : null;
                     const previewImage = previewAttraction?.imageUrl ?? null;
-                    const center = (decks[selectedDeckIndex].subdecks!.length - 1) / 2;
-                    const offset = si - center;
-                    const rotate = offset * 6;
-                    const translateY = -Math.abs(offset) * 8;
+                    const ids = (s.ids || []).map(Number);
+                    const allVotedForSubdeck = ids.length > 0 && ids.every((id) => Boolean(votesByAttraction[id]));
 
                     return (
-                      <button
-                        key={si}
-                        onClick={() => {
-                          setSelectedSubdeckIndex(si);
-                          setViewMode('cardsFocused');
-                        }}
-                        style={{
-                          width: 190,
-                          height: 160,
-                          padding: 0,
-                          boxShadow: selectedSubdeckIndex === si ? '0 10px 26px rgba(0,0,0,0.14)' : '0 6px 18px rgba(0,0,0,0.08)',
-                          borderRadius: 12,
-                          border: selectedSubdeckIndex === si ? '2px solid #2563eb' : '1px solid #e6edf3',
-                          background: '#fff',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          justifyContent: 'space-between',
-                          transform: `rotate(${rotate}deg) translateY(${translateY}px)`,
-                          transition: 'transform 220ms ease'
-                        }}
-                      >
-                        <div style={{ height: 88, overflow: 'hidden', borderTopLeftRadius: 12, borderTopRightRadius: 12 }}>
-                          {previewImage ? (
-                            <img src={previewImage} alt={s.label} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                          ) : (
-                            <div style={{ width: '100%', height: '100%', background: '#f3f7fb', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>No image</div>
-                          )}
-                        </div>
-                        <div style={{ padding: '8px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <div style={{ fontWeight: 700, fontSize: 13, lineHeight: '1.1' }}>{s.label}</div>
-                          <div style={{ color: '#374151', fontSize: 13 }}>{(s.ids || []).length}</div>
-                        </div>
-                      </button>
+                      <div key={si} style={{ width: 170, textAlign: 'center' }}>
+                        <button
+                          onClick={() => {
+                            setSelectedSubdeckIndex(si);
+                            setViewMode('cardsFocused');
+                          }}
+                          style={{
+                            width: 170,
+                            height: 160,
+                            padding: 0,
+                            boxShadow: selectedSubdeckIndex === si ? '0 10px 26px rgba(0,0,0,0.14)' : '0 6px 18px rgba(0,0,0,0.08)',
+                            borderRadius: 12,
+                            border: selectedSubdeckIndex === si ? '2px solid #2563eb' : '1px solid #e6edf3',
+                            background: '#fff',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'space-between',
+                            transition: 'transform 220ms ease'
+                          }}
+                        >
+                          <div style={{ height: 88, overflow: 'hidden', borderTopLeftRadius: 12, borderTopRightRadius: 12 }}>
+                            {previewImage ? (
+                              <img src={previewImage} alt={s.label} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                            ) : (
+                              <div style={{ width: '100%', height: '100%', background: '#f3f7fb', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>No image</div>
+                            )}
+                          </div>
+                          <div style={{ padding: '8px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ fontWeight: 700, fontSize: 13, lineHeight: '1.1', textAlign: 'left' }}>{s.label}</div>
+                            <div style={{ color: '#374151', fontSize: 13 }}>{ids.length}</div>
+                          </div>
+                        </button>
+                        {allVotedForSubdeck && (
+                          <div style={{ color: '#1f8f4a', fontSize: 12, marginTop: 6 }}>Already voted</div>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
