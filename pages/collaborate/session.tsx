@@ -553,13 +553,14 @@ export default function CollaborateSessionPage() {
               marginLeft: 'auto',
               marginRight: 'auto',
               paddingBottom: viewMode === 'cardsFocused' ? 12 : 28,
-              minHeight: viewMode === 'cardsFocused' ? 72 : 240,
-              transition: 'min-height 220ms ease, padding 220ms ease'
+              minHeight: viewMode === 'cardsFocused' ? 72 : viewMode === 'subdecks' ? 380 : 240,
+              transition: 'min-height 220ms ease, padding 220ms ease',
+              overflow: viewMode === 'decks' || viewMode === 'subdecks' ? 'hidden' : 'visible'
             }}
           >
             {viewMode !== 'cardsFocused' && (
               <div style={{ textAlign: 'center', marginBottom: 8 }}>
-                <strong style={{ fontSize: 16 }}>Choose a Place</strong>
+                <strong style={{ fontSize: 16 }}>{viewMode === 'subdecks' ? 'Choose an attraction type' : 'Choose a Place'}</strong>
               </div>
             )}
 
