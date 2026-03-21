@@ -226,6 +226,10 @@ function createCustomEvent(name: string): FavoriteAttraction {
   };
 }
 
+function intervalsOverlap(startA: number, endA: number, startB: number, endB: number) {
+  return startA < endB && startB < endA;
+}
+
 /** Parse "HH:MM" to minutes since midnight. Returns 0 for invalid. */
 function timeToMinutes(hhmm: string): number {
   const m = (hhmm || "09:00").match(/^(\d{1,2}):(\d{2})$/);
@@ -630,7 +634,9 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
   const [customEventMenuOpen, setCustomEventMenuOpen] = useState(false);
   const [customEventName, setCustomEventName] = useState("");
+  const [customEventDurationMinutes, setCustomEventDurationMinutes] = useState(90);
   const [customEventDraft, setCustomEventDraft] = useState<FavoriteAttraction | null>(null);
+  const [customDurationByAttractionId, setCustomDurationByAttractionId] = useState<Record<number, number>>({});
 
   function updateSectionSearch(sectionId: string, query: string) {
     setExtraSuggestionSections((sections) =>
@@ -658,7 +664,14 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
         setIsSearchingSuggestions(true);
         const params = new URLSearchParams();
         params.set("search", q);
-        if (effectiveLocation) params.set("place", effectiveLocation);
+        let cityConstraint = "";
+        if (selectedPlace?.city) {
+          cityConstraint = selectedPlace.city.trim();
+        } else {
+          const [rawCity] = effectiveLocation.split(",");
+          cityConstraint = (rawCity ?? "").trim();
+        }
+        if (cityConstraint) params.set("city", cityConstraint);
         const res = await fetch(`/api/attractions?${params.toString()}`);
         const data = (await res.json()) as { data?: ApiAttraction[]; attractions?: ApiAttraction[] };
         const rawAttractions = Array.isArray(data.data)
@@ -666,8 +679,13 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
           : Array.isArray(data.attractions)
             ? data.attractions
             : [];
-        if (!cancelled && rawAttractions.length > 0) {
-          const mapped = rawAttractions.map(apiAttractionToFavorite);
+        const filteredByCity = cityConstraint
+          ? rawAttractions.filter(
+              (attraction) => (attraction.city ?? "").trim().toLowerCase() === cityConstraint.toLowerCase()
+            )
+          : rawAttractions;
+        if (!cancelled && filteredByCity.length > 0) {
+          const mapped = filteredByCity.map(apiAttractionToFavorite);
           setSuggestSearchResults(mapped);
         } else if (!cancelled) {
           setSuggestSearchResults([]);
@@ -1067,14 +1085,20 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
   const handleCreateCustomEventDraft = useCallback(() => {
     const trimmed = customEventName.trim();
     if (!trimmed) return;
-    setCustomEventDraft(createCustomEvent(trimmed));
-  }, [customEventName]);
+    const draft = createCustomEvent(trimmed);
+    setCustomEventDraft(draft);
+    setCustomDurationByAttractionId((current) => ({
+      ...current,
+      [draft.id]: customEventDurationMinutes
+    }));
+  }, [customEventName, customEventDurationMinutes]);
 
   const handleAddCustomEventToPool = useCallback(() => {
     if (!customEventDraft) return;
     addToItineraryPool(customEventDraft);
     setCustomEventDraft(null);
     setCustomEventName("");
+    setCustomEventDurationMinutes(90);
     setCustomEventMenuOpen(false);
   }, [addToItineraryPool, customEventDraft]);
 
@@ -1092,9 +1116,15 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
         const item = unscheduled[from.index];
         if (!item) return;
         attraction = item;
+        if (isCustomEvent(item)) {
+          durationMinutes = customDurationByAttractionId[item.id] ?? SAMPLE_TRIAL_DEFAULT_DURATION;
+        }
       } else {
         attraction = from.attraction;
         addAttraction(attraction);
+        if (from.type === "custom-draft") {
+          durationMinutes = customDurationByAttractionId[attraction.id] ?? SAMPLE_TRIAL_DEFAULT_DURATION;
+        }
       }
 
       const roundedMinute =
@@ -1148,7 +1178,7 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
       }
       setDragSource(null);
     },
-    [addAttraction, dayPlans, tripDays, unscheduled]
+    [addAttraction, customDurationByAttractionId, dayPlans, tripDays, unscheduled]
   );
 
   const getCalendarDateLabel = useCallback(
@@ -2223,6 +2253,19 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                           className="planning-solo-input"
                           placeholder="Dinner reservation, train ride, hotel check-in…"
                         />
+                        <select
+                          aria-label="Custom event duration"
+                          value={customEventDurationMinutes}
+                          onChange={(event) =>
+                            setCustomEventDurationMinutes(Number(event.target.value) || 90)
+                          }
+                        >
+                          {[30, 45, 60, 90, 120, 180, 240].map((mins) => (
+                            <option key={mins} value={mins}>
+                              {mins < 60 ? `${mins}m` : mins === 60 ? "1h" : `${mins / 60}h`}
+                            </option>
+                          ))}
+                        </select>
                         <button
                           type="button"
                           className="saved-trips-button saved-trips-button-primary"
@@ -2247,6 +2290,9 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                           >
                             <span className="saved-calendar-custom-draft-badge">Custom</span>
                             <strong>{customEventDraft.name}</strong>
+                            <span>
+                              Duration: {customDurationByAttractionId[customEventDraft.id] ?? 90}m
+                            </span>
                             <span>Drag onto a day and time</span>
                           </div>
                           <div className="saved-calendar-custom-draft-actions">
@@ -2263,6 +2309,7 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                               onClick={() => {
                                 setCustomEventDraft(null);
                                 setCustomEventName("");
+                            setCustomEventDurationMinutes(90);
                               }}
                             >
                               Clear
@@ -2297,6 +2344,24 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                               timeToMinutes(left.stop.startTime || "09:00") -
                               timeToMinutes(right.stop.startTime || "09:00")
                           );
+                        const layoutStops = sortedStops.map((entry) => {
+                          const startMinute = timeToMinutes(entry.stop.startTime || "09:00");
+                          const endMinute =
+                            startMinute + (entry.stop.durationMinutes || SAMPLE_TRIAL_DEFAULT_DURATION);
+                          return { ...entry, startMinute, endMinute };
+                        });
+                        const laneEndTimes: number[] = [];
+                        const laneBySlot = new Map<number, number>();
+                        for (const entry of layoutStops) {
+                          let lane = laneEndTimes.findIndex((end) => end <= entry.startMinute);
+                          if (lane < 0) {
+                            lane = laneEndTimes.length;
+                            laneEndTimes.push(entry.endMinute);
+                          } else {
+                            laneEndTimes[lane] = entry.endMinute;
+                          }
+                          laneBySlot.set(entry.slotIndex, lane);
+                        }
 
                         return (
                           <section className="sample-trial-day-column" key={day.dayNumber}>
@@ -2332,15 +2397,24 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                               {sortedStops.length === 0 && (
                                 <p className="saved-day-empty saved-day-empty-calendar">Drop places here</p>
                               )}
-                              {sortedStops.map(({ stop, slotIndex }) => {
+                              {layoutStops.map(({ stop, slotIndex, startMinute, endMinute }) => {
                                 const top =
-                                  ((timeToMinutes(stop.startTime || "09:00") - SAMPLE_TRIAL_START_MINUTE) /
+                                  ((startMinute - SAMPLE_TRIAL_START_MINUTE) /
                                     SAMPLE_TRIAL_STEP_MINUTES) *
                                   SAMPLE_TRIAL_PX_PER_STEP;
                                 const height =
                                   ((stop.durationMinutes || SAMPLE_TRIAL_DEFAULT_DURATION) /
                                     SAMPLE_TRIAL_STEP_MINUTES) *
                                   SAMPLE_TRIAL_PX_PER_STEP;
+                                const lane = laneBySlot.get(slotIndex) ?? 0;
+                                const concurrentCount = Math.max(
+                                  1,
+                                  layoutStops.filter((item) =>
+                                    intervalsOverlap(startMinute, endMinute, item.startMinute, item.endMinute)
+                                  ).length
+                                );
+                                const laneWidthPct = 100 / concurrentCount;
+                                const leftPct = lane * laneWidthPct;
 
                                 return (
                                   <article
@@ -2353,7 +2427,13 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                                         : ""
                                     }`}
                                     draggable
-                                    style={{ top, height }}
+                                    style={{
+                                      top,
+                                      height,
+                                      left: `calc(${leftPct}% + 8px)`,
+                                      width: `calc(${laneWidthPct}% - 14px)`,
+                                      right: "auto"
+                                    }}
                                     onDragStart={() => setDragSource({ type: "day", dayIndex, slotIndex })}
                                     onDragEnd={() => setDragSource(null)}
                                   >
