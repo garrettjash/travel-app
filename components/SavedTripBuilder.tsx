@@ -898,11 +898,14 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
     }
   }, [initialItinerary?.itineraryId, itineraryIdFromRoute, resolvedId, clearAttractions, moveCartToItinerary, addAttraction]);
 
-  // Sync unscheduled so items added from Destinations (or elsewhere) appear in Unassigned (deduplicated by id)
+  // Sync unscheduled so items added from Destinations (or elsewhere) appear in Unassigned (deduplicated by id).
+  // When attractions is empty but current has items (e.g. initial load before addAttraction propagates),
+  // preserve current to avoid wiping loaded data.
   useEffect(() => {
     const inDayIds = new Set(dayPlans.flatMap((d) => d.stops.map((s) => s.attraction.id)));
     const unassigned = attractions.filter((a) => !inDayIds.has(a.id));
     setUnscheduled((current) => {
+      if (unassigned.length === 0 && current.length > 0) return current;
       const kept = current.filter((c) => unassigned.some((u) => u.id === c.id));
       const seenIds = new Set<number>();
       const dedupedKept = kept.filter((c) => {
