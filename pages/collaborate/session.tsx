@@ -32,6 +32,12 @@ type SessionPayload = {
   placeId: number;
   place: string;
   attractions: Attraction[];
+  decks?: Array<{
+    placeId: number;
+    placeName: string;
+    attractions: Attraction[];
+    subdecks?: { label: string; ids: number[] }[];
+  }>;
   isExpired?: boolean;
   results?: SessionAttractionResult[];
   itineraryPath?: string;
@@ -184,6 +190,9 @@ export default function CollaborateSessionPage() {
   const [itineraryPath, setItineraryPath] = useState<string | null>(null);
   const [expiresAtIso, setExpiresAtIso] = useState<string | null>(null);
   const [attractions, setAttractions] = useState<Attraction[]>([]);
+  const [decks, setDecks] = useState<SessionPayload["decks"] | null>(null);
+  const [selectedDeckIndex, setSelectedDeckIndex] = useState<number | null>(null);
+  const [selectedSubdeckIndex, setSelectedSubdeckIndex] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -226,7 +235,30 @@ export default function CollaborateSessionPage() {
       }
 
       setDestination(payload.place || destinationFromUrl);
-      setAttractions(payload.attractions ?? []);
+      const incomingAttractions = payload.attractions ?? [];
+      setAttractions(incomingAttractions);
+
+      // Prefer server-provided decks, but if none present build simple decks client-side
+      const serverDecks = (payload as any).decks ?? null;
+      if (serverDecks && Array.isArray(serverDecks) && serverDecks.length > 0) {
+        setDecks(serverDecks);
+        setSelectedDeckIndex(0);
+        setSelectedSubdeckIndex(null);
+      } else {
+        // Build decks grouped by city/country (fall back) so UI isn't empty
+        const map = new Map<string, Attraction[]>();
+        for (const a of incomingAttractions) {
+          const key = `${a.city || a.country || "unknown"}`;
+          const arr = map.get(key) ?? [];
+          arr.push(a);
+          map.set(key, arr);
+        }
+
+        const built = Array.from(map.entries()).map(([k, items]) => ({ placeId: 0, placeName: k, attractions: items }));
+        setDecks(built.length > 0 ? built : null);
+        setSelectedDeckIndex(built.length > 0 ? 0 : null);
+        setSelectedSubdeckIndex(null);
+      }
       setExpiresAtIso(payload.expiresAt ?? null);
       setIsSessionExpired(Boolean(payload.isExpired));
       setItineraryPath(payload.itineraryPath ?? null);
@@ -311,9 +343,20 @@ export default function CollaborateSessionPage() {
   }, [guestId, sessionId]);
 
   const displayedAttractions = useMemo(() => {
-    if (!isSessionExpired) return attractions;
+    // pick base list from decks if present and a deck is selected
+    let base: Attraction[] = attractions;
+    if (decks && selectedDeckIndex !== null && decks[selectedDeckIndex]) {
+      base = decks[selectedDeckIndex].attractions ?? [];
+      // if a subdeck is selected, filter to those ids
+      if (selectedSubdeckIndex !== null && decks[selectedDeckIndex].subdecks && decks[selectedDeckIndex].subdecks[selectedSubdeckIndex]) {
+        const ids = new Set(decks[selectedDeckIndex].subdecks![selectedSubdeckIndex].ids.map(Number));
+        base = base.filter((a) => ids.has(a.id));
+      }
+    }
 
-    return attractions
+    if (!isSessionExpired) return base;
+
+    return base
       .filter((attraction) => {
         const result = resultsByAttraction[attraction.id];
         if (!result) return false;
@@ -324,7 +367,7 @@ export default function CollaborateSessionPage() {
         const rightYes = resultsByAttraction[right.id]?.yesVotes ?? 0;
         return rightYes - leftYes;
       });
-  }, [attractions, isSessionExpired, resultsByAttraction]);
+  }, [attractions, decks, selectedDeckIndex, selectedSubdeckIndex, isSessionExpired, resultsByAttraction]);
   const rankedVoteRows = useMemo(() => {
     const attractionById = new Map(attractions.map((attraction) => [attraction.id, attraction]));
     return Object.values(resultsByAttraction)
@@ -363,6 +406,11 @@ export default function CollaborateSessionPage() {
       return Math.min(index, displayedAttractions.length - 1);
     });
   }, [displayedAttractions.length]);
+
+  // reset card index when deck/subdeck selection changes
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [selectedDeckIndex, selectedSubdeckIndex]);
 
   async function castVote(vote: VoteValue) {
     if (!currentAttraction || !sessionId || !guestId || isSessionExpired) return;
@@ -493,6 +541,47 @@ export default function CollaborateSessionPage() {
             </div>
           )}
         </section>
+
+        {/* Deck selector */}
+        {!isLoading && !error && decks && decks.length > 0 && (
+          <section className="about-card" style={{ marginTop: 12 }}>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
+              {decks.map((d, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  className={`saved-trips-button ${selectedDeckIndex === i ? "saved-trips-button-primary" : ""}`}
+                  onClick={() => { setSelectedDeckIndex(i); setSelectedSubdeckIndex(null); }}
+                >
+                  {d.placeName || `Place ${i + 1}`} ({(d.attractions || []).length})
+                </button>
+              ))}
+            </div>
+
+            {/* Subdeck selector for selected deck */}
+            {selectedDeckIndex !== null && decks[selectedDeckIndex] && decks[selectedDeckIndex].subdecks && (
+              <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
+                <button
+                  type="button"
+                  className={`saved-trips-button ${selectedSubdeckIndex === null ? "saved-trips-button-primary" : ""}`}
+                  onClick={() => setSelectedSubdeckIndex(null)}
+                >
+                  All ({decks[selectedDeckIndex].attractions.length})
+                </button>
+                {decks[selectedDeckIndex].subdecks!.map((s, si) => (
+                  <button
+                    key={si}
+                    type="button"
+                    className={`saved-trips-button ${selectedSubdeckIndex === si ? "saved-trips-button-primary" : ""}`}
+                    onClick={() => setSelectedSubdeckIndex(si)}
+                  >
+                    {s.label} ({s.ids.length})
+                  </button>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
 
         {isLoading && (
           <section className="about-card">

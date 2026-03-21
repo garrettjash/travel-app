@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { createClient } from "@supabase/supabase-js";
+import { bucketAttractions } from "../../lib/collab-bucket";
 
 type AttractionItem = {
   id: number;
@@ -43,6 +44,12 @@ type CollabSessionResponse =
       placeId: number;
       place: string;
       attractions: AttractionItem[];
+      decks?: Array<{
+        placeId: number;
+        placeName: string;
+        attractions: AttractionItem[];
+        subdecks?: { label: string; ids: number[] }[];
+      }>;
       isExpired?: boolean;
       results?: SessionAttractionResult[];
       itineraryPath?: string;
@@ -568,7 +575,7 @@ export default async function handler(
       filteredAttractionIds.forEach((id, index) => positionById.set(id, index));
 
       if (filteredAttractionIds.length === 0) {
-        res.status(200).json({ sessionId, placeId: resolvedPlaceIds[0] ?? null, place, attractions: [], isExpired, results, expiresAt: expiresAtIso });
+        res.status(200).json({ sessionId, placeId: resolvedPlaceIds[0] ?? null, place, attractions: [], decks: [], isExpired, results, expiresAt: expiresAtIso });
         return;
       }
 
@@ -580,6 +587,7 @@ export default async function handler(
           return {
             id,
             name: normalizeText(row.attraction_name) || "Unnamed attraction",
+            placeId: Number(row.place_id),
             city: normalizeText(row.attraction_city),
             country: normalizeText(row.attraction_countryregion),
             summary: normalizeText(row.attraction_summary),
@@ -601,6 +609,48 @@ export default async function handler(
         });
 
       let itineraryPath: string | undefined;
+
+      // Build decks grouped by placeId. If a deck has >25 attractions and OpenAI key is configured,
+      // attempt to create semantic subdecks using the bucket helper.
+      const placeNameById = new Map<number, string>();
+      if (Array.isArray(placeRowsResult?.data)) {
+        for (const r of placeRowsResult.data ?? []) {
+          const pid = Number((r as any).place_id);
+          if (Number.isFinite(pid)) placeNameById.set(pid, normalizeText((r as any).place_city) || "");
+        }
+      }
+
+      const decksMap = new Map<number, any[]>();
+      for (const a of attractions) {
+        const pid = Number((a as any).placeId) || 0;
+        const arr = decksMap.get(pid) ?? [];
+        arr.push(a);
+        decksMap.set(pid, arr);
+      }
+
+      const decks: {
+        placeId: number;
+        placeName: string;
+        attractions: AttractionItem[];
+        subdecks?: { label: string; ids: number[] }[];
+      }[] = [];
+
+      for (const [pid, items] of decksMap.entries()) {
+        const placeName = placeNameById.get(pid) ?? "";
+        const deck: any = { placeId: pid, placeName, attractions: items };
+        if (items.length > 25 && process.env.OPENAI_API_KEY) {
+          try {
+            const minimal = items.map((it) => ({ id: it.id, name: it.name, summary: it.summary ?? "", categories: it.categories ?? [] }));
+            const buck = await bucketAttractions(minimal as any);
+            if (buck && (buck as any).buckets) {
+              deck.subdecks = (buck as any).buckets.map((b: any) => ({ label: b.label, ids: b.ids }));
+            }
+          } catch {
+            // ignore bucket failures and leave deck without subdecks
+          }
+        }
+        decks.push(deck);
+      }
 
       if (isExpired && results.length > 0) {
         const existingItineraryId = sessionResult.data.itinerary_id;
@@ -661,7 +711,7 @@ export default async function handler(
         // The only itinerary for this collab is the one created at session POST time.
       }
 
-      res.status(200).json({ sessionId, placeId: resolvedPlaceIds[0] ?? null, place, attractions, isExpired, results, itineraryPath, expiresAt: expiresAtIso });
+      res.status(200).json({ sessionId, placeId: resolvedPlaceIds[0] ?? null, place, attractions, decks, isExpired, results, itineraryPath, expiresAt: expiresAtIso });
       return;
     }
 
