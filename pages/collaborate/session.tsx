@@ -545,7 +545,7 @@ export default function CollaborateSessionPage() {
 
         {/* Deck selector */}
         {!isLoading && !error && decks && decks.length > 0 && (
-          <section className="about-card" style={{ marginTop: 12 }}>
+          <section className="about-card" style={{ marginTop: 12, maxWidth: 980, marginLeft: 'auto', marginRight: 'auto' }}>
             <div style={{ textAlign: 'center', marginBottom: 8 }}>
               <strong style={{ fontSize: 16 }}>Choose a place deck</strong>
             </div>
@@ -664,18 +664,27 @@ export default function CollaborateSessionPage() {
             {/* Back button when focused */}
             {viewMode === 'cardsFocused' && (
               <div style={{ display: 'flex', justifyContent: 'center', marginTop: 12 }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    // clear focus and return to deck selection
-                    setSelectedSubdeckIndex(null);
-                    setSelectedDeckIndex(null);
-                    setViewMode('decks');
-                  }}
-                  className="saved-trips-button"
-                >
-                  ← Back to decks
-                </button>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 12 }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // clear focus and return to deck selection
+                      setSelectedSubdeckIndex(null);
+                      setSelectedDeckIndex(null);
+                      setViewMode('decks');
+                    }}
+                    className="saved-trips-button"
+                  >
+                    ← Back to decks
+                  </button>
+                  <div style={{ color: '#374151', fontSize: 14 }}>
+                    Currently viewing: {
+                      selectedDeckIndex !== null
+                        ? `${decks?.[selectedDeckIndex]?.placeName ?? 'Place'}${selectedSubdeckIndex !== null && decks?.[selectedDeckIndex]?.subdecks ? ` — ${decks[selectedDeckIndex].subdecks![selectedSubdeckIndex].label}` : ''}`
+                        : 'All attractions'
+                    }
+                  </div>
+                </div>
               </div>
             )}
 
@@ -759,7 +768,7 @@ export default function CollaborateSessionPage() {
           </section>
         )}
 
-        {!isLoading && !error && !isSessionExpired && currentAttraction && (
+        {!isLoading && !error && !isSessionExpired && currentAttraction && (viewMode === 'cardsFocused' || !decks) && (
           <section className="about-card" style={{ maxWidth: 980, marginLeft: "auto", marginRight: "auto" }}>
             {currentVoteMessage && (
               <p style={{ margin: "0 0 10px", color: "#1f8f4a", fontWeight: 600 }}>
