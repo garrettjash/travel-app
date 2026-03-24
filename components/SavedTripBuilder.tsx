@@ -393,6 +393,7 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
   const [placeInputValue, setPlaceInputValue] = useState("");
   const [placeDropdownOpen, setPlaceDropdownOpen] = useState(false);
   const placeDropdownRef = useRef<HTMLDivElement>(null);
+  const scheduleColumnRef = useRef<HTMLElement | null>(null);
   const [suggestedAttractions, setSuggestedAttractions] = useState<FavoriteAttraction[]>([]);
   const [loadingSuggested, setLoadingSuggested] = useState(false);
   const [tripName, setTripName] = useState(initialItinerary?.tripName ?? "");
@@ -670,6 +671,8 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
   const [customEventDialog, setCustomEventDialog] = useState<CustomEventDialogState | null>(null);
   const [customEventDialogName, setCustomEventDialogName] = useState("");
   const [customEventDialogDuration, setCustomEventDialogDuration] = useState(90);
+  const [expandedSuggestionsTarget, setExpandedSuggestionsTarget] = useState<"primary" | string | null>(null);
+  const [suggestionsColumnHeight, setSuggestionsColumnHeight] = useState<number | null>(null);
 
   function updateSectionSearch(sectionId: string, query: string) {
     setExtraSuggestionSections((sections) =>
@@ -1049,6 +1052,25 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
       window.removeEventListener("mouseup", handleMouseUp);
     };
   }, [calendarResizeState]);
+
+  useEffect(() => {
+    const element = scheduleColumnRef.current;
+    if (!element || typeof ResizeObserver === "undefined") return;
+
+    const updateHeight = () => {
+      setSuggestionsColumnHeight(Math.ceil(element.getBoundingClientRect().height));
+    };
+
+    updateHeight();
+    const observer = new ResizeObserver(() => updateHeight());
+    observer.observe(element);
+    window.addEventListener("resize", updateHeight);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", updateHeight);
+    };
+  }, [tripDays, unscheduled.length, dayPlans.length, effectiveLocation, extraSuggestionSections.length]);
 
   type DropTarget =
     | { type: "day"; dayIndex: number; insertIndex: number }
@@ -1859,6 +1881,14 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
     }
     return Array.from(categories).sort((a, b) => a.localeCompare(b));
   }, [suggestSearchQuery, suggestSearchResults, suggestedAttractions]);
+  const visibleSuggestionPanelCount = (effectiveLocation ? 1 : 0) + extraSuggestionSections.length;
+  const suggestionsColumnVariantClass = !hasSuggestionPanels
+    ? " saved-trips-suggestions-column-fill"
+    : visibleSuggestionPanelCount === 1
+      ? " saved-trips-suggestions-column-fill"
+      : visibleSuggestionPanelCount === 2
+        ? " saved-trips-suggestions-column-split"
+        : "";
 
   function renderSuggestedCard(attraction: FavoriteAttraction) {
     const added = isInItinerary(attraction.id);
@@ -1944,6 +1974,136 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
     setSelectedAttraction(attraction);
   }
 
+  function renderSuggestionsPanel({
+    panelId,
+    title,
+    collapsed,
+    onToggle,
+    searchLabel,
+    searchId,
+    searchQuery,
+    onSearchChange,
+    loading,
+    attractions,
+    categoryOptions,
+    intro
+  }: {
+    panelId: "primary" | string;
+    title: string;
+    collapsed: boolean;
+    onToggle: () => void;
+    searchLabel: string;
+    searchId: string;
+    searchQuery: string;
+    onSearchChange: (value: string) => void;
+    loading: boolean;
+    attractions: FavoriteAttraction[];
+    categoryOptions: string[];
+    intro?: string;
+  }) {
+    const isExpanded = expandedSuggestionsTarget === panelId;
+    const showContent = isExpanded || !collapsed;
+
+    return (
+      <section
+        key={panelId}
+        className={`saved-suggested-section${isExpanded ? " saved-suggested-section-expanded" : ""}`}
+        aria-label={title}
+      >
+        <div className="saved-suggested-section-head">
+          <h2>{title}</h2>
+          <div className="saved-suggested-section-actions">
+            {!isExpanded && (
+              <button
+                type="button"
+                className="saved-trips-button saved-trips-button-muted"
+                aria-label="Expand attractions"
+                title="Expand attractions"
+                onClick={() => setExpandedSuggestionsTarget(panelId)}
+              >
+                ⛶
+              </button>
+            )}
+            <button
+              type="button"
+              className="saved-trips-button saved-trips-button-muted"
+              onClick={isExpanded ? () => setExpandedSuggestionsTarget(null) : onToggle}
+            >
+              {isExpanded ? "Close" : collapsed ? "Show" : "Hide"}
+            </button>
+          </div>
+        </div>
+        {showContent && (
+          <div className="saved-suggested-section-body">
+            {intro && <p className="saved-suggested-intro">{intro}</p>}
+            <div className="saved-trips-field saved-trips-field-full" style={{ marginTop: 8 }}>
+              <label htmlFor={searchId}>{searchLabel}</label>
+              <input
+                id={searchId}
+                type="text"
+                className="planning-solo-input"
+                placeholder="Search by name or keyword…"
+                value={searchQuery}
+                onChange={(e) => onSearchChange(e.target.value)}
+              />
+            </div>
+            <div className="saved-suggested-filters">
+              <div>
+                <label htmlFor={`${searchId}-sort`}>Sort</label>
+                <select
+                  id={`${searchId}-sort`}
+                  value={suggestSortBy}
+                  onChange={(e) => setSuggestSortBy(e.target.value as SuggestSort)}
+                >
+                  <option value="name-asc">Name (A-Z)</option>
+                  <option value="category-asc">Category (A-Z)</option>
+                  <option value="rating-desc">Highest rating</option>
+                  <option value="popularity-desc">Most popular</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor={`${searchId}-category`}>Category</label>
+                <select
+                  id={`${searchId}-category`}
+                  value={suggestCategoryFilter}
+                  onChange={(e) => setSuggestCategoryFilter(e.target.value)}
+                >
+                  <option value="all">All categories</option>
+                  {categoryOptions.map((category) => (
+                    <option key={category} value={category.toLowerCase()}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor={`${searchId}-price`}>Max cost</label>
+                <select
+                  id={`${searchId}-price`}
+                  value={suggestMaxPriceLevel}
+                  onChange={(e) => setSuggestMaxPriceLevel(e.target.value)}
+                >
+                  <option value="0">All</option>
+                  <option value="1">$</option>
+                  <option value="2">$$</option>
+                  <option value="3">$$$</option>
+                  <option value="4">$$$$</option>
+                </select>
+              </div>
+            </div>
+            {loading ? (
+              <p className="saved-suggested-loading">Loading suggestions…</p>
+            ) : (
+              <div className="saved-suggested-grid">
+                {attractions.map(renderSuggestedCard)}
+              </div>
+            )}
+          </div>
+        )}
+      </section>
+    );
+  }
+
   const body = (
     <div className={`saved-trips-content${embedded ? " saved-trips-content-embedded" : ""}`}>
           <section className="saved-trips-header">
@@ -1954,6 +2114,14 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
               </p>
             </div>
             <div className="saved-trips-header-actions">
+              <button
+                type="button"
+                className="saved-trips-button saved-trips-button-primary saved-trips-header-action"
+                onClick={handleSave}
+                disabled={isSaving}
+              >
+                {isSaving ? "Saving..." : activeItineraryId ? "Save Changes" : "Save"}
+              </button>
               <div className="saved-trips-share-dropdown">
                 <button
                   type="button"
@@ -2246,7 +2414,10 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
           </section>
 
           <section className="saved-trips-planner-layout">
-              <div className="saved-trips-suggestions-column">
+              <div
+                className={`saved-trips-suggestions-column${suggestionsColumnVariantClass}`}
+                style={suggestionsColumnHeight ? { height: `${suggestionsColumnHeight}px` } : undefined}
+              >
                 {!hasSuggestionPanels && (
                   <section className="saved-suggested-section saved-suggested-section-empty">
                     <h2>Attractions</h2>
@@ -2257,218 +2428,61 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                 )}
 
                 {effectiveLocation && (
-                  <section className="saved-suggested-section" aria-labelledby="suggested-heading">
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        gap: 8
-                      }}
-                    >
-                      <h2 id="suggested-heading">Suggested in {effectiveLocation}</h2>
-                      <button
-                        type="button"
-                        className="saved-trips-button saved-trips-button-muted"
-                        onClick={() => setPrimarySuggestionsCollapsed((c) => !c)}
-                      >
-                        {primarySuggestionsCollapsed ? "Show" : "Hide"}
-                      </button>
-                    </div>
-                    {!primarySuggestionsCollapsed && (
-                      <>
-                        <p className="saved-suggested-intro">Scroll this list and drag any attraction onto the calendar.</p>
-                        <div className="saved-trips-field saved-trips-field-full" style={{ marginTop: 8 }}>
-                          <label htmlFor="saved-suggested-search">Search attractions</label>
-                          <input
-                            id="saved-suggested-search"
-                            type="text"
-                            value={suggestSearchQuery}
-                            onChange={(e) => setSuggestSearchQuery(e.target.value)}
-                            className="planning-solo-input"
-                            placeholder="Search by name or keyword…"
-                          />
-                        </div>
-                        <div
-                          className="saved-trips-field saved-trips-field-full"
-                          style={{ marginTop: 8, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}
-                        >
-                          <div>
-                            <label htmlFor="saved-suggested-sort">Sort</label>
-                            <select
-                              id="saved-suggested-sort"
-                              value={suggestSortBy}
-                              onChange={(e) => setSuggestSortBy(e.target.value as SuggestSort)}
-                            >
-                              <option value="name-asc">Name (A-Z)</option>
-                              <option value="category-asc">Category (A-Z)</option>
-                              <option value="rating-desc">Highest rating</option>
-                              <option value="popularity-desc">Most popular</option>
-                            </select>
-                          </div>
-                          <div>
-                            <label htmlFor="saved-suggested-category">Category</label>
-                            <select
-                              id="saved-suggested-category"
-                              value={suggestCategoryFilter}
-                              onChange={(e) => setSuggestCategoryFilter(e.target.value)}
-                            >
-                              <option value="all">All categories</option>
-                              {suggestionCategoryOptions.map((category) => (
-                                <option key={category} value={category.toLowerCase()}>
-                                  {category}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                          <div>
-                            <label htmlFor="saved-suggested-price">Max cost</label>
-                            <select
-                              id="saved-suggested-price"
-                              value={suggestMaxPriceLevel}
-                              onChange={(e) => setSuggestMaxPriceLevel(e.target.value)}
-                            >
-                              <option value="0">All</option>
-                              <option value="1">$</option>
-                              <option value="2">$$</option>
-                              <option value="3">$$$</option>
-                              <option value="4">$$$$</option>
-                            </select>
-                          </div>
-                        </div>
-                        {loadingSuggested && !suggestSearchQuery ? (
-                          <p className="saved-suggested-loading">Loading suggestions…</p>
-                        ) : isSearchingSuggestions ? (
-                          <p className="saved-suggested-loading">Searching…</p>
-                        ) : (
-                          <div className="saved-suggested-grid">
-                            {visiblePrimarySuggestions.map(renderSuggestedCard)}
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </section>
+                  renderSuggestionsPanel({
+                    panelId: "primary",
+                    title: `Suggested in ${effectiveLocation}`,
+                    collapsed: primarySuggestionsCollapsed,
+                    onToggle: () => setPrimarySuggestionsCollapsed((c) => !c),
+                    searchLabel: "Search attractions",
+                    searchId: "saved-suggested-search",
+                    searchQuery: suggestSearchQuery,
+                    onSearchChange: setSuggestSearchQuery,
+                    loading: (loadingSuggested && !suggestSearchQuery) || isSearchingSuggestions,
+                    attractions: visiblePrimarySuggestions,
+                    categoryOptions: suggestionCategoryOptions,
+                    intro: "Scroll this list and drag any attraction onto the calendar."
+                  })
                 )}
 
                 {extraSuggestionSections.map((section) => (
-                  <section
-                    key={section.id}
-                    className="saved-suggested-section"
-                    aria-label={`Suggested in ${section.label}`}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        gap: 8
-                      }}
-                    >
-                      <h2>Suggested in {section.label}</h2>
-                      <button
-                        type="button"
-                        className="saved-trips-button saved-trips-button-muted"
-                        onClick={() =>
-                          setExtraSuggestionSections((current) =>
-                            current.map((s) =>
-                              s.id === section.id ? { ...s, collapsed: !s.collapsed } : s
-                            )
-                          )
-                        }
-                      >
-                        {section.collapsed ? "Show" : "Hide"}
-                      </button>
-                    </div>
-                    {!section.collapsed && (
-                      <>
-                        <div className="saved-trips-field saved-trips-field-full" style={{ marginTop: 8 }}>
-                          <label htmlFor={`extra-suggested-search-${section.id}`}>
-                            Search attractions in {section.label}
-                          </label>
-                          <input
-                            id={`extra-suggested-search-${section.id}`}
-                            type="text"
-                            className="planning-solo-input"
-                            placeholder="Search by name or keyword…"
-                            value={section.searchQuery ?? ""}
-                            onChange={(e) => updateSectionSearch(section.id, e.target.value)}
-                          />
-                        </div>
-                        <div
-                          className="saved-trips-field saved-trips-field-full"
-                          style={{ marginTop: 8, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}
-                        >
-                          <div>
-                            <label htmlFor={`extra-suggested-sort-${section.id}`}>Sort</label>
-                            <select
-                              id={`extra-suggested-sort-${section.id}`}
-                              value={suggestSortBy}
-                              onChange={(e) => setSuggestSortBy(e.target.value as SuggestSort)}
-                            >
-                              <option value="name-asc">Name (A-Z)</option>
-                              <option value="category-asc">Category (A-Z)</option>
-                              <option value="rating-desc">Highest rating</option>
-                              <option value="popularity-desc">Most popular</option>
-                            </select>
-                          </div>
-                          <div>
-                            <label htmlFor={`extra-suggested-category-${section.id}`}>Category</label>
-                            <select
-                              id={`extra-suggested-category-${section.id}`}
-                              value={suggestCategoryFilter}
-                              onChange={(e) => setSuggestCategoryFilter(e.target.value)}
-                            >
-                              <option value="all">All categories</option>
-                              {Array.from(
-                                new Set(
-                                  section.attractions.flatMap((attraction) =>
-                                    (attraction.categories ?? []).map((category) => category.trim()).filter(Boolean)
-                                  )
-                                )
-                              )
-                                .sort((a, b) => a.localeCompare(b))
-                                .map((category) => (
-                                  <option key={category} value={category.toLowerCase()}>
-                                    {category}
-                                  </option>
-                                ))}
-                            </select>
-                          </div>
-                          <div>
-                            <label htmlFor={`extra-suggested-price-${section.id}`}>Max cost</label>
-                            <select
-                              id={`extra-suggested-price-${section.id}`}
-                              value={suggestMaxPriceLevel}
-                              onChange={(e) => setSuggestMaxPriceLevel(e.target.value)}
-                            >
-                              <option value="0">All</option>
-                              <option value="1">$</option>
-                              <option value="2">$$</option>
-                              <option value="3">$$$</option>
-                              <option value="4">$$$$</option>
-                            </select>
-                          </div>
-                        </div>
-                        {section.loading ? (
-                          <p className="saved-suggested-loading">Loading suggestions…</p>
-                        ) : (
-                          <div className="saved-suggested-grid">
-                            {filterAndSortAttractions(
-                              section.attractions,
-                              section.searchQuery ?? "",
-                              suggestSortBy,
-                              suggestMaxPriceLevel,
-                              suggestCategoryFilter
-                            ).map(renderSuggestedCard)}
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </section>
+                  renderSuggestionsPanel({
+                    panelId: section.id,
+                    title: `Suggested in ${section.label}`,
+                    collapsed: section.collapsed,
+                    onToggle: () =>
+                      setExtraSuggestionSections((current) =>
+                        current.map((s) =>
+                          s.id === section.id ? { ...s, collapsed: !s.collapsed } : s
+                        )
+                      ),
+                    searchLabel: `Search attractions in ${section.label}`,
+                    searchId: `extra-suggested-search-${section.id}`,
+                    searchQuery: section.searchQuery ?? "",
+                    onSearchChange: (value) => updateSectionSearch(section.id, value),
+                    loading: section.loading,
+                    attractions: filterAndSortAttractions(
+                      section.attractions,
+                      section.searchQuery ?? "",
+                      suggestSortBy,
+                      suggestMaxPriceLevel,
+                      suggestCategoryFilter
+                    ),
+                    categoryOptions: Array.from(
+                      new Set(
+                        section.attractions.flatMap((attraction) =>
+                          (attraction.categories ?? []).map((category) => category.trim()).filter(Boolean)
+                        )
+                      )
+                    ).sort((a, b) => a.localeCompare(b))
+                  })
                 ))}
               </div>
 
-              <section className="saved-trips-drag-schedule" aria-label="Schedule">
+              <section
+                ref={scheduleColumnRef}
+                className="saved-trips-drag-schedule"
+                aria-label="Schedule"
+              >
                 <div
                   className="saved-unassigned-zone"
                   onDragOver={(e) => {
@@ -2914,6 +2928,62 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                 {customEventDialog.mode === "edit" ? "Save changes" : "Add event"}
               </button>
             </div>
+          </section>
+        </div>
+      )}
+      {expandedSuggestionsTarget && (
+        <div className="suggestions-expand-overlay" role="dialog" aria-modal="true" aria-label="Expanded attractions">
+          <button
+            type="button"
+            className="suggestions-expand-backdrop"
+            onClick={() => setExpandedSuggestionsTarget(null)}
+            aria-label="Close expanded attractions"
+          />
+          <section className="suggestions-expand-content">
+            {expandedSuggestionsTarget === "primary" && effectiveLocation
+              ? renderSuggestionsPanel({
+                  panelId: "primary",
+                  title: `Suggested in ${effectiveLocation}`,
+                  collapsed: false,
+                  onToggle: () => undefined,
+                  searchLabel: "Search attractions",
+                  searchId: "saved-suggested-search-expanded",
+                  searchQuery: suggestSearchQuery,
+                  onSearchChange: setSuggestSearchQuery,
+                  loading: (loadingSuggested && !suggestSearchQuery) || isSearchingSuggestions,
+                  attractions: visiblePrimarySuggestions,
+                  categoryOptions: suggestionCategoryOptions,
+                  intro: "Scroll this list and drag any attraction onto the calendar."
+                })
+              : (() => {
+                  const section = extraSuggestionSections.find((item) => item.id === expandedSuggestionsTarget);
+                  if (!section) return null;
+                  return renderSuggestionsPanel({
+                    panelId: section.id,
+                    title: `Suggested in ${section.label}`,
+                    collapsed: false,
+                    onToggle: () => undefined,
+                    searchLabel: `Search attractions in ${section.label}`,
+                    searchId: `extra-suggested-search-expanded-${section.id}`,
+                    searchQuery: section.searchQuery ?? "",
+                    onSearchChange: (value) => updateSectionSearch(section.id, value),
+                    loading: section.loading,
+                    attractions: filterAndSortAttractions(
+                      section.attractions,
+                      section.searchQuery ?? "",
+                      suggestSortBy,
+                      suggestMaxPriceLevel,
+                      suggestCategoryFilter
+                    ),
+                    categoryOptions: Array.from(
+                      new Set(
+                        section.attractions.flatMap((attraction) =>
+                          (attraction.categories ?? []).map((category) => category.trim()).filter(Boolean)
+                        )
+                      )
+                    ).sort((a, b) => a.localeCompare(b))
+                  });
+                })()}
           </section>
         </div>
       )}
