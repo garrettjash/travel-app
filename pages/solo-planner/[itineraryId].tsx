@@ -416,6 +416,7 @@ export default function SoloPlannerItineraryPage() {
         title={isChatOpen ? "Close AI chat" : "Open AI chat"}
       >
         <img src="/chat-icon.svg" alt="" width={24} height={24} aria-hidden="true" />
+        <span className="solo-chat-fab-label">{isChatOpen ? "Hide AI Chat" : "Get help from AI"}</span>
       </button>
     </main>
   );

@@ -124,8 +124,7 @@ type SavedTripBuilderProps = {
 type DragSource =
   | { type: "day"; dayIndex: number; slotIndex: number }
   | { type: "unscheduled"; index: number }
-  | { type: "suggested"; attraction: FavoriteAttraction }
-  | { type: "custom-draft"; attraction: FavoriteAttraction };
+  | { type: "suggested"; attraction: FavoriteAttraction };
 
 type ExtraSuggestionSection = {
   id: string;
@@ -137,6 +136,17 @@ type ExtraSuggestionSection = {
 };
 
 type SuggestSort = "name-asc" | "category-asc" | "rating-desc" | "popularity-desc";
+
+type CustomEventDialogState =
+  | {
+      mode: "create";
+      dayIndex?: number;
+      requestedMinute?: number;
+    }
+  | {
+      mode: "edit";
+      eventId: number;
+    };
 
 function formatLocation(city: string, stateProvince: string, country: string) {
   return [city, stateProvince, country].filter(Boolean).join(", ") || "Location unavailable";
@@ -656,11 +666,10 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
   const [suggestCategoryFilter, setSuggestCategoryFilter] = useState("all");
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
-  const [customEventMenuOpen, setCustomEventMenuOpen] = useState(false);
-  const [customEventName, setCustomEventName] = useState("");
-  const [customEventDurationMinutes, setCustomEventDurationMinutes] = useState(90);
-  const [customEventDraft, setCustomEventDraft] = useState<FavoriteAttraction | null>(null);
   const [customDurationByAttractionId, setCustomDurationByAttractionId] = useState<Record<number, number>>({});
+  const [customEventDialog, setCustomEventDialog] = useState<CustomEventDialogState | null>(null);
+  const [customEventDialogName, setCustomEventDialogName] = useState("");
+  const [customEventDialogDuration, setCustomEventDialogDuration] = useState(90);
 
   function updateSectionSearch(sectionId: string, query: string) {
     setExtraSuggestionSections((sections) =>
@@ -1139,13 +1148,6 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
           next.splice(Math.min(to.insertIndex, next.length), 0, attraction);
           return next;
         }
-        if (from.type === "custom-draft") {
-          if (to.type !== "unscheduled") return current;
-          if (current.some((item) => item.id === attraction.id)) return current;
-          const next = [...current];
-          next.splice(Math.min(to.insertIndex, next.length), 0, attraction);
-          return next;
-        }
         if (to.type === "unscheduled") {
           const next = [...current];
           if (next.some((item) => item.id === attraction.id)) return next;
@@ -1154,11 +1156,6 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
         }
         return current;
       });
-      if (from.type === "custom-draft") {
-        setCustomEventDraft(null);
-        setCustomEventMenuOpen(false);
-        setCustomEventName("");
-      }
       setDragSource(null);
     },
     [addAttraction, dayPlans, unscheduled, tripDays]
@@ -1231,25 +1228,110 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
     [addAttraction]
   );
 
-  const handleCreateCustomEventDraft = useCallback(() => {
-    const trimmed = customEventName.trim();
-    if (!trimmed) return;
-    const draft = createCustomEvent(trimmed);
-    setCustomEventDraft(draft);
+  const openCustomEventEditDialog = useCallback((eventId: number, currentName: string, currentDuration: number) => {
+    setCustomEventDialog({ mode: "edit", eventId });
+    setCustomEventDialogName(currentName);
+    setCustomEventDialogDuration(currentDuration || 90);
+  }, []);
+
+  const closeCustomEventDialog = useCallback(() => {
+    setCustomEventDialog(null);
+    setCustomEventDialogName("");
+    setCustomEventDialogDuration(90);
+  }, []);
+
+  const addCustomEventToCalendar = useCallback(
+    (dayIndex: number, requestedMinute: number, name: string, durationMinutes: number) => {
+      const attraction = createCustomEvent(name.trim());
+      addAttraction(attraction);
+      setCustomDurationByAttractionId((current) => ({
+        ...current,
+        [attraction.id]: durationMinutes
+      }));
+      const roundedMinute =
+        Math.round((requestedMinute - SAMPLE_TRIAL_START_MINUTE) / SAMPLE_TRIAL_STEP_MINUTES) *
+          SAMPLE_TRIAL_STEP_MINUTES +
+        SAMPLE_TRIAL_START_MINUTE;
+      const safeStartMinute = Math.max(
+        SAMPLE_TRIAL_START_MINUTE,
+        Math.min(SAMPLE_TRIAL_END_MINUTE - SAMPLE_TRIAL_STEP_MINUTES, roundedMinute)
+      );
+
+      setDayPlans((current) => {
+        const next = current.map((day) => ({ ...day, stops: [...day.stops] }));
+        while (next.length < tripDays) next.push({ dayNumber: next.length + 1, stops: [] });
+        const targetDay = next[dayIndex];
+        if (!targetDay) return next.slice(0, tripDays);
+
+        const nextStartMinute = Math.min(safeStartMinute, SAMPLE_TRIAL_END_MINUTE - durationMinutes);
+        const newStop: PlannedStop = {
+          attraction,
+          startTime: minutesToTime(nextStartMinute),
+          durationMinutes
+        };
+        const insertIndex = targetDay.stops.findIndex(
+          (stop) => timeToMinutes(stop.startTime || "09:00") > nextStartMinute
+        );
+        if (insertIndex === -1) targetDay.stops.push(newStop);
+        else targetDay.stops.splice(insertIndex, 0, newStop);
+        return next.slice(0, tripDays);
+      });
+    },
+    [addAttraction, tripDays]
+  );
+
+  const handleSaveCustomEventDialog = useCallback(() => {
+    const trimmed = customEventDialogName.trim();
+    if (!trimmed || !customEventDialog) return;
+
+    if (customEventDialog.mode === "create") {
+      if (
+        typeof customEventDialog.dayIndex === "number" &&
+        typeof customEventDialog.requestedMinute === "number"
+      ) {
+        addCustomEventToCalendar(
+          customEventDialog.dayIndex,
+          customEventDialog.requestedMinute,
+          trimmed,
+          customEventDialogDuration
+        );
+      } else {
+        const attraction = createCustomEvent(trimmed);
+        setCustomDurationByAttractionId((current) => ({
+          ...current,
+          [attraction.id]: customEventDialogDuration
+        }));
+        addToItineraryPool(attraction);
+      }
+      closeCustomEventDialog();
+      return;
+    }
+
+    setDayPlans((current) =>
+      current.map((day) => ({
+        ...day,
+        stops: day.stops.map((stop) =>
+          stop.attraction.id === customEventDialog.eventId
+            ? {
+                ...stop,
+                attraction: { ...stop.attraction, name: trimmed },
+                durationMinutes: customEventDialogDuration
+              }
+            : stop
+        )
+      }))
+    );
+    setUnscheduled((current) =>
+      current.map((attraction) =>
+        attraction.id === customEventDialog.eventId ? { ...attraction, name: trimmed } : attraction
+      )
+    );
     setCustomDurationByAttractionId((current) => ({
       ...current,
-      [draft.id]: customEventDurationMinutes
+      [customEventDialog.eventId]: customEventDialogDuration
     }));
-  }, [customEventName, customEventDurationMinutes]);
-
-  const handleAddCustomEventToPool = useCallback(() => {
-    if (!customEventDraft) return;
-    addToItineraryPool(customEventDraft);
-    setCustomEventDraft(null);
-    setCustomEventName("");
-    setCustomEventDurationMinutes(90);
-    setCustomEventMenuOpen(false);
-  }, [addToItineraryPool, customEventDraft]);
+    closeCustomEventDialog();
+  }, [addCustomEventToCalendar, addToItineraryPool, closeCustomEventDialog, customEventDialog, customEventDialogDuration, customEventDialogName]);
 
   const moveStopToCalendar = useCallback(
     (from: DragSource, dayIndex: number, requestedMinute: number) => {
@@ -1271,9 +1353,6 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
       } else {
         attraction = from.attraction;
         addAttraction(attraction);
-        if (from.type === "custom-draft") {
-          durationMinutes = customDurationByAttractionId[attraction.id] ?? SAMPLE_TRIAL_DEFAULT_DURATION;
-        }
       }
 
       const roundedMinute =
@@ -1320,11 +1399,6 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
       setUnscheduled((current) =>
         from.type === "unscheduled" ? current.filter((_, index) => index !== from.index) : current
       );
-      if (from.type === "custom-draft") {
-        setCustomEventDraft(null);
-        setCustomEventMenuOpen(false);
-        setCustomEventName("");
-      }
       setDragSource(null);
     },
     [addAttraction, customDurationByAttractionId, dayPlans, tripDays, unscheduled]
@@ -2506,97 +2580,15 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                         type="button"
                         className="saved-trips-button saved-trips-button-muted"
                         onClick={() => {
-                          setCustomEventMenuOpen((open) => !open);
-                          if (customEventMenuOpen) {
-                            setCustomEventDraft(null);
-                            setCustomEventName("");
-                          }
+                          setCustomEventDialog({ mode: "create" });
+                          setCustomEventDialogName("");
+                          setCustomEventDialogDuration(90);
                         }}
                       >
                         Add custom event
                       </button>
                     </div>
                   </div>
-                  {customEventMenuOpen && (
-                    <div className="saved-calendar-popover" role="dialog" aria-label="Create custom event">
-                      <label htmlFor="custom-event-name" className="saved-calendar-popover-label">
-                        Event name
-                      </label>
-                      <div className="saved-calendar-popover-row">
-                        <input
-                          id="custom-event-name"
-                          type="text"
-                          value={customEventName}
-                          onChange={(event) => setCustomEventName(event.target.value)}
-                          className="planning-solo-input"
-                          placeholder="Dinner reservation, train ride, hotel check-in…"
-                        />
-                        <select
-                          aria-label="Custom event duration"
-                          value={customEventDurationMinutes}
-                          onChange={(event) =>
-                            setCustomEventDurationMinutes(Number(event.target.value) || 90)
-                          }
-                        >
-                          {[30, 45, 60, 90, 120, 180, 240].map((mins) => (
-                            <option key={mins} value={mins}>
-                              {mins < 60 ? `${mins}m` : mins === 60 ? "1h" : `${mins / 60}h`}
-                            </option>
-                          ))}
-                        </select>
-                        <button
-                          type="button"
-                          className="saved-trips-button saved-trips-button-primary"
-                          onClick={handleCreateCustomEventDraft}
-                          disabled={!customEventName.trim()}
-                        >
-                          Create
-                        </button>
-                      </div>
-                      <p className="saved-calendar-popover-copy">
-                        Create a custom event, then drag it onto the calendar or into Unassigned.
-                      </p>
-                      {customEventDraft && (
-                        <div className="saved-calendar-custom-draft-wrap">
-                          <div
-                            className={`saved-calendar-custom-draft ${
-                              dragSource?.type === "custom-draft" ? "saved-calendar-custom-draft-dragging" : ""
-                            }`}
-                            draggable
-                            onDragStart={() => setDragSource({ type: "custom-draft", attraction: customEventDraft })}
-                            onDragEnd={() => setDragSource(null)}
-                          >
-                            <span className="saved-calendar-custom-draft-badge">Custom</span>
-                            <strong>{customEventDraft.name}</strong>
-                            <span>
-                              Duration: {customDurationByAttractionId[customEventDraft.id] ?? 90}m
-                            </span>
-                            <span>Drag onto a day and time</span>
-                          </div>
-                          <div className="saved-calendar-custom-draft-actions">
-                            <button
-                              type="button"
-                              className="saved-trips-button saved-trips-button-muted"
-                              onClick={handleAddCustomEventToPool}
-                            >
-                              Add to Unassigned
-                            </button>
-                            <button
-                              type="button"
-                              className="saved-trips-button saved-trips-button-muted"
-                              onClick={() => {
-                                setCustomEventDraft(null);
-                                setCustomEventName("");
-                            setCustomEventDurationMinutes(90);
-                              }}
-                            >
-                              Clear
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
                   <p className="sample-trial-panel-copy">
                     Drop a place onto a day and time. Pull the bottom tab to make the stop longer.
                   </p>
@@ -2664,6 +2656,23 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                                   (offsetY / SAMPLE_TRIAL_PX_PER_STEP) * SAMPLE_TRIAL_STEP_MINUTES;
                                 moveStopToCalendar(dragSource, dayIndex, requestedMinute);
                               }}
+                              onDoubleClick={(event) => {
+                                if (dragSource) return;
+                                const target = event.target;
+                                if (target instanceof Element && target.closest(".sample-trial-event")) return;
+                                const rect = event.currentTarget.getBoundingClientRect();
+                                const offsetY = event.clientY - rect.top;
+                                const requestedMinute =
+                                  SAMPLE_TRIAL_START_MINUTE +
+                                  (offsetY / SAMPLE_TRIAL_PX_PER_STEP) * SAMPLE_TRIAL_STEP_MINUTES;
+                                setCustomEventDialog({
+                                  mode: "create",
+                                  dayIndex,
+                                  requestedMinute
+                                });
+                                setCustomEventDialogName("");
+                                setCustomEventDialogDuration(90);
+                              }}
                             >
                               {calendarTimeSlots.slice(0, -1).map((minute) => (
                                 <div
@@ -2712,7 +2721,17 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                                       width: `calc(${laneWidthPct}% - 14px)`,
                                       right: "auto"
                                     }}
-                                    onClick={() => openAttractionDetails(stop.attraction)}
+                                    onClick={() => {
+                                      if (isCustomEvent(stop.attraction)) {
+                                        openCustomEventEditDialog(
+                                          stop.attraction.id,
+                                          stop.attraction.name,
+                                          stop.durationMinutes || customDurationByAttractionId[stop.attraction.id] || 90
+                                        );
+                                        return;
+                                      }
+                                      openAttractionDetails(stop.attraction);
+                                    }}
                                     onDragStart={() => setDragSource({ type: "day", dayIndex, slotIndex })}
                                     onDragEnd={() => setDragSource(null)}
                                   >
@@ -2744,18 +2763,38 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                                         </span>
                                       </strong>
                                     </div>
-                                    <button
-                                      type="button"
-                                      className="sample-trial-event-remove"
-                                      aria-label={`Remove ${stop.attraction.name}`}
-                                      onMouseDown={(e) => e.stopPropagation()}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        removeFromItinerary(stop.attraction.id);
-                                      }}
-                                    >
-                                      ×
-                                    </button>
+                                    <div className="sample-trial-event-actions">
+                                      {isCustomEvent(stop.attraction) && (
+                                        <button
+                                          type="button"
+                                          className="sample-trial-event-edit"
+                                          aria-label={`Edit ${stop.attraction.name}`}
+                                          onMouseDown={(e) => e.stopPropagation()}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            openCustomEventEditDialog(
+                                              stop.attraction.id,
+                                              stop.attraction.name,
+                                              stop.durationMinutes || customDurationByAttractionId[stop.attraction.id] || 90
+                                            );
+                                          }}
+                                        >
+                                          ✎
+                                        </button>
+                                      )}
+                                      <button
+                                        type="button"
+                                        className="sample-trial-event-remove"
+                                        aria-label={`Remove ${stop.attraction.name}`}
+                                        onMouseDown={(e) => e.stopPropagation()}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          removeFromItinerary(stop.attraction.id);
+                                        }}
+                                      >
+                                        ×
+                                      </button>
+                                    </div>
                                     <button
                                       type="button"
                                       className="sample-trial-event-edge sample-trial-event-edge-bottom"
@@ -2806,6 +2845,78 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
               </p>
             )}
           </section>
+      {customEventDialog && (
+        <div className="custom-event-dialog-overlay" role="dialog" aria-modal="true" aria-label="Custom event">
+          <button
+            type="button"
+            className="custom-event-dialog-backdrop"
+            onClick={closeCustomEventDialog}
+            aria-label="Close custom event dialog"
+          />
+          <section className="custom-event-dialog-content">
+            <div className="custom-event-dialog-head">
+              <div>
+                <h2>{customEventDialog.mode === "edit" ? "Edit custom event" : "Add custom event"}</h2>
+                <p>
+                  {customEventDialog.mode === "edit"
+                    ? "Update the event name and duration."
+                    : "Name your custom event and add it to this time slot."}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="custom-event-dialog-close"
+                onClick={closeCustomEventDialog}
+                aria-label="Close custom event dialog"
+              >
+                ×
+              </button>
+            </div>
+            <div className="custom-event-dialog-fields">
+              <label className="custom-event-dialog-field">
+                <span>Event name</span>
+                <input
+                  type="text"
+                  value={customEventDialogName}
+                  onChange={(event) => setCustomEventDialogName(event.target.value)}
+                  placeholder="Dinner reservation, flight, check-in..."
+                  autoFocus
+                />
+              </label>
+              <label className="custom-event-dialog-field">
+                <span>Duration</span>
+                <select
+                  value={customEventDialogDuration}
+                  onChange={(event) => setCustomEventDialogDuration(Number(event.target.value) || 90)}
+                >
+                  {[30, 45, 60, 90, 120, 180, 240].map((mins) => (
+                    <option key={mins} value={mins}>
+                      {mins < 60 ? `${mins}m` : mins === 60 ? "1h" : `${mins / 60}h`}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <div className="custom-event-dialog-actions">
+              <button
+                type="button"
+                className="saved-trips-button saved-trips-button-muted"
+                onClick={closeCustomEventDialog}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="saved-trips-button saved-trips-button-primary"
+                onClick={handleSaveCustomEventDialog}
+                disabled={!customEventDialogName.trim()}
+              >
+                {customEventDialog.mode === "edit" ? "Save changes" : "Add event"}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
       <AttractionDetailsModal
         attraction={selectedAttraction}
         isFavorited={selectedAttraction ? isFavorite(selectedAttraction.id) : false}
