@@ -1,4 +1,4 @@
-import { ChangeEvent, useEffect, useMemo, useState } from "react";
+import { ChangeEvent, useCallback, useEffect, useMemo, useState } from "react";
 import AttractionDetailsModal from "./AttractionDetailsModal";
 import { FavoriteAttraction, useFavorites } from "../lib/favorites-context";
 import { useAuth } from "../lib/auth-context";
@@ -211,29 +211,38 @@ export default function AttractionsExplorer({ title, subtitle, initialPlace }: A
     return params.toString();
   }, [filters]);
 
-  useEffect(() => {
+  const fetchSavedItineraries = useCallback(async () => {
     if (!user?.id) {
       setSavedItineraries([]);
       return;
     }
-    let isActive = true;
-    (async () => {
-      try {
-        const res = await fetch(`/api/itinerary?userId=${encodeURIComponent(user.id)}`);
-        const data = (await res.json()) as { itineraries?: SavedItineraryItem[]; error?: string };
-        if (!isActive) return;
-        if (res.ok && data.itineraries) {
-          setSavedItineraries(data.itineraries);
-        } else {
-          setSavedItineraries([]);
-        }
-      } catch {
-        if (!isActive) return;
+    try {
+      const res = await fetch(`/api/itinerary?userId=${encodeURIComponent(user.id)}`);
+      const data = (await res.json()) as { itineraries?: SavedItineraryItem[]; error?: string };
+      if (res.ok && data.itineraries) {
+        setSavedItineraries(data.itineraries);
+      } else {
         setSavedItineraries([]);
       }
-    })();
-    return () => { isActive = false; };
+    } catch {
+      setSavedItineraries([]);
+    }
   }, [user?.id]);
+
+  useEffect(() => {
+    fetchSavedItineraries();
+  }, [fetchSavedItineraries]);
+
+  // Refetch when page becomes visible (e.g. user switches back to tab or returns from another page)
+  useEffect(() => {
+    const onVisible = () => {
+      if (user?.id) fetchSavedItineraries();
+    };
+    if (typeof document !== "undefined" && document.addEventListener) {
+      document.addEventListener("visibilitychange", onVisible);
+      return () => document.removeEventListener("visibilitychange", onVisible);
+    }
+  }, [user?.id, fetchSavedItineraries]);
 
   useEffect(() => {
     if (initialPlace === undefined) return;
