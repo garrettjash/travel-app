@@ -41,6 +41,10 @@ type DbStop = {
   attractionName: string;
   startTime: string;
   durationMinutes: number;
+  // Preserve custom-event metadata in itinerary JSON.
+  customRawData?: string;
+  customAddress?: string;
+  customDetails?: string;
 };
 
 type DbUnscheduledItem = {
@@ -48,6 +52,10 @@ type DbUnscheduledItem = {
   attractionName: string;
   yesVotes?: number;
   noVotes?: number;
+  // Preserve custom-event metadata in itinerary JSON.
+  customRawData?: string;
+  customAddress?: string;
+  customDetails?: string;
 };
 
 type DbDayPlan = {
@@ -254,7 +262,23 @@ function toDbShape(days: DayPlan[], unscheduled: FavoriteAttraction[]): {
           typeof (stop as any).durationMinutes === "number" && (stop as any).durationMinutes > 0
             ? Math.round((stop as any).durationMinutes)
             : 90;
-        return { attractionId: Number(id), attractionName: name, startTime, durationMinutes } as DbStop;
+        const isCustom = typeof attr?.rawData === "string" && attr.rawData === "custom-event";
+        return {
+          attractionId: Number(id),
+          attractionName: name,
+          startTime,
+          durationMinutes,
+          ...(isCustom
+            ? {
+                customRawData: "custom-event",
+                customAddress: typeof attr?.city === "string" ? attr.city.trim() : "",
+                customDetails:
+                  typeof attr?.summary === "string" && attr.summary.trim() !== "Custom event"
+                    ? attr.summary.trim()
+                    : ""
+              }
+            : {})
+        } as DbStop;
       })
       .filter((s): s is DbStop => Boolean(s));
     return { dayNumber: day.dayNumber, stops };
@@ -272,7 +296,21 @@ function toDbShape(days: DayPlan[], unscheduled: FavoriteAttraction[]): {
       typeof item.name === "string" ? item.name.trim() || "Unnamed attraction"
       : typeof (item as any).attractionName === "string" ? String((item as any).attractionName).trim() || "Unnamed attraction"
       : "Unnamed attraction";
-    dbUnscheduled.push({ attractionId: n, attractionName: name });
+    const isCustom = typeof (item as any)?.rawData === "string" && (item as any).rawData === "custom-event";
+    dbUnscheduled.push({
+      attractionId: n,
+      attractionName: name,
+      ...(isCustom
+        ? {
+            customRawData: "custom-event",
+            customAddress: typeof (item as any)?.city === "string" ? (item as any).city.trim() : "",
+            customDetails:
+              typeof (item as any)?.summary === "string" && (item as any).summary.trim() !== "Custom event"
+                ? (item as any).summary.trim()
+                : ""
+          }
+        : {})
+    });
   }
 
   return { dbDays, dbUnscheduled };
@@ -759,6 +797,24 @@ export default async function handler(
             if (!Number.isFinite(id)) continue;
             const n = Number(id);
             const storedName = stop?.attractionName ?? stop?.attraction_name ?? stop?.attraction?.name;
+            const customRawData =
+              typeof stop?.customRawData === "string"
+                ? stop.customRawData
+                : typeof stop?.custom_raw_data === "string"
+                ? stop.custom_raw_data
+                : "";
+            const customAddress =
+              typeof stop?.customAddress === "string"
+                ? stop.customAddress
+                : typeof stop?.custom_address === "string"
+                ? stop.custom_address
+                : "";
+            const customDetails =
+              typeof stop?.customDetails === "string"
+                ? stop.customDetails
+                : typeof stop?.custom_details === "string"
+                ? stop.custom_details
+                : "";
             let attraction = byId.get(n);
             if (!attraction && typeof storedName === "string" && storedName.trim()) {
               attraction = {
@@ -786,6 +842,14 @@ export default async function handler(
               } as FavoriteAttraction;
             }
             if (!attraction) continue;
+            if (customRawData === "custom-event") {
+              attraction = {
+                ...attraction,
+                rawData: "custom-event",
+                city: customAddress.trim(),
+                summary: customDetails.trim() || "Custom event"
+              };
+            }
             let startTime =
               typeof stop?.startTime === "string" && /^\d{2}:\d{2}$/.test(stop.startTime)
                 ? stop.startTime
@@ -816,6 +880,24 @@ export default async function handler(
           const n = Number(id);
           if (usedInDays.has(n) || seenUnscheduled.has(n)) continue;
           const storedName = item?.attractionName ?? item?.attraction_name ?? item?.name;
+          const customRawData =
+            typeof item?.customRawData === "string"
+              ? item.customRawData
+              : typeof item?.custom_raw_data === "string"
+              ? item.custom_raw_data
+              : "";
+          const customAddress =
+            typeof item?.customAddress === "string"
+              ? item.customAddress
+              : typeof item?.custom_address === "string"
+              ? item.custom_address
+              : "";
+          const customDetails =
+            typeof item?.customDetails === "string"
+              ? item.customDetails
+              : typeof item?.custom_details === "string"
+              ? item.custom_details
+              : "";
           const yesVotes = typeof item?.yesVotes === "number" ? item.yesVotes : undefined;
           const noVotes = typeof item?.noVotes === "number" ? item.noVotes : undefined;
           if (yesVotes !== undefined && noVotes !== undefined) {
@@ -823,19 +905,28 @@ export default async function handler(
           }
           let attraction = byId.get(n);
           if (attraction) {
-            hydratedUnscheduled.push(attraction);
+            hydratedUnscheduled.push(
+              customRawData === "custom-event"
+                ? {
+                    ...attraction,
+                    rawData: "custom-event",
+                    city: customAddress.trim(),
+                    summary: customDetails.trim() || "Custom event"
+                  }
+                : attraction
+            );
           } else if (typeof storedName === "string" && storedName.trim()) {
             // Fallback: attraction not in DB, use stored name as minimal display
             hydratedUnscheduled.push({
               id: n,
               name: storedName.trim(),
-              city: "",
+              city: customAddress.trim(),
               stateProvince: "",
               country: "",
               latitude: null,
               longitude: null,
               distanceFromPlace: null,
-              summary: "",
+              summary: customDetails.trim() || (customRawData === "custom-event" ? "Custom event" : ""),
               vibe: "",
               rating: null,
               totalCountRatings: null,
@@ -843,7 +934,7 @@ export default async function handler(
               reviewsSummary: "",
               priceLevel: "",
               popularityScore: null,
-              rawData: "",
+              rawData: customRawData === "custom-event" ? "custom-event" : "",
               lastRefreshed: "",
               categories: [],
               imageUrl: null,
