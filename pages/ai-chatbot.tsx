@@ -172,7 +172,7 @@ export default function AiChatbotPage() {
           <section className="chat-shell">
             <header className="chat-header">
               <h1>AI Travel Chatbot</h1>
-              <p>Ask travel questions and view the conversation from your database.</p>
+              <p>I can answer questions, suggest attractions, and help build your itinerary for you.</p>
             </header>
 
             <div className="chat-messages" role="log" aria-live="polite">

@@ -290,12 +290,13 @@ function formatTimeLabel(startTime: string, durationMinutes: number): string {
 
 function formatCalendarTimeRange(startTime: string, durationMinutes: number): string {
   const startMinutes = timeToMinutes(startTime || "09:00");
-  const endMinutes = Math.min(24 * 60 - 1, startMinutes + Math.max(0, durationMinutes || 0));
+  const endMinutes = Math.min(24 * 60, startMinutes + Math.max(0, durationMinutes || 0));
   return `${formatMinuteLabel(startMinutes)} to ${formatMinuteLabel(endMinutes)}`;
 }
 
 function formatMinuteLabel(totalMinutes: number) {
-  const clamped = Math.max(0, Math.min(24 * 60 - 1, Math.floor(totalMinutes)));
+  const clamped = Math.max(0, Math.min(24 * 60, Math.floor(totalMinutes)));
+  if (clamped === 24 * 60) return "12 AM";
   const hours24 = Math.floor(clamped / 60);
   const minutes = clamped % 60;
   const suffix = hours24 >= 12 ? "PM" : "AM";
@@ -347,8 +348,8 @@ function escapeHtml(value: string) {
 }
 
 const SUGGESTED_LIMIT = 24;
-const SAMPLE_TRIAL_START_MINUTE = 8 * 60;
-const SAMPLE_TRIAL_END_MINUTE = 20 * 60;
+const SAMPLE_TRIAL_START_MINUTE = 0;
+const SAMPLE_TRIAL_END_MINUTE = 24 * 60;
 const SAMPLE_TRIAL_STEP_MINUTES = 60;
 const SAMPLE_TRIAL_DEFAULT_DURATION = 90;
 const SAMPLE_TRIAL_PX_PER_STEP = 44;
@@ -2711,6 +2712,7 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                                       width: `calc(${laneWidthPct}% - 14px)`,
                                       right: "auto"
                                     }}
+                                    onClick={() => openAttractionDetails(stop.attraction)}
                                     onDragStart={() => setDragSource({ type: "day", dayIndex, slotIndex })}
                                     onDragEnd={() => setDragSource(null)}
                                   >

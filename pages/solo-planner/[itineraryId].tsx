@@ -335,11 +335,7 @@ export default function SoloPlannerItineraryPage() {
           <header className="chat-header planner-pane-header">
             <div>
               <h1>AI Travel Chatbot</h1>
-              <p>
-                {initialPlace
-                  ? `Planning for ${initialPlace}.`
-                  : "Ask where to go, what to do, and how to organize your trip."}
-              </p>
+              <p>I can answer questions, suggest attractions, and help build your itinerary for you.</p>
             </div>
             <button
               type="button"

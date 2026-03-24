@@ -577,7 +577,7 @@ export default function CollabPlannerPage() {
           <header className="chat-header planner-pane-header">
             <div>
               <h1>AI Travel Chatbot</h1>
-              <p>{initialPlace ? `Group planning for ${initialPlace}.` : "Use AI while you set up your group session."}</p>
+              <p>I can answer questions, suggest attractions, and help build your itinerary for you.</p>
             </div>
           </header>
           <button
