@@ -1,6 +1,7 @@
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import AttractionDetailsModal from "./AttractionDetailsModal";
 import { FavoriteAttraction, useFavorites } from "../lib/favorites-context";
+import { useAuth } from "../lib/auth-context";
 import { useCart } from "../lib/cart-context";
 import { useUndo } from "../lib/undo-context";
 import {
@@ -10,6 +11,12 @@ import {
   isInWorkingItinerary,
   removeAttractionFromWorkingItinerary
 } from "../lib/working-itinerary-storage";
+
+type SavedItineraryItem = {
+  itineraryId: string;
+  tripName: string;
+  location: string;
+};
 
 type Attraction = {
   id: number;
@@ -161,9 +168,13 @@ function dedupeAttractionsById(list: Attraction[]) {
 }
 
 export default function AttractionsExplorer({ title, subtitle, initialPlace }: AttractionsExplorerProps) {
+  const { user } = useAuth();
   const { isFavorite, addFavorite, removeFavorite } = useFavorites();
   const { addToCart, removeFromCart, isInCart } = useCart();
-  const showAddChoices = hasWorkingItinerary();
+  const [savedItineraries, setSavedItineraries] = useState<SavedItineraryItem[]>([]);
+  const currentId = getCurrentItineraryId();
+  const hasCurrent = hasWorkingItinerary();
+  const showAddChoices = hasCurrent || (!!user?.id && savedItineraries.length > 0);
   const refreshWorkingItinerary = () => setWorkingItineraryVersion((v) => v + 1);
   const { addUndo } = useUndo();
   const [filters, setFilters] = useState<Filters>(defaultFilters);
@@ -199,6 +210,30 @@ export default function AttractionsExplorer({ title, subtitle, initialPlace }: A
 
     return params.toString();
   }, [filters]);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setSavedItineraries([]);
+      return;
+    }
+    let isActive = true;
+    (async () => {
+      try {
+        const res = await fetch(`/api/itinerary?userId=${encodeURIComponent(user.id)}`);
+        const data = (await res.json()) as { itineraries?: SavedItineraryItem[]; error?: string };
+        if (!isActive) return;
+        if (res.ok && data.itineraries) {
+          setSavedItineraries(data.itineraries);
+        } else {
+          setSavedItineraries([]);
+        }
+      } catch {
+        if (!isActive) return;
+        setSavedItineraries([]);
+      }
+    })();
+    return () => { isActive = false; };
+  }, [user?.id]);
 
   useEffect(() => {
     if (initialPlace === undefined) return;
@@ -724,20 +759,35 @@ export default function AttractionsExplorer({ title, subtitle, initialPlace }: A
                                   }}
                                 />
                                 <div className="attraction-card-add-dropdown">
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                    const id = getCurrentItineraryId();
-                                    if (id) {
-                                      addAttractionToWorkingItinerary(id, toFavoriteAttraction(attraction));
-                                      refreshWorkingItinerary();
-                                    }
-                                    setAddMenuAttractionId(null);
-                                    }}
-                                  >
-                                    Add to current itinerary
-                                  </button>
+                                  {currentId && hasCurrent && (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        addAttractionToWorkingItinerary(currentId, toFavoriteAttraction(attraction));
+                                        refreshWorkingItinerary();
+                                        setAddMenuAttractionId(null);
+                                      }}
+                                    >
+                                      Add to current itinerary
+                                    </button>
+                                  )}
+                                  {savedItineraries
+                                    .filter((it) => it.itineraryId !== currentId)
+                                    .map((it) => (
+                                      <button
+                                        key={it.itineraryId}
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          addAttractionToWorkingItinerary(it.itineraryId, toFavoriteAttraction(attraction));
+                                          refreshWorkingItinerary();
+                                          setAddMenuAttractionId(null);
+                                        }}
+                                      >
+                                        Add to {it.tripName || it.location || "Untitled"}
+                                      </button>
+                                    ))}
                                   <button
                                     type="button"
                                     onClick={(e) => {

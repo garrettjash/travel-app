@@ -22,6 +22,12 @@ const supabaseKey =
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY ||
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
+/** Cache TTL in seconds. Set PLACES_CACHE_MAX_AGE in env (e.g. 3600 = 1 hour). 0 = no cache (default). */
+const PLACES_CACHE_MAX_AGE = Math.max(
+  0,
+  parseInt(process.env.PLACES_CACHE_MAX_AGE ?? "0", 10) || 0
+);
+
 function normalizeText(value: unknown) {
   if (typeof value === "string") return value.trim();
   if (value === null || value === undefined) return "";
@@ -88,6 +94,9 @@ export default async function handler(
       .filter((item): item is PlaceOption => Boolean(item))
       .sort((left, right) => left.label.localeCompare(right.label));
 
+    if (PLACES_CACHE_MAX_AGE > 0) {
+      res.setHeader("Cache-Control", `public, s-maxage=${PLACES_CACHE_MAX_AGE}, stale-while-revalidate=${PLACES_CACHE_MAX_AGE}`);
+    }
     res.status(200).json({ options });
   } catch (error) {
     res.status(500).json({

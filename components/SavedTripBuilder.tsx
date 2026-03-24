@@ -1,5 +1,5 @@
 import { FormEvent, forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/router";
+import Router, { useRouter } from "next/router";
 import AppShell from "./AppShell";
 import AttractionDetailsModal from "./AttractionDetailsModal";
 import { useAuth } from "../lib/auth-context";
@@ -412,6 +412,10 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
     sanitizeItineraryId(initialItinerary?.itineraryId ?? itineraryIdFromRoute ?? "")
   );
   const hasBeenSavedRef = useRef(false);
+  const hasUnsavedChangesRef = useRef(false);
+  const markDirty = useCallback(() => {
+    hasUnsavedChangesRef.current = true;
+  }, []);
   const [shareLink, setShareLink] = useState<string | null>(null);
   const [isShareCopied, setIsShareCopied] = useState(false);
   const [isShareCodeCopied, setIsShareCodeCopied] = useState(false);
@@ -874,10 +878,26 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
     if (initialItinerary) {
       setCollabVoteStats(initialItinerary.collabVoteStats);
       const all: FavoriteAttraction[] = [];
+      const seenIds = new Set<number>();
       for (const day of initialItinerary.days ?? []) {
-        for (const stop of day.stops) all.push(stop.attraction);
+        for (const stop of day.stops) {
+          all.push(stop.attraction);
+          seenIds.add(stop.attraction.id);
+        }
       }
-      for (const a of initialItinerary.unscheduled ?? []) all.push(a);
+      for (const a of initialItinerary.unscheduled ?? []) {
+        all.push(a);
+        seenIds.add(a.id);
+      }
+      // Merge in any items added from Destinations (working storage) that aren't in API yet
+      if (persisted?.unscheduled?.length) {
+        for (const a of persisted.unscheduled) {
+          if (!seenIds.has(a.id)) {
+            all.push(a);
+            seenIds.add(a.id);
+          }
+        }
+      }
       all.forEach((a) => addAttraction(a));
       return;
     }
@@ -960,17 +980,36 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
   }, [resolvedId, persistData]);
 
   useEffect(() => {
-    const onBeforeUnload = () => persistData();
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      persistData();
+      if (hasUnsavedChangesRef.current) {
+        e.preventDefault();
+        (e as unknown as { returnValue: string }).returnValue = "";
+      }
+    };
     window.addEventListener("beforeunload", onBeforeUnload);
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
   }, [persistData]);
+
+  useEffect(() => {
+    const onRouteChange = (url: string) => {
+      if (!hasUnsavedChangesRef.current) return;
+      if (!window.confirm("You have unsaved changes. Leave without saving?")) {
+        Router.events.emit("routeChangeError");
+        throw "Route change aborted by user";
+      }
+    };
+    Router.events.on("routeChangeStart", onRouteChange);
+    return () => Router.events.off("routeChangeStart", onRouteChange);
+  }, []);
 
   const handleSelectPlace = useCallback((place: PlaceOption) => {
     setSelectedPlace(place);
     setTripPlace(place.label);
     setPlaceInputValue(place.label);
     setPlaceDropdownOpen(false);
-  }, []);
+    markDirty();
+  }, [markDirty]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -1042,6 +1081,7 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
     }
 
     function handleMouseUp() {
+      markDirty();
       setCalendarResizeState(null);
     }
 
@@ -1051,7 +1091,7 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [calendarResizeState]);
+  }, [calendarResizeState, markDirty]);
 
   useEffect(() => {
     const element = scheduleColumnRef.current;
@@ -1179,8 +1219,9 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
         return current;
       });
       setDragSource(null);
+      markDirty();
     },
-    [addAttraction, dayPlans, unscheduled, tripDays]
+    [addAttraction, dayPlans, unscheduled, tripDays, markDirty]
   );
 
   const clearPlan = () => {
@@ -1198,6 +1239,7 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
     setPlaceInputValue("");
     setExtraSuggestionSections([]);
     hasBeenSavedRef.current = false;
+    hasUnsavedChangesRef.current = false;
     setShareLink(null);
     setShareCode(null);
     const currentId = activeItineraryId || resolvedId;
@@ -1220,6 +1262,7 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
     removeAttraction(attractionId);
     setUnscheduled((c) => c.filter((x) => x.id !== attractionId));
     setDayPlans((c) => c.map((d) => ({ ...d, stops: d.stops.filter((s) => s.attraction.id !== attractionId) })));
+    markDirty();
     if (removedAttraction) {
       addUndo(`Removed ${removedAttraction.name}`, () => {
         addAttraction(removedAttraction);
@@ -1227,18 +1270,19 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
         setDayPlans(previousDayPlans);
       });
     }
-  }, [addAttraction, addUndo, attractions, dayPlans, removeAttraction, unscheduled]);
+  }, [addAttraction, addUndo, attractions, dayPlans, markDirty, removeAttraction, unscheduled]);
 
   const removeExtraLocation = useCallback((sectionId: string) => {
     const removed = extraSuggestionSections.find((section) => section.id === sectionId);
     if (!removed) return;
     setExtraSuggestionSections((current) => current.filter((section) => section.id !== sectionId));
+    markDirty();
     addUndo(`Removed ${removed.label}`, () => {
       setExtraSuggestionSections((current) =>
         current.some((section) => section.id === removed.id) ? current : [...current, removed]
       );
     });
-  }, [addUndo, extraSuggestionSections]);
+  }, [addUndo, extraSuggestionSections, markDirty]);
 
   const addToItineraryPool = useCallback(
     (attraction: FavoriteAttraction) => {
@@ -1246,8 +1290,9 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
       setUnscheduled((current) =>
         current.some((item) => item.id === attraction.id) ? current : [...current, attraction]
       );
+      markDirty();
     },
-    [addAttraction]
+    [addAttraction, markDirty]
   );
 
   const openCustomEventEditDialog = useCallback((eventId: number, currentName: string, currentDuration: number) => {
@@ -1317,6 +1362,7 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
           trimmed,
           customEventDialogDuration
         );
+        markDirty();
       } else {
         const attraction = createCustomEvent(trimmed);
         setCustomDurationByAttractionId((current) => ({
@@ -1352,8 +1398,9 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
       ...current,
       [customEventDialog.eventId]: customEventDialogDuration
     }));
+    markDirty();
     closeCustomEventDialog();
-  }, [addCustomEventToCalendar, addToItineraryPool, closeCustomEventDialog, customEventDialog, customEventDialogDuration, customEventDialogName]);
+  }, [addCustomEventToCalendar, addToItineraryPool, closeCustomEventDialog, customEventDialog, customEventDialogDuration, customEventDialogName, markDirty]);
 
   const moveStopToCalendar = useCallback(
     (from: DragSource, dayIndex: number, requestedMinute: number) => {
@@ -1422,8 +1469,9 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
         from.type === "unscheduled" ? current.filter((_, index) => index !== from.index) : current
       );
       setDragSource(null);
+      markDirty();
     },
-    [addAttraction, customDurationByAttractionId, dayPlans, tripDays, unscheduled]
+    [addAttraction, customDurationByAttractionId, dayPlans, markDirty, tripDays, unscheduled]
   );
 
   const getCalendarDateLabel = useCallback(
@@ -1503,6 +1551,7 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
       setActiveItineraryId(sanitizedId);
       setShareLink(fullShareLink);
       hasBeenSavedRef.current = true;
+      hasUnsavedChangesRef.current = false;
       clearWorkingItinerary(sanitizedId);
 
       if (data.shareCode) {
@@ -1781,6 +1830,7 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
       ...current,
       { id, label, attractions: [], loading: true, collapsed: false }
     ]);
+    markDirty();
     setNewSuggestionLocation("");
     setExtraPlaceDropdownOpen(false);
     setAddLocationExpanded(false);
@@ -1818,16 +1868,19 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
             s.id === sectionId ? { ...s, attractions: favorites, loading: false } : s
           )
         );
+        markDirty();
       } else if (!cancelled) {
         setExtraSuggestionSections((prev) =>
           prev.map((s) => (s.id === sectionId ? { ...s, attractions: [], loading: false } : s))
         );
+        markDirty();
       }
     } catch {
       if (!cancelled) {
         setExtraSuggestionSections((prev) =>
           prev.map((s) => (s.id === sectionId ? { ...s, attractions: [], loading: false } : s))
         );
+        markDirty();
       }
     }
   }
@@ -2212,7 +2265,7 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                     id="trip-name"
                     type="text"
                     value={tripName}
-                    onChange={(event) => setTripName(event.target.value)}
+                    onChange={(event) => { setTripName(event.target.value); markDirty(); }}
                     placeholder="Give your trip a name"
                   />
                 </div>
@@ -2222,7 +2275,7 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                     id="trip-start"
                     type="date"
                     value={startDate}
-                    onChange={(event) => setStartDate(event.target.value)}
+                    onChange={(event) => { setStartDate(event.target.value); markDirty(); }}
                   />
                 </div>
                 <div className="saved-trips-field saved-trips-field-date">
@@ -2231,7 +2284,7 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                     id="trip-end"
                     type="date"
                     value={endDate}
-                    onChange={(event) => setEndDate(event.target.value)}
+                    onChange={(event) => { setEndDate(event.target.value); markDirty(); }}
                   />
                 </div>
               </div>
@@ -2248,6 +2301,7 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                       if (!e.target.value.trim()) {
                         setSelectedPlace(null);
                         setTripPlace("");
+                        markDirty();
                       }
                     }}
                     onFocus={() => setPlaceDropdownOpen(true)}
@@ -2406,7 +2460,7 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
               <textarea
                 id="trip-notes"
                 value={notes}
-                onChange={(event) => setNotes(event.target.value)}
+                onChange={(event) => { setNotes(event.target.value); markDirty(); }}
                 placeholder="Add reminders: reservations, neighborhood plans, must-eat spots..."
                 rows={3}
               />

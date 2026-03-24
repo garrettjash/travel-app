@@ -56,7 +56,12 @@ export function hasWorkingItinerary(): boolean {
 export function isInWorkingItinerary(attractionId: number): boolean {
   const id = getCurrentItineraryId();
   if (!id) return false;
-  const data = loadWorkingItinerary(id);
+  return isInWorkingItineraryFor(id, attractionId);
+}
+
+/** Check if an attraction is in a specific itinerary's working storage. */
+export function isInWorkingItineraryFor(itineraryId: string, attractionId: number): boolean {
+  const data = loadWorkingItinerary(itineraryId);
   if (!data) return false;
   const ids = new Set<number>([
     ...data.unscheduled.map((a) => a.id),

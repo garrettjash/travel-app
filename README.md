@@ -19,6 +19,14 @@ In Supabase Dashboard: **Authentication → Providers → Email** – enable Ema
 
 Signup stores `first_name` and `last_name` in `user_metadata`.
 
+## Places cache
+
+The `/api/collab-places` endpoint caches responses for performance. Set in `.env`:
+
+- `PLACES_CACHE_MAX_AGE` – Cache TTL in seconds (default: `0` = no caching). Set e.g. `3600` for 1 hour.
+
+Examples: `86400` = 1 day, `3600` = 1 hour, `300` = 5 minutes.
+
 ## Local dev
 Install deps at the repo root:
 
