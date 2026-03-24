@@ -3584,6 +3584,16 @@ select:focus {
   letter-spacing: 0.03em;
 }
 
+.custom-event-dialog-field textarea {
+  font-family: inherit;
+  font-size: 1rem;
+  padding: 10px 12px;
+  border: 1px solid #d3e2f0;
+  border-radius: 8px;
+  resize: vertical;
+  min-height: 60px;
+}
+
 .custom-event-dialog-actions {
   display: flex;
   justify-content: flex-end;

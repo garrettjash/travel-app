@@ -210,25 +210,32 @@ function isCustomEvent(attraction: FavoriteAttraction | null | undefined) {
 }
 
 function getAttractionMeta(attraction: FavoriteAttraction) {
-  if (isCustomEvent(attraction)) return "Custom event";
+  if (isCustomEvent(attraction)) {
+    const addr = getCustomEventAddress(attraction);
+    return addr || "Custom event";
+  }
   const location = formatLocation(attraction.city, attraction.stateProvince, attraction.country);
   const categoryLabel = formatCategoryLabel(attraction.categories);
   return categoryLabel ? `${location} · ${categoryLabel}` : location;
 }
 
-function createCustomEvent(name: string): FavoriteAttraction {
+function createCustomEvent(
+  name: string,
+  address?: string,
+  details?: string
+): FavoriteAttraction {
   const trimmed = name.trim();
   const idSeed = Date.now() + Math.floor(Math.random() * 100000);
   return {
     id: -idSeed,
     name: trimmed,
-    city: "",
+    city: (address ?? "").trim(),
     stateProvince: "",
     country: "",
     latitude: null,
     longitude: null,
     distanceFromPlace: null,
-    summary: "Custom event",
+    summary: (details ?? "").trim() || "Custom event",
     vibe: "",
     rating: null,
     totalCountRatings: null,
@@ -242,6 +249,16 @@ function createCustomEvent(name: string): FavoriteAttraction {
     imageUrl: null,
     imageUrls: []
   };
+}
+
+/** Address and details for custom events: stored in city and summary. */
+function getCustomEventAddress(attraction: FavoriteAttraction): string {
+  return isCustomEvent(attraction) ? (attraction.city ?? "").trim() : "";
+}
+function getCustomEventDetails(attraction: FavoriteAttraction): string {
+  if (!isCustomEvent(attraction)) return "";
+  const s = (attraction.summary ?? "").trim();
+  return s === "Custom event" ? "" : s;
 }
 
 function intervalsOverlap(startA: number, endA: number, startB: number, endB: number) {
@@ -674,6 +691,8 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
   const [customDurationByAttractionId, setCustomDurationByAttractionId] = useState<Record<number, number>>({});
   const [customEventDialog, setCustomEventDialog] = useState<CustomEventDialogState | null>(null);
   const [customEventDialogName, setCustomEventDialogName] = useState("");
+  const [customEventDialogAddress, setCustomEventDialogAddress] = useState("");
+  const [customEventDialogDetails, setCustomEventDialogDetails] = useState("");
   const [customEventDialogDuration, setCustomEventDialogDuration] = useState(90);
   const [expandedSuggestionsTarget, setExpandedSuggestionsTarget] = useState<"primary" | string | null>(null);
   const [suggestionsColumnHeight, setSuggestionsColumnHeight] = useState<number | null>(null);
@@ -1295,21 +1314,41 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
     [addAttraction, markDirty]
   );
 
-  const openCustomEventEditDialog = useCallback((eventId: number, currentName: string, currentDuration: number) => {
-    setCustomEventDialog({ mode: "edit", eventId });
-    setCustomEventDialogName(currentName);
-    setCustomEventDialogDuration(currentDuration || 90);
-  }, []);
+  const openCustomEventEditDialog = useCallback(
+    (
+      eventId: number,
+      currentName: string,
+      currentDuration: number,
+      address?: string,
+      details?: string
+    ) => {
+      setCustomEventDialog({ mode: "edit", eventId });
+      setCustomEventDialogName(currentName);
+      setCustomEventDialogAddress(address ?? "");
+      setCustomEventDialogDetails(details ?? "");
+      setCustomEventDialogDuration(currentDuration || 90);
+    },
+    []
+  );
 
   const closeCustomEventDialog = useCallback(() => {
     setCustomEventDialog(null);
     setCustomEventDialogName("");
+    setCustomEventDialogAddress("");
+    setCustomEventDialogDetails("");
     setCustomEventDialogDuration(90);
   }, []);
 
   const addCustomEventToCalendar = useCallback(
-    (dayIndex: number, requestedMinute: number, name: string, durationMinutes: number) => {
-      const attraction = createCustomEvent(name.trim());
+    (
+      dayIndex: number,
+      requestedMinute: number,
+      name: string,
+      durationMinutes: number,
+      address?: string,
+      details?: string
+    ) => {
+      const attraction = createCustomEvent(name.trim(), address, details);
       addAttraction(attraction);
       setCustomDurationByAttractionId((current) => ({
         ...current,
@@ -1351,6 +1390,9 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
     const trimmed = customEventDialogName.trim();
     if (!trimmed || !customEventDialog) return;
 
+    const address = customEventDialogAddress.trim();
+    const details = customEventDialogDetails.trim();
+
     if (customEventDialog.mode === "create") {
       if (
         typeof customEventDialog.dayIndex === "number" &&
@@ -1360,11 +1402,13 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
           customEventDialog.dayIndex,
           customEventDialog.requestedMinute,
           trimmed,
-          customEventDialogDuration
+          customEventDialogDuration,
+          address || undefined,
+          details || undefined
         );
         markDirty();
       } else {
-        const attraction = createCustomEvent(trimmed);
+        const attraction = createCustomEvent(trimmed, address || undefined, details || undefined);
         setCustomDurationByAttractionId((current) => ({
           ...current,
           [attraction.id]: customEventDialogDuration
@@ -1382,7 +1426,12 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
           stop.attraction.id === customEventDialog.eventId
             ? {
                 ...stop,
-                attraction: { ...stop.attraction, name: trimmed },
+                attraction: {
+                  ...stop.attraction,
+                  name: trimmed,
+                  city: address,
+                  summary: details || "Custom event"
+                },
                 durationMinutes: customEventDialogDuration
               }
             : stop
@@ -1391,7 +1440,9 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
     );
     setUnscheduled((current) =>
       current.map((attraction) =>
-        attraction.id === customEventDialog.eventId ? { ...attraction, name: trimmed } : attraction
+        attraction.id === customEventDialog.eventId
+          ? { ...attraction, name: trimmed, city: address, summary: details || "Custom event" }
+          : attraction
       )
     );
     setCustomDurationByAttractionId((current) => ({
@@ -1400,7 +1451,17 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
     }));
     markDirty();
     closeCustomEventDialog();
-  }, [addCustomEventToCalendar, addToItineraryPool, closeCustomEventDialog, customEventDialog, customEventDialogDuration, customEventDialogName, markDirty]);
+  }, [
+    addCustomEventToCalendar,
+    addToItineraryPool,
+    closeCustomEventDialog,
+    customEventDialog,
+    customEventDialogAddress,
+    customEventDialogDetails,
+    customEventDialogDuration,
+    customEventDialogName,
+    markDirty
+  ]);
 
   const moveStopToCalendar = useCallback(
     (from: DragSource, dayIndex: number, requestedMinute: number) => {
@@ -1660,19 +1721,25 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
         const endTime = formatTimeForIcs(endHour, endMinute);
 
         const summary = `${cleanedTitle} - ${a.name}`.replace(/[\r\n]+/g, " ");
-        const locationParts = [a.name, a.city, a.stateProvince, a.country].filter(Boolean);
+        const locationParts = [a.city, a.stateProvince, a.country].filter(Boolean);
         const location = locationParts.join(", ").replace(/[\r\n]+/g, " ");
+        const description =
+          isCustomEvent(a) && getCustomEventDetails(a)
+            ? getCustomEventDetails(a).replace(/[\r\n]+/g, " ").replace(/,/g, "\\,")
+            : "";
 
-        events.push(
+        const eventLines = [
           "BEGIN:VEVENT",
           `UID:${a.id}-${day.dayNumber}-${i}@travelapp`,
           `DTSTAMP:${formatDateForIcs(new Date())}T000000`,
           `DTSTART:${datePart}T${startTime}`,
           `DTEND:${datePart}T${endTime}`,
           `SUMMARY:${summary}`,
-          location ? `LOCATION:${location}` : "",
+          ...(location ? [`LOCATION:${location}`] : []),
+          ...(description ? [`DESCRIPTION:${description}`] : []),
           "END:VEVENT"
-        );
+        ];
+        events.push(...eventLines);
       }
     }
 
@@ -2572,7 +2639,19 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                         key={attraction.id}
                         className={`saved-schedule-card saved-schedule-card-clickable ${dragSource?.type === "unscheduled" && dragSource.index === unscheduledIdx ? "saved-schedule-card-dragging" : ""}`}
                         draggable
-                        onClick={() => openAttractionDetails(attraction)}
+                        onClick={() => {
+                          if (isCustomEvent(attraction)) {
+                            openCustomEventEditDialog(
+                              attraction.id,
+                              attraction.name,
+                              customDurationByAttractionId[attraction.id] || 90,
+                              getCustomEventAddress(attraction),
+                              getCustomEventDetails(attraction)
+                            );
+                          } else {
+                            openAttractionDetails(attraction);
+                          }
+                        }}
                         onDragStart={() => setDragSource({ type: "unscheduled", index: unscheduledIdx })}
                         onDragEnd={() => setDragSource(null)}
                         onDragOver={(e) => {
@@ -2650,6 +2729,8 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                         onClick={() => {
                           setCustomEventDialog({ mode: "create" });
                           setCustomEventDialogName("");
+                          setCustomEventDialogAddress("");
+                          setCustomEventDialogDetails("");
                           setCustomEventDialogDuration(90);
                         }}
                       >
@@ -2739,6 +2820,8 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                                   requestedMinute
                                 });
                                 setCustomEventDialogName("");
+                                setCustomEventDialogAddress("");
+                                setCustomEventDialogDetails("");
                                 setCustomEventDialogDuration(90);
                               }}
                             >
@@ -2794,7 +2877,9 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                                         openCustomEventEditDialog(
                                           stop.attraction.id,
                                           stop.attraction.name,
-                                          stop.durationMinutes || customDurationByAttractionId[stop.attraction.id] || 90
+                                          stop.durationMinutes || customDurationByAttractionId[stop.attraction.id] || 90,
+                                          getCustomEventAddress(stop.attraction),
+                                          getCustomEventDetails(stop.attraction)
                                         );
                                         return;
                                       }
@@ -2830,6 +2915,22 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                                           )}
                                         </span>
                                       </strong>
+                                      {isCustomEvent(stop.attraction) &&
+                                        getCustomEventAddress(stop.attraction) && (
+                                          <div
+                                            className="sample-trial-event-address"
+                                            style={{
+                                              fontSize: "0.85em",
+                                              opacity: 0.9,
+                                              marginTop: 2,
+                                              whiteSpace: "nowrap",
+                                              overflow: "hidden",
+                                              textOverflow: "ellipsis"
+                                            }}
+                                          >
+                                            {getCustomEventAddress(stop.attraction)}
+                                          </div>
+                                        )}
                                     </div>
                                     <div className="sample-trial-event-actions">
                                       {isCustomEvent(stop.attraction) && (
@@ -2843,7 +2944,9 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                                             openCustomEventEditDialog(
                                               stop.attraction.id,
                                               stop.attraction.name,
-                                              stop.durationMinutes || customDurationByAttractionId[stop.attraction.id] || 90
+                                              stop.durationMinutes || customDurationByAttractionId[stop.attraction.id] || 90,
+                                              getCustomEventAddress(stop.attraction),
+                                              getCustomEventDetails(stop.attraction)
                                             );
                                           }}
                                         >
@@ -2927,7 +3030,7 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                 <h2>{customEventDialog.mode === "edit" ? "Edit custom event" : "Add custom event"}</h2>
                 <p>
                   {customEventDialog.mode === "edit"
-                    ? "Update the event name and duration."
+                    ? "Update the event name, address, details, and duration."
                     : "Name your custom event and add it to this time slot."}
                 </p>
               </div>
@@ -2949,6 +3052,24 @@ const SavedTripBuilderComponent = forwardRef<SavedTripBuilderHandle, SavedTripBu
                   onChange={(event) => setCustomEventDialogName(event.target.value)}
                   placeholder="Dinner reservation, flight, check-in..."
                   autoFocus
+                />
+              </label>
+              <label className="custom-event-dialog-field">
+                <span>Address</span>
+                <input
+                  type="text"
+                  value={customEventDialogAddress}
+                  onChange={(event) => setCustomEventDialogAddress(event.target.value)}
+                  placeholder="123 Main St, City, State"
+                />
+              </label>
+              <label className="custom-event-dialog-field">
+                <span>Details</span>
+                <textarea
+                  value={customEventDialogDetails}
+                  onChange={(event) => setCustomEventDialogDetails(event.target.value)}
+                  placeholder="Reservation #1234, confirmation code, notes..."
+                  rows={3}
                 />
               </label>
               <label className="custom-event-dialog-field">
